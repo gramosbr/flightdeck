@@ -1,9 +1,9 @@
 {
-  "name": "cockpit",
+  "name": "flightdeck",
   "owner": {
-    "name": "quaresc"
+    "name": "gramosbr"
   },
-  "description": "Every coding agent beside its work, in herdr and the Herdr app",
+  "description": "cockpit, with screens a layout adds (an SRE home beside the coding Home). Upstream: quaresc/cockpit",
   "plugins": [
     {
       "name": "cockpit",
