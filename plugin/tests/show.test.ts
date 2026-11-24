@@ -5,10 +5,10 @@ import { SHOW_CASES } from './fixtures/show-cases'
 
 const HOME = '/home/me'
 
-test('each shared case gets the answer cockpit mcp is held to as well', async () => {
+test('each shared case gets the answer flightdeck mcp is held to as well', async () => {
   for (const c of SHOW_CASES) expect([c.name, viewError(c.spec) ?? null]).toEqual([c.name, c.error])
 })
-const DIR = `${HOME}/.cache/cockpit/show`
+const DIR = `${HOME}/.cache/flightdeck/show`
 const ran = (exitCode: number, stdout = '') => ({ exitCode, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false })
 
 test('a compare block shows in a pane as well as in the browser', async () => {
@@ -83,7 +83,7 @@ test('a click on a blueprint box reads as a change request about it', async () =
 })
 
 test("a view is its app terminal's, else the driven session's whose key its environment holds", async () => {
-  const withEnv = (key: string | undefined) => ({ env: { get: async (name: string) => (name === 'COCKPIT_SESSION_KEY' ? key : undefined) } }) as unknown as Parameters<typeof viewOwner>[0]
+  const withEnv = (key: string | undefined) => ({ env: { get: async (name: string) => (name === 'FLIGHTDECK_SESSION_KEY' ? key : undefined) } }) as unknown as Parameters<typeof viewOwner>[0]
   const app = { frontend: 'app', terminal: 't42', paneId: 'p1' } as unknown as Parameters<typeof viewOwner>[1]
   expect(await viewOwner(withEnv('claude:1794-0'), app)).toBe('t42')
   expect(await viewOwner(withEnv('claude:1794-0'), undefined)).toBe('claude:1794-0')

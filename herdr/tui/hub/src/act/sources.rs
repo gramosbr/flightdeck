@@ -1,6 +1,6 @@
 //! What the headers' source chips do: sign a source in again in a tab of the actions space, or read it again at once.
 
-use cockpit_core::{files, frontend};
+use flightdeck_core::{files, frontend};
 use serde_json::Value;
 
 use super::{Ctx, arg, inbox, space};
@@ -16,7 +16,7 @@ fn label(source: &str) -> String {
     record(source)["label"].as_str().filter(|l| !l.is_empty()).map(str::to_string).unwrap_or_else(|| source.to_string())
 }
 
-/// `[source]`: its login (`gh auth login`, `cockpit connector login <server>` or `cockpit setup`) typed into a new tab of
+/// `[source]`: its login (`gh auth login`, `flightdeck connector login <server>` or `flightdeck setup`) typed into a new tab of
 /// the actions space, else a space of its own; pressed again while that tab or space is open, it comes back into view.
 pub fn sign_in(ctx: &mut Ctx, args: &[Value]) -> Res {
     let source = text(arg(args, 0)?);
@@ -68,7 +68,7 @@ pub fn refresh(ctx: &mut Ctx, args: &[Value]) -> Res {
     inbox::request_refresh(ctx, args)?;
     let record = record(&source);
     let limited = record["error"]["kind"] == "rate";
-    let next = record["next"].as_u64().map(cockpit_core::header::clock);
+    let next = record["next"].as_u64().map(flightdeck_core::header::clock);
     ctx.note(match (limited, next) {
         (true, Some(next)) => format!("{} is read again at {next}, when its limit resets", label(&source)),
         _ if source.is_empty() => "refresh requested, it lands within a minute".to_string(),

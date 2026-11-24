@@ -23,7 +23,7 @@ test('a session follows the checkout its tools touch, worktrees included', async
   on('env.get', (_, e) => ({ value: (e as { name?: string }).name === 'HOME' ? HOME : undefined }))
   on('fs.read', (_, e) => {
     const path = (e as { path?: string }).path ?? ''
-    if (path.endsWith('/.config/cockpit/config.json')) return { value: JSON.stringify({ reposDir: '~/code', tickets: { enabled: false } }) }
+    if (path.endsWith('/.config/flightdeck/config.json')) return { value: JSON.stringify({ reposDir: '~/code', tickets: { enabled: false } }) }
     throw new Error('ENOENT')
   })
   on('fs.write', () => ({ value: undefined }))

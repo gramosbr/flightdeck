@@ -11,8 +11,8 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::RecvTimeoutError;
 use std::time::Duration;
 
-use cockpit_core::files;
-use cockpit_core::frontend::{self, Frontend};
+use flightdeck_core::files;
+use flightdeck_core::frontend::{self, Frontend};
 use serde_json::{Value, json};
 
 use crate::{act, feed, fetch, fetcher, go, history, names, outbox, search, store, views};
@@ -95,10 +95,10 @@ fn refused(gate: &Gate, op: &str) -> bool {
     gate.read_only && !READS.contains(&op)
 }
 
-/// How long a subscriber's connection may refuse a line before the hub lets it go; COCKPIT_HUB_WRITE_SECS shortens it
+/// How long a subscriber's connection may refuse a line before the hub lets it go; FLIGHTDECK_HUB_WRITE_SECS shortens it
 /// for tests.
 fn write_limit() -> Duration {
-    Duration::from_secs(std::env::var("COCKPIT_HUB_WRITE_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(60))
+    Duration::from_secs(std::env::var("FLIGHTDECK_HUB_WRITE_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(60))
 }
 
 pub fn now_secs() -> u64 {
@@ -131,7 +131,7 @@ pub fn serve<C: Conn>(stream: C, last: Arc<AtomicU64>, gate: Gate) {
             }
             // Start work's plan reads the checkouts and asks the tracker: it stays on this machine.
             Ok(request) if refused(&gate, request["op"].as_str().unwrap_or_default()) || (gate.read_only && request["kind"] == "start_work") => {
-                json!({"error": "this cockpit hub serves reads only off loopback: start it without COCKPIT_HUB_LISTEN to write from this machine"})
+                json!({"error": "this flightdeck hub serves reads only off loopback: start it without FLIGHTDECK_HUB_LISTEN to write from this machine"})
             }
             Ok(request) if request["op"] == "subscribe" => return subscribe(writer, reader, &request),
             Ok(request) => {

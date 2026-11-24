@@ -2,7 +2,7 @@
 //! when the config gives `tickets.token`, else through the hub's own ticket server; otherwise an agent session in the
 //! actions space makes the change with the ticket connector.
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use super::{Ctx, arg, inbox, opt};
@@ -18,7 +18,7 @@ pub fn token() -> Option<String> {
 }
 
 fn gql(token: &str, query: &str, variables: Value) -> Res<Value> {
-    let api = http::base("COCKPIT_LINEAR_API", "https://api.linear.app");
+    let api = http::base("FLIGHTDECK_LINEAR_API", "https://api.linear.app");
     let body = http::post(&format!("{api}/graphql"), &[("Authorization", token)], &json!({"query": query, "variables": variables})).map_err(|e| match e {
         http::Failure::Limited(_) => "Linear's rate limit: try again in a minute".to_string(),
         http::Failure::Other(m) => m,
@@ -122,14 +122,14 @@ fn ticket_id(v: &Value) -> String {
 }
 
 /// The hub's own ticket server and the tickets mapping, when there is no Linear token.
-fn served() -> Option<(cockpit_connectors::Server, Value)> {
+fn served() -> Option<(flightdeck_connectors::Server, Value)> {
     if token().is_some() {
         return None;
     }
     let raw = files::load(&files::config_dir().join("config.json")).unwrap_or(Value::Null);
     let config = crate::config::load();
     let server = crate::feed::mcp::server(&raw, &config.0, "tickets")?;
-    Some((server, cockpit_connectors::tickets::mapping(&raw["tickets"])))
+    Some((server, flightdeck_connectors::tickets::mapping(&raw["tickets"])))
 }
 
 /// A change the ticket connector makes, in an agent session of the actions space.
@@ -145,7 +145,7 @@ pub fn set_state(ctx: &mut Ctx, args: &[Value]) -> Res {
     let id = ticket_id(arg(args, 0)?);
     let name = text(arg(args, 1)?);
     if let Some((server, mapping)) = served() {
-        use cockpit_connectors::{tickets, tools::Mapped};
+        use flightdeck_connectors::{tickets, tools::Mapped};
         let (moved, kind) =
             crate::feed::mcp::with(&server, async |c| tickets::set_state(&Mapped { connection: c, section: &mapping }, &mapping, &id, &name).await)?;
         show_now(&id, |t| {
@@ -190,7 +190,7 @@ pub fn assign(ctx: &mut Ctx, args: &[Value]) -> Res {
     let id = ticket_id(arg(args, 0)?);
     let who = opt(args, 1).as_str().filter(|w| !w.is_empty()).unwrap_or("me").to_string();
     if let Some((server, mapping)) = served().filter(|(_, m)| m["tools"]["assign"]["tool"].is_string()) {
-        use cockpit_connectors::{tickets, tools::Mapped};
+        use flightdeck_connectors::{tickets, tools::Mapped};
         crate::feed::mcp::with(&server, async |c| tickets::assign(&Mapped { connection: c, section: &mapping }, &mapping, &id, &who).await)?;
         // A ticket given to someone else is no longer mine.
         if who != "me" {
@@ -231,7 +231,7 @@ pub fn file_issue(ctx: &mut Ctx, args: &[Value]) -> Res {
     let team = spec["team"].as_str().filter(|t| !t.is_empty()).map(cased).or_else(|| keys.first().cloned()).ok_or("say which team files it")?;
     let description = spec["description"].as_str().unwrap_or_default().to_string();
     if let Some((server, mapping)) = served().filter(|(_, m)| m["tools"]["create"]["tool"].is_string()) {
-        use cockpit_connectors::{tickets, tools::Mapped};
+        use flightdeck_connectors::{tickets, tools::Mapped};
         let (made, url) = crate::feed::mcp::with(&server, async |c| {
             tickets::create(&Mapped { connection: c, section: &mapping }, &mapping, &team, &title, &description).await
         })?;
@@ -262,7 +262,7 @@ pub fn file_issue(ctx: &mut Ctx, args: &[Value]) -> Res {
 pub fn card(args: &Value) -> Res<Value> {
     let id = ticket_id(&args["id"]);
     if let Some((server, mapping)) = served() {
-        use cockpit_connectors::{tickets, tools::Mapped};
+        use flightdeck_connectors::{tickets, tools::Mapped};
         let mut card = crate::feed::mcp::with(&server, async |c| tickets::details(&Mapped { connection: c, section: &mapping }, &mapping, &id).await)?;
         let mine = list(&crate::store::global().get("inbox")["tickets"]).iter().any(|t| t["id"] == id.as_str());
         card["mine"] = mine.into();

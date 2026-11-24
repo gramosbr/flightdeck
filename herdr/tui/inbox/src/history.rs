@@ -1,11 +1,11 @@
 //! Each ticket's estimated cost history for its sparkline, asked of the hub in the background at most every few minutes;
-//! when the hub cannot be reached, its store (~/.cache/cockpit/history/ticket_estimate.jsonl, {key, value} a line) is read.
+//! when the hub cannot be reached, its store (~/.cache/flightdeck/history/ticket_estimate.jsonl, {key, value} a line) is read.
 
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::{Duration, Instant};
 
-use cockpit_core::{files, hub};
+use flightdeck_core::{files, hub};
 use serde_json::Value;
 
 const KIND: &str = "ticket_estimate";

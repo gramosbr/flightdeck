@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use cockpit_core::acts::Act;
+use flightdeck_core::acts::Act;
 use regex::Regex;
 use serde_json::Value;
 

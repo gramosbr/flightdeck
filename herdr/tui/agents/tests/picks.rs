@@ -4,7 +4,7 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use cockpit_agents::session::{self, Picks};
+use flightdeck_agents::session::{self, Picks};
 use serde_json::{Value, json};
 
 fn wait_for(key: &str, what: &str, done: impl Fn(&Value) -> bool) -> Value {
@@ -42,10 +42,10 @@ fn a_session_starts_with_what_was_picked_and_changes_it_live() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_CLAUDE", &stub);
+        std::env::set_var("FLIGHTDECK_CLAUDE", &stub);
         std::env::set_var("STUB_ARGS", &args);
     }
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
     let refused = session::start("claude", &work.to_string_lossy(), "default", &Picks { effort: "ultra".into(), ..Picks::default() });
     assert_eq!(refused.unwrap_err(), "Claude Code takes no effort level ultra");
     let picks = Picks { model: "opus".into(), effort: "high".into(), fast: Some(true) };
@@ -72,10 +72,10 @@ fn a_session_starts_with_what_was_picked_and_changes_it_live() {
     assert!(session::act("model", &[json!({"key": key, "model": "gpt-acme-1"})]).unwrap().unwrap_err().contains("takes no model"));
     // Fast mode spends the plan's usage faster: the agent's own tools cannot turn it on, though they may turn it off.
     let stub_pid = session::keyed_pids()[0].1;
-    cockpit_core::peer::set(Some(stub_pid));
+    flightdeck_core::peer::set(Some(stub_pid));
     assert!(session::act("fast", &[json!({"key": key, "fast": true})]).unwrap().unwrap_err().contains("by a person"));
     assert!(session::act("fast", &[json!({"key": key, "fast": false})]).unwrap().is_ok(), "its own session");
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
     assert_eq!(session::act("model", &[json!({"key": key, "model": "haiku"})]).unwrap(), Ok("set".into()));
     wait_for(&key, "the model", |s| s["model"] == "claude-haiku-5-5");
     // Asked for on a model without it, fast mode does not serve, and the agent says why.

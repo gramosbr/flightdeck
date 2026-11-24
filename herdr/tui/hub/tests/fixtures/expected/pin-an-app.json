@@ -2,8 +2,8 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/refresh-request": "<T>",
-    "home/.config/cockpit/monitor-pinned.json": [
+    "home/.cache/flightdeck/refresh-request": "<T>",
+    "home/.config/flightdeck/monitor-pinned.json": [
       "web-production"
     ]
   },

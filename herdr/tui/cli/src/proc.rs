@@ -21,7 +21,7 @@ impl Out {
 
 /// Homebrew's and the user's bin folders before the inherited PATH: herdr runs its plugins with a bare one.
 pub fn path() -> String {
-    let home = cockpit_core::files::home();
+    let home = flightdeck_core::files::home();
     let local = home.join(".local/bin");
     let inherited = std::env::var("PATH").unwrap_or_default();
     format!("/opt/homebrew/bin:/usr/local/bin:{}:{inherited}", local.display())

@@ -1,21 +1,21 @@
-# Cockpit Chat
+# Flightdeck Chat
 
 Read your agents instead of watching their terminals. The window opens on the conversation with the agent in front —
 its words as words, everything it did folded into one line you can open — with the question it is waiting on as a card
 above the box you answer in. Its real terminal is one key away.
 
-The same cockpit mod and hub as the Cockpit layout, so the inbox, runbooks, meetings and the rest are still a key
+The same flightdeck mod and hub as the Flightdeck layout, so the inbox, runbooks, meetings and the rest are still a key
 away; only the shell around them changes.
 
 ## What you see
 
-Left to right, then top to bottom. Colours come from the layout's own theme (`cockpit-chat`, dark, and
-`cockpit-chat-light`): near-monochrome greys, colour only for what an agent is doing and the providers' own logos.
+Left to right, then top to bottom. Colours come from the layout's own theme (`flightdeck-chat`, dark, and
+`flightdeck-chat-light`): near-monochrome greys, colour only for what an agent is doing and the providers' own logos.
 
-- **Sidebar**: cockpit's own — Herdr's brand row with the search field and the panel button that closes
+- **Sidebar**: flightdeck's own — Herdr's brand row with the search field and the panel button that closes
   it, the quota bars, the app strip with its counts (Needs you second, with how many wait; keys in the tooltips only), the NEEDS YOU band whose questions are answered in place, the
   agents grouped by whose move it is with their ticket, PR, diff and age, the spaces with their terminals, a quiet
-  Cockpit settings row (every option, the health checks, the versions) and the Settings footer. ⌘B and the panel button pin it open and let it go; it remembers.
+  Flightdeck settings row (every option, the health checks, the versions) and the Settings footer. ⌘B and the panel button pin it open and let it go; it remembers.
 - **Drawers**, one per edge, each standing in for its pinned half while that half is away: a 10px bar of `selected`
   is all that shows, and the pointer slides out the rest — the agents alone on the left (whose move it is, the title,
   the ticket or branch, the wait), the agent's `show` view on the right. Herdr draws one layout and never changes it
@@ -43,7 +43,7 @@ Left to right, then top to bottom. Colours come from the layout's own theme (`co
     pill counts what came since; reaching the top, or "Earlier messages", reads further back with the first message
     kept where it was;
   - the prompts waiting their turn, under the conversation, each with a cross that takes it back;
-  - the question it waits on as the cockpit question card, wide, right above the box;
+  - the question it waits on as the flightdeck question card, wide, right above the box;
   - the box, 22px corners, what you type above and what it is working with below: `+` for a file, what the agent may
     do without asking (amber once it is more than "asks first"), the folder, then the model and a round send button
     that lights up once there is something to send. Where its work lives sits above the box as icons (the views it
@@ -52,12 +52,12 @@ Left to right, then top to bottom. Colours come from the layout's own theme (`co
     A file dropped on the box rides with the next prompt as a path, and `+` chooses one or takes the image off the
     clipboard.
 - **Needs you**: every waiting agent as a question card, the longest-waiting first, each with a button to read it.
-- **Home, Inbox, Runbook, To-do, Meetings, Monitor, Routines, Mail**: the cockpit apps, unchanged.
+- **Home, Inbox, Runbook, To-do, Meetings, Monitor, Routines, Mail**: the flightdeck apps, unchanged.
 - **Tab** (⌘⌥T): the space's real panes, for when the terminal is what you want — a `show` pane, a diff, a page in
   terminal-browser.
 - **Side panel** (⌘⌥B), 420px on the right of both: the `show` tool's views with their charts, tables and diagrams,
   the review screen, the focused agent's runbook, files and changes, the Chromium side browser when it is
-  turned on, and the activity rail that switches between them (⌃⌘1–5). Files and Changes are cockpit's own
+  turned on, and the activity rail that switches between them (⌃⌘1–5). Files and Changes are flightdeck's own
   (`project-files`, `project-changes`): they follow the repositories the chat's agent works in, even from a folder of
   several, the one it changed last first; `chat.projectPanels` off gives Herdr's back.
 
@@ -83,12 +83,12 @@ Left to right, then top to bottom. Colours come from the layout's own theme (`co
   grouped and searchable, the one place they are all shown.
 - The palette lists this layout's screens and commands (Chat, Needs you, Tab…), nothing that does nothing here, and with
   nothing typed the agents by stage, those waiting on you first.
-- ⌘⇧L switches back to the Cockpit layout; everything there is where it was.
+- ⌘⇧L switches back to the Flightdeck layout; everything there is where it was.
 
 ## In chat, not only read
 
 A conversation the chat shows comes from one of two places. Any agent Herdr runs is **read**: its transcript gives the
-words and the tool calls, its screen gives the question. Claude Code can also run **in chat**: cockpit starts it under
+words and the tool calls, its screen gives the question. Claude Code can also run **in chat**: flightdeck starts it under
 the streaming protocol and owns its stdin and stdout, so the same words arrive as events, and with them the things a
 reader had to guess — the agent's own slash commands, its rate-limit window, the cost of the turn. ⌘⌥N starts one in
 the folder of the space in front and opens it in the chat; each session in chat has a pill in the top bar.
@@ -97,22 +97,22 @@ A session in chat gives the box what a reader could never have: `/` completes fr
 publishes and `@` from the folder's files, the permission word and the model are menus that set them on the running
 agent, ⇧⇥ cycles what it may do without asking (asks first → edits freely → plan only) and ⎋ stops the turn, both
 only while the keyboard is in the chat (a menu or the palette keeps its own), and a permission it wants arrives as the
-same question card the rest of cockpit uses.
+same question card the rest of flightdeck uses.
 Full access and auto, which run tools without asking, are set only after a confirm that names the session; Cancel
 holds the keyboard. Edits freely is set at once from the mode menu, whose items carry a key made when it opened, or by ⇧⇥
 pressed in the chat, and through the same confirm any other way (the palette's entry, a window command).
 
 ## Built from
 
-- `layouts/cockpit-chat.json`: a row of `sidebar` (268px: Herdr's `workspace-chrome` brand row, the cockpit
+- `layouts/flightdeck-chat.json`: a row of `sidebar` (268px: Herdr's `workspace-chrome` brand row, the flightdeck
   `sidebar` view, its footer) and `work`; `work` is `topbar` (56px,
   `chat-top`) over the `screen` stack. Its first child is a row also called `work`, holding the `view` stack
   (`chat` and `tab`, Herdr's `{tab: "active"}` with a pane frame) beside the hidden `panel`; then come `needs`,
   `home` and the seven app blocks.
-- `mods/cockpit/`, the one cockpit mod, through `props.app`: `chat`, `chat-top`, `needs`, and every view the Cockpit
+- `mods/flightdeck/`, the one flightdeck mod, through `props.app`: `chat`, `chat-top`, `needs`, and every view the Flightdeck
   layout already uses, `sidebar` included. `screens.js` says which stack each layout uses and which screen it
-  deals with an agent on (`chat` here, the panes in the Cockpit layout), so `show()` and `goToAgent()` work in both.
-- `themes/cockpit-chat.json` and `cockpit-chat-light.json`: the twelve panel colours plus the ansi set the design kit
+  deals with an agent on (`chat` here, the panes in the Flightdeck layout), so `show()` and `goToAgent()` work in both.
+- `themes/flightdeck-chat.json` and `flightdeck-chat-light.json`: the twelve panel colours plus the ansi set the design kit
   derives its badges from.
 - The hub's `chat` view (`herdr/tui/agents/src/chat.rs`): one agent's transcript followed with
   `transcripts::Follow` (only what was written since the last build is read), its messages and tool calls in order,
@@ -123,7 +123,7 @@ pressed in the chat, and through the same confirm any other way (the palette's e
 ## Watch out
 
 - The sidebar column's id must stay `sidebar`: Herdr's own ⌘B is `layout.toggle:sidebar`.
-- Its `min` is 220, not 44: the cockpit sidebar folds into an icon rail below 160px, and here the small state is the
+- Its `min` is 220, not 44: the flightdeck sidebar folds into an icon rail below 160px, and here the small state is the
   drawer, not a rail.
 - A drawer sizes to what it holds, so nothing inside it may be `flex_1` with `min_h(0)` — there is no height to take,
   and the drawer collapses to its head. The body caps the height; the list keeps its own.

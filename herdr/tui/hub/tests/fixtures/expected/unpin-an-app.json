@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/refresh-request": "<T>"
+    "home/.cache/flightdeck/refresh-request": "<T>"
   },
   "note": "unpinned api-production",
   "pending": {},

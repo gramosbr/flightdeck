@@ -1,5 +1,5 @@
 //! The tools and the drawing guidance as the plugin declares them in `plugin/hooks/tools.ts`, read at build time so
-//! an agent on `cockpit mcp` reads the same words a plugin session does.
+//! an agent on `flightdeck mcp` reads the same words a plugin session does.
 
 use std::sync::LazyLock;
 
@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 const SHARED_TS: &str = include_str!("../../../../../plugin/hooks/tools.ts");
 
 /// The tools in the order `tools/list` gives them.
-pub const NAMES: [&str; 6] = ["show", "cockpit_search", "cockpit_changes", "cockpit_read", "cockpit_health", "report_step"];
+pub const NAMES: [&str; 6] = ["show", "flightdeck_search", "flightdeck_changes", "flightdeck_read", "flightdeck_health", "report_step"];
 pub const PLACEMENTS: [&str; 4] = ["right", "down", "zoomed", "browser"];
 pub const BLOCKS: [&str; 15] =
     ["markdown", "stats", "table", "chart", "flow", "sequence", "mermaid", "blueprint", "image", "compare", "diff", "log", "ci", "choice", "confirm"];
@@ -31,7 +31,7 @@ fn strings(lines: &Value) -> Vec<&str> {
 
 /// The drawing guidance the server gives as its instructions.
 pub fn instructions() -> String {
-    strings(&SHARED["drawing"]).join("\n").replace("{show}", "cockpit's show tool")
+    strings(&SHARED["drawing"]).join("\n").replace("{show}", "flightdeck's show tool")
 }
 
 /// What `tools/list` answers; the two that only read say so, so an agent may run them without asking.
@@ -58,7 +58,7 @@ mod tests {
         assert!(said(0).starts_with("Draws charts, figures, tables") && said(0).ends_with("with rows given in the call."), "{}", said(0));
         // An escaped quote and a backslash read as themselves.
         assert!(said(0).contains("the person's next message") && said(0).contains(r"`---\ntitle:"));
-        assert!(said(1).starts_with("Searches everything cockpit knows") && said(1).ends_with("a ticket's its id."));
+        assert!(said(1).starts_with("Searches everything flightdeck knows") && said(1).ends_with("a ticket's its id."));
         assert!(said(2).starts_with("What changed in the person's work") && said(2).ends_with("title}]}."));
         assert!(said(3).starts_with("Reads from the person's tools") && said(4).starts_with("A service's health"));
         assert!(said(5).starts_with("Records how a runbook step") && said(5).ends_with("before it runs."));
@@ -72,7 +72,7 @@ mod tests {
         let props = |tool: &str| &SHARED["tools"][tool]["inputSchema"]["properties"];
         assert_eq!(strings(&props("show")["placement"]["enum"]), PLACEMENTS);
         assert_eq!(strings(&props("show")["blocks"]["items"]["properties"]["type"]["enum"]), BLOCKS);
-        assert_eq!(strings(&props("cockpit_changes")["app"]["enum"]), APPS);
+        assert_eq!(strings(&props("flightdeck_changes")["app"]["enum"]), APPS);
         assert_eq!(strings(&props("report_step")["outcome"]["enum"]), OUTCOMES);
         for name in NAMES {
             assert_eq!(SHARED["tools"][name]["name"], name);

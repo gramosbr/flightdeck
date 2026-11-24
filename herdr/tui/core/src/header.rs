@@ -106,7 +106,7 @@ pub enum Tone {
 /// What a chip's key does.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Fix {
-    /// `cockpit connector login` (or `gh auth login`) in a tab of the actions space.
+    /// `flightdeck connector login` (or `gh auth login`) in a tab of the actions space.
     SignIn,
     /// The space's refresh: every source is read again at once, a rate-limited one at its reset.
     Refresh,
@@ -248,7 +248,7 @@ pub fn key(key: &KeyEvent) -> bool {
     std::thread::spawn(move || {
         match crate::hub::request(&request, Duration::from_secs(60)) {
             Ok(answer) if answer["error"].is_string() => note(answer["error"].as_str().unwrap_or_default().to_string(), true),
-            Ok(answer) if answer["unknown"] == true => note("this hub cannot sign in: update cockpit".into(), true),
+            Ok(answer) if answer["unknown"] == true => note("this hub cannot sign in: update flightdeck".into(), true),
             Ok(answer) => note(answer["note"].as_str().unwrap_or_default().to_string(), false),
             Err(error) => note(error, true),
         }
@@ -458,13 +458,13 @@ mod tests {
     fn documents_hold_their_sources_in_one_order() {
         let ci = json!({"hub": {"fresh": {"ci": {"source": "ci", "label": "CI", "at": 5, "every": 30000, "error": null}}}});
         let inbox = json!({"hub": {"fresh": {
-            "tickets": {"source": "tickets", "label": "Linear", "at": 5, "every": 60000, "login": "cockpit connector login Linear",
+            "tickets": {"source": "tickets", "label": "Linear", "at": 5, "every": 60000, "login": "flightdeck connector login Linear",
                         "error": {"kind": "auth", "message": "HTTP 401", "since": 4}},
             "github": {"source": "github", "label": "GitHub", "at": 5, "every": 30000, "error": null}}}});
         let found = sources(&[&inbox, &ci, &Value::Null]);
         let ids: Vec<&str> = found.iter().map(|s| s.fresh.source.as_str()).collect();
         assert_eq!(ids, ["github", "tickets", "ci"]);
-        assert_eq!(found[1].login.as_deref(), Some("cockpit connector login Linear"));
+        assert_eq!(found[1].login.as_deref(), Some("flightdeck connector login Linear"));
         assert!(has(&found, "ci") && !has(&found, "mail"));
         let served = json(&found, 10);
         assert_eq!((&served[1]["state"], &served[1]["error"]["kind"], &served[1]["label"]), (&json!("failing"), &json!("auth"), &json!("Linear")));

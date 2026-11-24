@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-async function fixture(layout = "cockpit", live = null) {
+async function fixture(layout = "flightdeck", live = null) {
   const calls = [], notices = [];
   const context = createContext({ console });
   const imports = {
@@ -19,7 +19,7 @@ async function fixture(layout = "cockpit", live = null) {
     "./hub.js": { act: () => { throw new Error("no hub action expected"); }, openUrl: () => {} },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -50,11 +50,11 @@ async function fixture(layout = "cockpit", live = null) {
 }
 
 test("the agents' screen is the one the shown layout calls it", async () => {
-  const cockpit = await fixture();
-  cockpit.fleet.goToAgent({ address: "t7" });
+  const flightdeck = await fixture();
+  flightdeck.fleet.goToAgent({ address: "t7" });
   const selects = f => f.calls.filter(c => c[0] === "layout.select").map(c => `${c[1].stack}/${c[1].child}`);
-  assert.deepEqual(selects(cockpit).join(" "), "center/work");
-  const chat = await fixture("cockpit-chat");
+  assert.deepEqual(selects(flightdeck).join(" "), "center/work");
+  const chat = await fixture("flightdeck-chat");
   chat.fleet.goToAgent({ address: "t7" });
   // The reading layout stacks the conversation and the panes inside the screen that holds the side panel.
   assert.deepEqual(selects(chat).join(" "), "screen/work view/chat");
@@ -165,7 +165,7 @@ test("every view reads an agent's status through one helper: error is failed, an
 });
 
 test("Needs lists the agents asking, then those stopped with an error, and the drawer counts both", async () => {
-  const { fleet } = await fixture("cockpit-chat");
+  const { fleet } = await fixture("flightdeck-chat");
   const rows = [
     { terminal: "app:t1", address: "t1", stage: "needs_you", question: { text: "Run the migration?" } },
     { terminal: "app:t2", address: "t2", stage: "failed", status: "failed", error: "API Error: 529 overloaded" },
@@ -197,7 +197,7 @@ test("a blocked agent with nothing to read says what it waits on, never a line o
   assert.equal(at("t52").waits.text, "Reached its usage limit · resets 08:00");
   assert.equal(at("t41").waits, null);
   assert.equal(at("t41").question.text, "Which limit?");
-  const src = await readFile(new URL("../mods/cockpit/agentsui.js", import.meta.url), "utf8");
+  const src = await readFile(new URL("../mods/flightdeck/agentsui.js", import.meta.url), "utf8");
   const card = src.slice(src.indexOf("export function WaitsCard"), src.indexOf("/** How many of what a permission would do"));
   assert.match(card, /label: "Go to agent"/, "the way to its terminal is the card's action");
   assert.doesNotMatch(card, /startReply|TextField|model\.answer/, "it takes no reply: nothing on its screen reads as a question");
@@ -206,19 +206,19 @@ test("a blocked agent with nothing to read says what it waits on, never a line o
 
 test("the hub's word wins over a Herdr status that stayed blocked", async () => {
   const herdr = (status) => [{ address: "t7", tab: "tab7", space: "s1", status, title: "Local agent" }];
-  const read = async (status, hub) => (await fixture("cockpit", herdr(status))).fleet.fleet({ agents: [{ terminal: "app:t7", address: "t7", stage: hub, status: hub }] }, null)[0];
+  const read = async (status, hub) => (await fixture("flightdeck", herdr(status))).fleet.fleet({ agents: [{ terminal: "app:t7", address: "t7", stage: hub, status: hub }] }, null)[0];
   // Herdr still calls it blocked; the hub read its screen and transcript since, and found it past its prompt.
   const stale = await read("blocked", "done");
   assert.equal(stale.status, "done");
   assert.equal(stale.stage, "done", "it is not among what needs you");
   assert.equal((await read("blocked", "blocked")).status, "blocked");
   assert.equal((await read("working", "done")).status, "working", "Herdr's own word stands while it is not blocked");
-  const unknown = (await fixture("cockpit", herdr("blocked"))).fleet.fleet({ agents: [] }, null)[0];
+  const unknown = (await fixture("flightdeck", herdr("blocked"))).fleet.fleet({ agents: [] }, null)[0];
   assert.equal(unknown.status, "blocked", "an agent the hub does not list keeps Herdr's word");
 });
 
 test("a dismissed agent leaves Needs you, the bell and Home's count, and stays in the list with its real status", async () => {
-  const { fleet } = await fixture("cockpit-chat");
+  const { fleet } = await fixture("flightdeck-chat");
   const waits = { kind: "limit", text: "Reached its usage limit · resets 08:00", resets: "08:00" };
   const rows = [
     { terminal: "app:t1", address: "t1", stage: "needs_you", status: "blocked", question: { text: "Run the migration?" }, dismissed: null },

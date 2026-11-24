@@ -132,7 +132,7 @@ async function prepFor($: $, meeting: Meeting) {
   const prs = inbox.mine.filter(pr => text.includes(pr.url) || text.includes(`${pr.repo}#${pr.number}`))
   const parts: string[] = []
   for (const t of tickets.filter(t => !t.parentId).slice(0, 2)) {
-    const book = await $.fs.read(`${await home($)}/.config/cockpit/runbooks/${t.id.toLowerCase()}.md`).catch(() => '')
+    const book = await $.fs.read(`${await home($)}/.config/flightdeck/runbooks/${t.id.toLowerCase()}.md`).catch(() => '')
     const open = book.split('\n').filter(l => OPEN_STEP.test(l)).length
     parts.push(book ? `${t.id}: ${t.status}, runbook ${open} to do` : `${t.id}: ${t.status}`)
   }
@@ -157,7 +157,7 @@ export function refreshMeetings($: $, isForced = false) {
           const meetings = isOff ? null : await fetchMeetings($).catch((err: Error) => {
             // The connector may not be connected yet (at startup, or added later): try again shortly.
             if (isMcpNotReady(err)) calendarMissingAt = Date.now()
-            else state = { ...state, error: `Calendar: ${err.message.replace(/^cockpit: /, '')}` }
+            else state = { ...state, error: `Calendar: ${err.message.replace(/^flightdeck: /, '')}` }
             return null
           })
           if (meetings) state = { ...state, at: Date.now(), meetings: markBriefable(meetings, (await loadConfig($)).meetingBrief.skip), error: undefined, by: 'plugin' }

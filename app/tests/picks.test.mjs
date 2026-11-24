@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { pickChips, howPick, startPicks, keptPicks, currentOffer, effortName } from "../mods/cockpit/picks.js";
+import { pickChips, howPick, startPicks, keptPicks, currentOffer, effortName } from "../mods/flightdeck/picks.js";
 
 // An agent's `picks` as the hub sends them: Claude Code's table and Codex's, whose fast mode is a toggle in its terminal.
 const LEVELS = ["low", "medium", "high", "xhigh", "max"];
@@ -105,7 +105,7 @@ test("a Start work form offers what the agent takes at start, its own default fi
 
 test("the chat's own fields never take the name of one of its methods", async () => {
   const { readFile } = await import("node:fs/promises");
-  const text = await readFile(new URL("../mods/cockpit/chat.js", import.meta.url), "utf8");
+  const text = await readFile(new URL("../mods/flightdeck/chat.js", import.meta.url), "utf8");
   const body = text.slice(text.indexOf("export default class Chat"));
   const methods = new Set([...body.matchAll(/^ {2}(?:async |get )?([a-zA-Z]+)\(/gm)].map((m) => m[1]));
   const fields = new Set([...body.matchAll(/this\.([a-zA-Z]+) = /g)].map((m) => m[1]));

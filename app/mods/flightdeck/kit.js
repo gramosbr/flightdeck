@@ -1,5 +1,5 @@
 // The design kit's gallery: every component of ui.js on sample data, to check a change in both themes.
-// `cockpit.kit` opens it as a window (sh scripts/sandbox.sh kit).
+// `flightdeck.kit` opens it as a window (sh scripts/sandbox.sh kit).
 
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
@@ -124,7 +124,7 @@ export default class Kit {
           .border_b_1()
           .border_color(k.border)
           .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-          .child(div().flex_1().text_size(TEXT.lg).font_semibold().child("cockpit design kit"))
+          .child(div().flex_1().text_size(TEXT.lg).font_semibold().child("flightdeck design kit"))
           .child(
             Tabs("kit-tabs", {
               items: [{ value: "components", label: "Components" }, { value: "charts", label: "Charts" }, { value: "empty", label: "States" }],

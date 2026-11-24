@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test, after } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 // The folders the tests make, gone once they ran.
 const made = [];
@@ -138,9 +138,9 @@ test("⌘V with an image attaches it as the + menu does; with none it does nothi
   const work = [];
   const cx = { notify() {}, spawn: (f) => work.push(f(cx)) };
   const paste = async (asked) => (chat.pasteFromClipboard(cx, asked), await Promise.all(work.splice(0)));
-  answer = { code: 0, stdout: "/tmp/cockpit-paste.ab12/pasted.png\n", stderr: "" };
+  answer = { code: 0, stdout: "/tmp/flightdeck-paste.ab12/pasted.png\n", stderr: "" };
   await paste(false);
-  assert.deepEqual([...chat.files], ["/tmp/cockpit-paste.ab12/pasted.png"], "the same file chip a drop gives, sent the same way");
+  assert.deepEqual([...chat.files], ["/tmp/flightdeck-paste.ab12/pasted.png"], "the same file chip a drop gives, sent the same way");
   assert.deepEqual(runs.at(-1), ["sh", "-c"]);
   answer = { code: 2, stdout: "", stderr: "" };
   await paste(false);
@@ -152,7 +152,7 @@ test("⌘V with an image attaches it as the + menu does; with none it does nothi
   await paste(false);
   assert.deepEqual({ ...chat.pasteNote }, { why: "the clipboard's image could not be read", detail: "execution error (-1700)" });
   // The + menu's clipboard item goes the same way.
-  answer = { code: 0, stdout: "/tmp/cockpit-paste.cd34/pasted.png\n", stderr: "" };
+  answer = { code: 0, stdout: "/tmp/flightdeck-paste.cd34/pasted.png\n", stderr: "" };
   chat.pick("clipboard", cx);
   await Promise.all(work.splice(0));
   assert.equal(chat.files.length, 2);
@@ -183,16 +183,16 @@ test("a delayed clipboard result stays with the original chat's draft after navi
 test("a paste deletes this person's pastes older than a day, and keeps the recent ones", async () => {
   const { paste } = await load(async () => null);
   const tmp = scratch("paste-tmp-");
-  for (const name of ["cockpit-paste.old111", "cockpit-paste.new222", "acme-keep.old333"]) mkdirSync(join(tmp, name));
-  writeFileSync(join(tmp, "cockpit-paste.old111", "pasted-old111.png"), "PNG");
+  for (const name of ["flightdeck-paste.old111", "flightdeck-paste.new222", "acme-keep.old333"]) mkdirSync(join(tmp, name));
+  writeFileSync(join(tmp, "flightdeck-paste.old111", "pasted-old111.png"), "PNG");
   const twoDaysAgo = new Date(Date.now() - 2 * 86_400_000);
-  for (const name of ["cockpit-paste.old111", "acme-keep.old333"]) utimesSync(join(tmp, name), twoDaysAgo, twoDaysAgo);
+  for (const name of ["flightdeck-paste.old111", "acme-keep.old333"]) utimesSync(join(tmp, name), twoDaysAgo, twoDaysAgo);
   const r = runScript(paste.PASTE_IMAGE, tools({ osascript: OSASCRIPT }), { FAKE_CLIP: "«class PNGf», 2048" }, tmp);
   assert.ok(paste.pasted(r).path, JSON.stringify(r));
   const left = readdirSync(tmp).sort();
-  assert.ok(!left.includes("cockpit-paste.old111"), "a day-old paste is gone");
-  assert.ok(left.includes("cockpit-paste.new222") && left.includes("acme-keep.old333"), "a recent paste and anything else stay");
-  assert.equal(left.filter((n) => n.startsWith("cockpit-paste.")).length, 2, "and the new one is there");
+  assert.ok(!left.includes("flightdeck-paste.old111"), "a day-old paste is gone");
+  assert.ok(left.includes("flightdeck-paste.new222") && left.includes("acme-keep.old333"), "a recent paste and anything else stay");
+  assert.equal(left.filter((n) => n.startsWith("flightdeck-paste.")).length, 2, "and the new one is there");
 });
 
 test("an image over the cap is refused with what to do instead, and leaves nothing behind", async () => {
@@ -206,7 +206,7 @@ test("an image over the cap is refused with what to do instead, and leaves nothi
 
 test("a held ⌘V pastes once; let go and pressed again, it pastes again", async () => {
   const runs = [];
-  const { Chat } = await load(async () => (runs.push(1), { code: 0, stdout: `/tmp/cockpit-paste.ab${runs.length}/pasted.png\n` }));
+  const { Chat } = await load(async () => (runs.push(1), { code: 0, stdout: `/tmp/flightdeck-paste.ab${runs.length}/pasted.png\n` }));
   const chat = Object.create(Chat.prototype);
   Object.assign(chat, { files: [], pasteNote: null, down: new Map() });
   const work = [];
@@ -234,9 +234,9 @@ test("an image sent with a prompt is copied into the app's folder once, with its
   };
   const got = await paste.thumbnail(src, home, run);
   assert.deepEqual({ ...got }, { rel: paste.thumbPath(src), w: 800, h: 400 });
-  assert.match(got.rel, /^data\/cockpit\/thumbs\/\w+\.png$/);
+  assert.match(got.rel, /^data\/flightdeck\/thumbs\/\w+\.png$/);
   assert.equal(readFileSync(join(home, got.rel), "utf8"), "PNG");
   assert.equal(await paste.thumbnail(join(home, "gone.png"), home, run), null);
-  assert.ok(paste.IMAGE_LINE.test(src) && paste.IMAGE_LINE.test("/tmp/cockpit-paste.ab12/pasted.JPG"));
+  assert.ok(paste.IMAGE_LINE.test(src) && paste.IMAGE_LINE.test("/tmp/flightdeck-paste.ab12/pasted.JPG"));
   assert.ok(!paste.IMAGE_LINE.test("look at /tmp/a.png") && !paste.IMAGE_LINE.test("/tmp/notes.md"));
 });

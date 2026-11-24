@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/browser-grab-session-controller.ts
 // (how a session reads what `awaitClick` settles with).
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { clampGrabPayload } from "./payload.js";
 import { GRAB_CANCELLED_KEY, GRAB_CONTEXT_MENU_KEY } from "./types.js";

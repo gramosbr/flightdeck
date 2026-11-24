@@ -12,11 +12,11 @@
     12
   ],
   "theme": {
-    "light": "cockpit-chat-light",
-    "dark": "cockpit-chat"
+    "light": "flightdeck-chat-light",
+    "dark": "flightdeck-chat"
   },
-  "preview": "layouts/cockpit-chat.svg",
-  "link_handlers": ["cockpit"],
+  "preview": "layouts/flightdeck-chat.svg",
+  "link_handlers": ["flightdeck"],
   "children": [
     {
       "id": "sidebar",
@@ -40,14 +40,14 @@
           }
         },
         {
-          "id": "cockpit-sidebar",
+          "id": "flightdeck-sidebar",
           "type": "block",
           "size": {
             "weight": 1
           },
           "min": 120,
           "content": {
-            "mod": "cockpit",
+            "mod": "flightdeck",
             "props": {
               "app": "sidebar"
             }
@@ -87,7 +87,7 @@
           },
           "window_drag": true,
           "content": {
-            "mod": "cockpit",
+            "mod": "flightdeck",
             "props": {
               "app": "chat-top"
             }
@@ -113,7 +113,7 @@
                       "id": "chat",
                       "type": "block",
                       "content": {
-                        "mod": "cockpit",
+                        "mod": "flightdeck",
                         "props": {
                           "app": "chat"
                         }
@@ -140,7 +140,7 @@
                           },
                           "header": {
                             "content": {
-                              "mod": "cockpit",
+                              "mod": "flightdeck",
                               "props": {
                                 "app": "pane"
                               }
@@ -181,7 +181,7 @@
                           "id": "show",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "show"
                             }
@@ -191,7 +191,7 @@
                           "id": "review",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "review"
                             }
@@ -201,7 +201,7 @@
                           "id": "runbook-panel",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "runbook",
                               "scope": "focused"
@@ -226,7 +226,7 @@
                           "id": "project-files",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "files"
                             }
@@ -236,7 +236,7 @@
                           "id": "project-changes",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "changes"
                             }
@@ -246,7 +246,7 @@
                           "id": "code",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "code",
                               "panel": true
@@ -268,7 +268,7 @@
                           "id": "web",
                           "type": "block",
                           "content": {
-                            "mod": "cockpit",
+                            "mod": "flightdeck",
                             "props": {
                               "app": "web"
                             }
@@ -283,7 +283,7 @@
                         "px": 44
                       },
                       "content": {
-                        "mod": "cockpit",
+                        "mod": "flightdeck",
                         "props": {
                           "app": "activity",
                           "stack": "panel-body"
@@ -299,7 +299,7 @@
               "id": "needs",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "needs"
                 }
@@ -309,7 +309,7 @@
               "id": "home",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "home"
                 }
@@ -319,7 +319,7 @@
               "id": "inbox",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "inbox"
                 }
@@ -329,7 +329,7 @@
               "id": "runbook",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "runbook"
                 }
@@ -339,7 +339,7 @@
               "id": "todo",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "todo"
                 }
@@ -349,7 +349,7 @@
               "id": "meetings",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "meetings"
                 }
@@ -359,7 +359,7 @@
               "id": "monitor",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "monitor"
                 }
@@ -369,7 +369,7 @@
               "id": "routines",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "routines"
                 }
@@ -379,7 +379,7 @@
               "id": "mail",
               "type": "block",
               "content": {
-                "mod": "cockpit",
+                "mod": "flightdeck",
                 "props": {
                   "app": "mail"
                 }
@@ -394,7 +394,7 @@
     {
       "id": "side-peek",
       "content": {
-        "mod": "cockpit",
+        "mod": "flightdeck",
         "props": {
           "app": "side-peek"
         }
@@ -406,7 +406,7 @@
     {
       "id": "panel-peek",
       "content": {
-        "mod": "cockpit",
+        "mod": "flightdeck",
         "props": {
           "app": "panel-peek"
         }

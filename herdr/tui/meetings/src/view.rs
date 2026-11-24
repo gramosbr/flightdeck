@@ -1,12 +1,12 @@
 //! The frame: the header, the now-or-next banner, the week as a list of days (or as a picture), the selected meeting's
 //! panel (or, compact, its buttons on the row itself), the footer, and the toasts and palette over them.
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::files::Density;
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
-use cockpit_core::widgets;
-use cockpit_core::{header, sources};
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::files::Density;
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
+use flightdeck_core::widgets;
+use flightdeck_core::{header, sources};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -87,7 +87,7 @@ impl App {
             None => {
                 let waiting = match sources::waiting_for(&[sources::Source::Calendar]) {
                     sources::Waiting::FirstFetch => "   waiting for the first fetch from your calendar",
-                    sources::Waiting::NotConnected => "   no calendar connected · cockpit setup adds one",
+                    sources::Waiting::NotConnected => "   no calendar connected · flightdeck setup adds one",
                 };
                 spans.push(Span::styled(waiting, dim()))
             }
@@ -198,7 +198,7 @@ impl App {
             }
             if let (Some(brief), true) = (self.briefs.get(&m.id), self.open.contains(&m.id)) {
                 // The brief's markdown drawn as the show view draws it, kept tight: no blank line between its blocks.
-                for line in cockpit_show::markdown_lines(&brief.join("\n"), cells.saturating_sub(BRIEF_INDENT)) {
+                for line in flightdeck_show::markdown_lines(&brief.join("\n"), cells.saturating_sub(BRIEF_INDENT)) {
                     if line.width() > 0 {
                         let indent = Span::raw(" ".repeat(BRIEF_INDENT));
                         rows.push(plain_row(Line::from(std::iter::once(indent).chain(line.spans).collect::<Vec<_>>()).style(fg(FG))));

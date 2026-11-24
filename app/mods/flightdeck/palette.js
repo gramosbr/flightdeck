@@ -1,4 +1,4 @@
-// The palette (⌘⇧P in both cockpit layouts), a superset of Herdr's on its geometry: the agents in the hub's order, the
+// The palette (⌘⇧P in both flightdeck layouts), a superset of Herdr's on its geometry: the agents in the hub's order, the
 // shown layout's screens and commands, places, Herdr's commands and what the hub finds. As the keys sheet (⌘/) it
 // lists the layout's keys instead.
 
@@ -27,9 +27,9 @@ const ROW_H = 32;
 const HEAD_H = 26;
 const LIST_H = SHOWN * ROW_H;
 const PAGE_H = LIST_H + HEAD_H;
-const FOUND_HEAD = "Found in cockpit";
+const FOUND_HEAD = "Found in flightdeck";
 
-const GROUPS = ["Session", "Here", "Cockpit", "Places", "Tab", "Pane", "Space", "Layout", "Terminal", "Agent", "Window", "App"];
+const GROUPS = ["Session", "Here", "Flightdeck", "Places", "Tab", "Pane", "Space", "Layout", "Terminal", "Agent", "Window", "App"];
 
 // Commands that act on something pointed at (ids, terminals): not for a list.
 const HIDDEN = new Set([
@@ -48,8 +48,8 @@ const FOUND = {
 
 const STATUS = new Set(["working", "blocked", "failed", "done", "idle"]);
 
-// The runner of the shown layout shows one of its screens on `cockpit.go:<child>`.
-const show = (child) => run(`cockpit.go:${child}`);
+// The runner of the shown layout shows one of its screens on `flightdeck.go:<child>`.
+const show = (child) => run(`flightdeck.go:${child}`);
 
 /**
  * The rows before anything is typed: the agents the hub lists first (`listed`, ids in its order: waiting on you, then
@@ -105,11 +105,11 @@ export function fuzzy(q, text) {
 }
 
 /**
- * The entry a query nothing matches becomes: Start work on it, in the Start work dialog in Cockpit and in the chat's own
- * box in Cockpit Chat, prefilled either way and started by the person from there.
+ * The entry a query nothing matches becomes: Start work on it, in the Start work dialog in Flightdeck and in the chat's own
+ * box in Flightdeck Chat, prefilled either way and started by the person from there.
  */
 export function startEntry(text, layout) {
-  const chat = layout === "cockpit-chat";
+  const chat = layout === "flightdeck-chat";
   return {
     id: "start-work",
     group: "Start work",
@@ -118,16 +118,16 @@ export function startEntry(text, layout) {
     hint: chat ? "In the chat's box: it gets a worktree and an agent" : "In a worktree of its own, with an agent",
     words: "",
     fallback: true,
-    act: () => (chat ? run(keyed(`cockpit.via:chat|chat:start:new:${text}`)) : openStart(text), null),
+    act: () => (chat ? run(keyed(`flightdeck.via:chat|chat:start:new:${text}`)) : openStart(text), null),
   };
 }
 
 /** Tab and ⇧⇥ in the palette, from its search line too: the next and previous row. */
 export const PALETTE_KEYS = [
-  { keystroke: "tab", action: "cockpit_palette_next", context: "CockpitPalette" },
-  { keystroke: "tab", action: "cockpit_palette_next", context: "CockpitPalette > Input" },
-  { keystroke: "shift-tab", action: "cockpit_palette_prev", context: "CockpitPalette" },
-  { keystroke: "shift-tab", action: "cockpit_palette_prev", context: "CockpitPalette > Input" },
+  { keystroke: "tab", action: "flightdeck_palette_next", context: "FlightdeckPalette" },
+  { keystroke: "tab", action: "flightdeck_palette_next", context: "FlightdeckPalette > Input" },
+  { keystroke: "shift-tab", action: "flightdeck_palette_prev", context: "FlightdeckPalette" },
+  { keystroke: "shift-tab", action: "flightdeck_palette_prev", context: "FlightdeckPalette > Input" },
 ];
 
 export default class Palette {
@@ -141,13 +141,13 @@ export default class Palette {
     this.busy = null;
     this.error = null;
     this.editor = "VS Code";
-    this.recent = Array.isArray(shared("cockpit.palette.recent")) ? shared("cockpit.palette.recent") : [];
+    this.recent = Array.isArray(shared("flightdeck.palette.recent")) ? shared("flightdeck.palette.recent") : [];
     this.over = this.agentBelow();
     this.place = this.placeBelow();
     // The agents in the order every palette lists them (the hub's), and how many an empty query shows.
     this.jumps = [];
     this.listed = 0;
-    // Whether the chat follows a session cockpit drives, whose own commands then show.
+    // Whether the chat follows a session flightdeck drives, whose own commands then show.
     this.driven = false;
     this.loaded = false;
     this.sheet = props()?.sheet === "keys" ? "keys" : null;
@@ -163,7 +163,7 @@ export default class Palette {
 
   /** The search line, its hint saying what it searches. */
   makeInput() {
-    this.input = InputState.new({ placeholder: this.sheet ? "Search the keys…" : "Search cockpit or type a command…" });
+    this.input = InputState.new({ placeholder: this.sheet ? "Search the keys…" : "Search flightdeck or type a command…" });
     this.input.on("change", (_e, cx) => this.changed(cx));
     this.input.on("submit", (_e, cx) => this.pick(this.rows()[this.at]?.e, cx));
     this.input.focus();
@@ -194,7 +194,7 @@ export default class Palette {
       } catch {}
       cx.notify();
     });
-    if (layoutName() === "cockpit-chat")
+    if (layoutName() === "flightdeck-chat")
       cx.spawn(async (cx) => {
         try {
           this.driven = Boolean((await hub.view("session"))?.session);
@@ -294,30 +294,30 @@ export default class Palette {
     // The shown layout's screens, then its commands: only what does something here, each with the key it has here.
     const layout = layoutName();
     for (const s of screens().list) {
-      add({ id: `app:${s.child}`, group: "Cockpit", icon: s.icon, title: s.label, name: s.command, words: "cockpit app go screen", act: () => (show(s.child), null) });
+      add({ id: `app:${s.child}`, group: "Flightdeck", icon: s.icon, title: s.label, name: s.command, words: "flightdeck app go screen", act: () => (show(s.child), null) });
     }
     for (const e of CATALOGUE) {
-      if (e.command === "cockpit.palette" || !available(layout, e.command.slice(8), { driven: this.driven })) continue;
-      const base = { id: e.command, group: "Cockpit", icon: e.icon, title: e.title, name: e.command, words: e.words };
-      if (e.command === "cockpit.keys") add({ ...base, sheet: true });
+      if (e.command === "flightdeck.palette" || !available(layout, e.command.slice(8), { driven: this.driven })) continue;
+      const base = { id: e.command, group: "Flightdeck", icon: e.icon, title: e.title, name: e.command, words: e.words };
+      if (e.command === "flightdeck.keys") add({ ...base, sheet: true });
       else add({ ...base, act: () => (run(keyed(paletteAction(e))), null) });
     }
-    add({ id: "refresh", group: "Cockpit", icon: "refresh", title: "Refresh the inbox", words: "fetch PRs reviews tickets CI now", act: () => hub.act("inbox", "request_refresh") });
-    add({ id: "brief", group: "Cockpit", icon: "newspaper", title: "Today's brief", words: "morning meetings reviews CI tickets", page: "brief" });
-    add({ id: "kit", group: "Cockpit", icon: "palette", title: "Design kit", words: "components gallery ui", name: "cockpit.kit", act: () => (run("cockpit.kit"), null) });
+    add({ id: "refresh", group: "Flightdeck", icon: "refresh", title: "Refresh the inbox", words: "fetch PRs reviews tickets CI now", act: () => hub.act("inbox", "request_refresh") });
+    add({ id: "brief", group: "Flightdeck", icon: "newspaper", title: "Today's brief", words: "morning meetings reviews CI tickets", page: "brief" });
+    add({ id: "kit", group: "Flightdeck", icon: "palette", title: "Design kit", words: "components gallery ui", name: "flightdeck.kit", act: () => (run("flightdeck.kit"), null) });
 
     for (const s of spaces()) {
       add({ id: `space:${s.id}`, group: "Places", icon: "folder", title: s.name, hint: s.branch ?? "", status: s.status, words: `space ${s.branch ?? ""}`, act: () => (run("space.select", { id: s.id }), show(screens().work), null) });
       if (s.tabs.length > 1)
         for (const t of s.tabs) add({ id: `tab:${t.id}`, group: "Places", icon: "app-window", title: `${s.name} › ${t.name}`, status: t.status, words: "tab", act: () => (run("tab.select", { id: t.id }), show(screens().work), null) });
     }
-    // The hub's agents in its order, then any Herdr shows that the hub does not know yet. A session cockpit drives has
-    // no terminal: the chat opens on it, and the cockpit layout, which has no chat, leaves it out.
+    // The hub's agents in its order, then any Herdr shows that the hub does not know yet. A session flightdeck drives has
+    // no terminal: the chat opens on it, and the flightdeck layout, which has no chat, leaves it out.
     const listed = new Set();
     for (const j of this.jumps) {
       listed.add(j.address);
-      if (j.driven && layout !== "cockpit-chat") continue;
-      const act = j.driven ? () => (run(keyed(`cockpit.via:chat|chat:open:${j.terminal}`)), null) : () => this.jumpTo(j);
+      if (j.driven && layout !== "flightdeck-chat") continue;
+      const act = j.driven ? () => (run(keyed(`flightdeck.via:chat|chat:open:${j.terminal}`)), null) : () => this.jumpTo(j);
       add({ id: `agent:${j.address}`, group: "Places", icon: "bot", logo: j.icon ?? "agent", title: j.title, hint: j.help, status: j.status, waiting: j.waiting, words: `agent ${j.icon ?? ""} ${j.stage ?? ""}`, act });
     }
     for (const a of agents()) {
@@ -330,7 +330,7 @@ export default class Palette {
       add({ name, args, group, title, words });
     }
     for (const l of layouts()) {
-      const t = { main: "Herdr", terminals: "Terminals", win98: "Herdr 98", cockpit: "Cockpit" }[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
+      const t = { main: "Herdr", terminals: "Terminals", win98: "Herdr 98", flightdeck: "Flightdeck" }[l] ?? l.charAt(0).toUpperCase() + l.slice(1);
       add({ name: "layout.switch", args: { name: l }, group: "Layout", icon: "layout", title: `Layout: ${t}`, words: `look ${l}` });
     }
     const named = new Set(NAMED.map(([n]) => n));
@@ -407,7 +407,7 @@ export default class Palette {
   remember(e) {
     if (e.found || e.keys || e.fallback) return;
     this.recent = [e.id, ...this.recent.filter((r) => r !== e.id)].slice(0, 20);
-    setShared("cockpit.palette.recent", this.recent);
+    setShared("flightdeck.palette.recent", this.recent);
   }
 
   /** Runs an entry; one that waits on the hub keeps the palette open until it answers, with its error in place. */
@@ -417,7 +417,7 @@ export default class Palette {
     if (e.keys) {
       if (!e.action) return;
       this.dismiss();
-      return runAction(e.action.startsWith("cockpit.") ? keyed(e.action) : e.action);
+      return runAction(e.action.startsWith("flightdeck.") ? keyed(e.action) : e.action);
     }
     this.remember(e);
     if (e.sheet) return this.setSheet(true, cx);
@@ -466,7 +466,7 @@ export default class Palette {
   }
 
   openPage(kind, cx) {
-    this.page = { kind, title: kind === "doctor" ? "Cockpit doctor" : "Today's brief", rows: null, at: 0 };
+    this.page = { kind, title: kind === "doctor" ? "Flightdeck doctor" : "Today's brief", rows: null, at: 0 };
     cx.notify();
     cx.spawn(async (cx) => {
       try {
@@ -480,7 +480,7 @@ export default class Palette {
     });
   }
 
-  /** A key, from the window or `cockpit.key:` (tests): true when the palette used it. */
+  /** A key, from the window or `flightdeck.key:` (tests): true when the palette used it. */
   key(e, cx, typed = false) {
     const key = e.keystroke;
     if (this.page) {
@@ -508,8 +508,8 @@ export default class Palette {
   }
 
   /**
-   * `cockpit.palette` and `cockpit.keys` close what they opened, or turn the other one into it in place; either way the
-   * palette says it answered, so the runner opens no second one. `cockpit.palette:type:<text>` types into the search, in a
+   * `flightdeck.palette` and `flightdeck.keys` close what they opened, or turn the other one into it in place; either way the
+   * palette says it answered, so the runner opens no second one. `flightdeck.palette:type:<text>` types into the search, in a
    * sandbox only.
    */
   command(c, cx) {
@@ -550,13 +550,13 @@ export default class Palette {
   }
 
   /**
-   * A key as the shown layout draws one: a Kbd chip in Cockpit; in Cockpit Chat, which keeps keys to its tooltips and
+   * A key as the shown layout draws one: a Kbd chip in Flightdeck; in Flightdeck Chat, which keeps keys to its tooltips and
    * this sheet, quiet text in the sheet and nothing on the palette's rows.
    */
   keyHint(k, key) {
-    if (layoutName() === "cockpit-chat" && !this.sheet) return div();
+    if (layoutName() === "flightdeck-chat" && !this.sheet) return div();
     const caps = keyCaps(key);
-    if (layoutName() === "cockpit-chat") return div().flex_none().text_size(TEXT.sm).text_color(k.mutedFg).child(caps.join(" "));
+    if (layoutName() === "flightdeck-chat") return div().flex_none().text_size(TEXT.sm).text_color(k.mutedFg).child(caps.join(" "));
     return Kbd(caps.join(""));
   }
 
@@ -709,7 +709,7 @@ export default class Palette {
     const rows = p.rows ?? [];
     const body =
       p.rows === null
-        ? div().px(14).py(12).text_size(TEXT.base).text_color(k.mutedFg).child(p.kind === "doctor" ? "Checking every part of cockpit…" : "Reading today's brief…")
+        ? div().px(14).py(12).text_size(TEXT.base).text_color(k.mutedFg).child(p.kind === "doctor" ? "Checking every part of flightdeck…" : "Reading today's brief…")
         : v_flex()
             .id("page-rows")
             .h(LIST_H)
@@ -785,7 +785,7 @@ export default class Palette {
       .py(14)
       .text_size(TEXT.base)
       .text_color(k.dim)
-      .child(this.searching ? "Searching cockpit…" : this.sheet ? `No key matches "${q}".` : `Nothing matches "${q}".`);
+      .child(this.searching ? "Searching flightdeck…" : this.sheet ? `No key matches "${q}".` : `Nothing matches "${q}".`);
     const error = this.error
       ? h_flex()
           .mx(6)
@@ -816,11 +816,11 @@ export default class Palette {
       .when(Boolean(error), (e) => e.child(error))
       .child(this.page ? this.pageView(k) : rows.length ? this.list(k, rows) : empty);
     return div()
-      .id("cockpit-palette")
+      .id("flightdeck-palette")
       .track_focus(this.handle)
-      .key_context("CockpitPalette")
-      .on_action("cockpit_palette_next", (_e, cx) => (this.key({ keystroke: "down", key: "down" }, cx, true), cx.notify()))
-      .on_action("cockpit_palette_prev", (_e, cx) => (this.key({ keystroke: "up", key: "up" }, cx, true), cx.notify()))
+      .key_context("FlightdeckPalette")
+      .on_action("flightdeck_palette_next", (_e, cx) => (this.key({ keystroke: "down", key: "down" }, cx, true), cx.notify()))
+      .on_action("flightdeck_palette_prev", (_e, cx) => (this.key({ keystroke: "up", key: "up" }, cx, true), cx.notify()))
       .size_full()
       .flex()
       .flex_col()

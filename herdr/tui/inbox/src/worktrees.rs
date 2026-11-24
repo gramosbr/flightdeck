@@ -1,11 +1,11 @@
 //! The linked worktrees of the repos in the repos folder and herdr's worktree folder, with their uncommitted changes and
-//! what keeps each (`cockpit_core::cleanup`); git and lsof are asked again at most every 30 s, or once a worktree changed.
+//! what keeps each (`flightdeck_core::cleanup`); git and lsof are asked again at most every 30 s, or once a worktree changed.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use cockpit_core::{cleanup, files};
+use flightdeck_core::{cleanup, files};
 use serde_json::{Value, json};
 
 const FRESH: Duration = Duration::from_secs(30);
@@ -131,7 +131,7 @@ pub fn scan_later(config: &Value, merged: &[Value]) -> Vec<Value> {
         let done = kept.as_ref().map_or(0, |k| k.done) + 1;
         *kept = Some(Kept { at: Instant::now(), made, merges: merges_key(&merged), list, running: false, done });
         drop(kept);
-        cockpit_core::term::wake();
+        flightdeck_core::term::wake();
     });
     last
 }

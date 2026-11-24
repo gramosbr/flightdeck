@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { linkify, imagesIn, pathOf, fileAndLine, expand } from "../mods/cockpit/textlinks.js";
+import { linkify, imagesIn, pathOf, fileAndLine, expand } from "../mods/flightdeck/textlinks.js";
 
 test("bare paths and URLs become links, their sentence's punctuation left outside", () => {
   assert.equal(

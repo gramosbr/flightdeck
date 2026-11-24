@@ -39,7 +39,7 @@ pub async fn rows(tools: &impl Tools, source: &Value, servers: &Value) -> Result
         "from": if source["from"].is_null() { json!("now-1h") } else { source["from"].clone() },
         "raw_data": true,
         "max_tokens": 20000,
-        "telemetry": {"intent": "A live chart in a cockpit show pane beside a coding agent"}
+        "telemetry": {"intent": "A live chart in a flightdeck show pane beside a coding agent"}
     });
     if !source["queries"].is_null() {
         args["queries"] = source["queries"].clone();

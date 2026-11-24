@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { modelChoices, modelLabel, asPills, listHint, PILLS } from "../mods/cockpit/models.js";
+import { modelChoices, modelLabel, asPills, listHint, PILLS } from "../mods/flightdeck/models.js";
 
 test("a routine's form offers the models its agent takes, its default first", () => {
   // What the hub lists for Claude Code: a routine's own lightest, then the models Start work and the chat offer.

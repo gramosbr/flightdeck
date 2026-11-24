@@ -1,7 +1,7 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3),
 // src/main/browser/guest-lifecycle/input/shortcuts/browser-guest-grab-shortcuts.ts and
 // src/main/browser/guest-lifecycle/input/shortcuts/browser-guest-escape-forwarding.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /**
  * What a key pressed in the page means while a pick is armed: "copy" for a bare C, "screenshot" for a bare S, "cancel"

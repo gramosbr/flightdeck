@@ -1,4 +1,4 @@
-//! The monitor space: how production does after each release, from ~/.cache/cockpit/monitor.json as the hub pushes
+//! The monitor space: how production does after each release, from ~/.cache/flightdeck/monitor.json as the hub pushes
 //! it: every app's latest deploy, monitors and error and latency sparklines, the releases of the last day with their
 //! verdict, and the actions to investigate, fix, file a bug or roll back.
 
@@ -15,14 +15,14 @@ use std::time::Duration;
 use crossterm::event::Event;
 use ratatui::Frame;
 
-/// `cockpit monitor`: production in the terminal until it quits.
+/// `flightdeck monitor`: production in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
     let mut app = app::App::start();
     app.report();
-    cockpit_core::term::run(&mut app)
+    flightdeck_core::term::run(&mut app)
 }
 
-impl cockpit_core::term::App for app::App {
+impl flightdeck_core::term::App for app::App {
     fn draw(&mut self, frame: &mut Frame) {
         app::App::draw(self, frame);
     }
@@ -31,7 +31,7 @@ impl cockpit_core::term::App for app::App {
         app::App::event(self, event)
     }
 
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         let busy = self.dialog.is_some() || self.palette.is_open;
         (!busy).then(|| ("the monitor".to_string(), self.acts().into_iter().map(|(act, _)| act).collect()))
     }

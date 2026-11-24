@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use cockpit_core::{actions, focus, frontend};
+use flightdeck_core::{actions, focus, frontend};
 use serde_json::{Value, json};
 
 use crate::config;
@@ -62,12 +62,12 @@ fn session(target: &Value) -> Value {
     }
     let title = target["title"].as_str().map(str::trim).filter(|t| !t.is_empty()).unwrap_or(id);
     let label = format!("↩ {}", cut(title, 28));
-    let prompt = "This is a fork of a past session, opened from cockpit to look back at it. Sum up in a few lines where it \
+    let prompt = "This is a fork of a past session, opened from flightdeck to look back at it. Sum up in a few lines where it \
                   stood: what was done, what was decided, what was left open. Then wait for my questions. Change nothing (no \
                   edits, commits, pushes or ticket updates) unless I ask.";
     // A past session's target names its agent; one that does not is Claude Code's.
-    let Some(agent) = cockpit_core::agent::get(target["agent"].as_str().unwrap_or("claude")) else {
-        return json!({"error": format!("session {id} belongs to an agent cockpit does not know")});
+    let Some(agent) = flightdeck_core::agent::get(target["agent"].as_str().unwrap_or("claude")) else {
+        return json!({"error": format!("session {id} belongs to an agent flightdeck does not know")});
     };
     let Some(argv) = agent.fork_with(id, Some(prompt)) else {
         return json!({"error": format!("{} cannot fork a past session", agent.name)});

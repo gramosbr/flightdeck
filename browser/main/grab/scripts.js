@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/grab-guest-script.ts and
 // src/main/browser/element-grab/grab-guest-selection-scripts.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { COMPOSED_TREE_SCRIPT } from "./script-composed-tree.js";
 import { GRAB_CONTENT_SCRIPT } from "./script-content.js";
@@ -27,7 +27,7 @@ const AWAIT_CLICK_SCRIPT = `(async function() {
   // Async returns an intrinsic Promise Electron unwraps even when Zone.js replaces global Promise.
   return await new Promise(function(resolve, reject) {
     'use strict';
-    var grab = window.__cockpitGrab;
+    var grab = window.__flightdeckGrab;
     if (!grab) {
       reject(new Error('Grab not armed'));
       return;
@@ -57,13 +57,13 @@ const AWAIT_CLICK_SCRIPT = `(async function() {
       // Keep the selected element outlined while the toolbar shows its copy menu.
       grab.freezeHighlight(payload.page.capturedAt);
       // The marker opens the action menu instead of auto-copying.
-      resolve(e.type === 'contextmenu' ? { __cockpitContextMenu: true, payload: payload } : payload);
+      resolve(e.type === 'contextmenu' ? { __flightdeckContextMenu: true, payload: payload } : payload);
     };
 
     grab.cancelAwait = function() {
       grab.cleanup();
       // Resolve cancellation to avoid page-console errors during normal teardown.
-      resolve({ __cockpitCancelled: true });
+      resolve({ __flightdeckCancelled: true });
     };
   });
 })()`;
@@ -71,7 +71,7 @@ const AWAIT_CLICK_SCRIPT = `(async function() {
 /** Reads the payload of the hovered element and removes the picker; evaluates to the payload or `null`. */
 const FINALIZE_SCRIPT = `(function() {
   'use strict';
-  var grab = window.__cockpitGrab;
+  var grab = window.__flightdeckGrab;
   if (!grab) return null;
   var el = grab.getCurrentElement();
   if (!el) return null;
@@ -89,7 +89,7 @@ const FINALIZE_SCRIPT = `(function() {
 /** Reads the payload of the hovered element and leaves the picker armed; evaluates to the payload or `null`. */
 const EXTRACT_HOVER_SCRIPT = `(function() {
   'use strict';
-  var grab = window.__cockpitGrab;
+  var grab = window.__flightdeckGrab;
   if (!grab) return null;
   var el = grab.getCurrentElement();
   if (!el) return null;
@@ -103,7 +103,7 @@ const EXTRACT_HOVER_SCRIPT = `(function() {
 /** Removes the picker and settles a pending `awaitClick` with the cancel marker; evaluates to `true`. */
 const TEARDOWN_SCRIPT = `(function() {
   'use strict';
-  var grab = window.__cockpitGrab;
+  var grab = window.__flightdeckGrab;
   if (!grab) return true;
   // Settle the outstanding executeJavaScript call before removing grab state.
   if (grab.cancelAwait) {

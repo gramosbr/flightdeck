@@ -1,4 +1,4 @@
-// Cockpit's browser: an Electron shell the hub starts. It listens on a unix socket, shows one window (docked over the
+// Flightdeck's browser: an Electron shell the hub starts. It listens on a unix socket, shows one window (docked over the
 // Herdr window's slot, or on its own), and opens Chromium's debugging port on loopback for agents' tools.
 
 import fs from "node:fs";
@@ -29,11 +29,11 @@ const log = (line) => {
 
 let options = {};
 try {
-  options = JSON.parse(process.env.COCKPIT_BROWSER_OPTIONS || "{}");
+  options = JSON.parse(process.env.FLIGHTDECK_BROWSER_OPTIONS || "{}");
 } catch {}
 const docked = options.dock !== false;
 
-app.setName("Cockpit Browser");
+app.setName("Flightdeck Browser");
 app.setPath("userData", paths.userData());
 // The port file of the run before would be read as this run's.
 fs.rmSync(path.join(paths.userData(), "DevToolsActivePort"), { force: true });
@@ -43,7 +43,7 @@ app.commandLine.appendSwitch("remote-debugging-port", "0");
 app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
 // A sandbox or a test runs on a home folder with no keychain: Chromium keeps its cookie key in memory there, and the
 // system never asks where to store it.
-if (process.env.COCKPIT_SANDBOX || process.env.COCKPIT_BROWSER_MOCK_KEYCHAIN) app.commandLine.appendSwitch("use-mock-keychain");
+if (process.env.FLIGHTDECK_SANDBOX || process.env.FLIGHTDECK_BROWSER_MOCK_KEYCHAIN) app.commandLine.appendSwitch("use-mock-keychain");
 // Docked, the browser is part of the Herdr window: no Dock icon, no place among the apps to switch to.
 if (docked) app.setActivationPolicy("accessory");
 
@@ -60,17 +60,17 @@ async function debuggingPort() {
   return 0;
 }
 
-/** Follows the host window on screen through `cockpit browser track`, restarted for each host. */
+/** Follows the host window on screen through `flightdeck browser track`, restarted for each host. */
 function follow(shell) {
-  const cockpit = process.env.COCKPIT_BIN;
+  const flightdeck = process.env.FLIGHTDECK_BIN;
   let child = null;
   let pid = 0;
   const start = (host) => {
     child?.kill();
     child = null;
     pid = host;
-    if (!host || !cockpit) return;
-    child = spawn(cockpit, ["browser", "track", "--host", String(host)], { stdio: ["ignore", "pipe", "ignore"] });
+    if (!host || !flightdeck) return;
+    child = spawn(flightdeck, ["browser", "track", "--host", String(host)], { stdio: ["ignore", "pipe", "ignore"] });
     readline.createInterface({ input: child.stdout }).on("line", (line) => {
       try {
         shell.dock.track(JSON.parse(line));
@@ -85,12 +85,12 @@ app.on("window-all-closed", () => {});
 
 app.whenReady().then(async () => {
   if (await alive(paths.socketPath())) {
-    console.error("cockpit's browser is running already");
+    console.error("flightdeck's browser is running already");
     app.exit(0);
     return;
   }
   Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }, { role: "windowMenu" }]));
-  const shell = new Shell({ options, token: process.env.COCKPIT_BROWSER_TOKEN || "", log });
+  const shell = new Shell({ options, token: process.env.FLIGHTDECK_BROWSER_TOKEN || "", log });
   shell.menus = new Menus(shell);
   shell.design = new Design(shell);
   shell.cdpPort = await debuggingPort();

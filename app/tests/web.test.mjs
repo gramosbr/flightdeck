@@ -5,7 +5,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 async function load(layoutName) {
   const tree = JSON.parse(await readFile(new URL(`../layouts/${layoutName}.json`, import.meta.url), "utf8"));
@@ -84,39 +84,39 @@ async function load(layoutName) {
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
 test("both layouts have the slot in their side panel", async () => {
-  for (const name of ["cockpit", "cockpit-chat"]) {
+  for (const name of ["flightdeck", "flightdeck-chat"]) {
     const { node, web } = await load(name);
     assert.equal(node("panel-body").children.some((c) => c.id === web.WEB), true, name);
-    assert.deepEqual(node(web.WEB).content, { mod: "cockpit", props: { app: "web" } });
+    assert.deepEqual(node(web.WEB).content, { mod: "flightdeck", props: { app: "web" } });
     assert.ok(web.INSETS[name], `${name} has its insets`);
   }
 });
 
 test("the slot is placed from the window's far edges, by layout", async () => {
-  const { web } = await load("cockpit");
+  const { web } = await load("flightdeck");
   const size = { width: 594, height: 726 };
-  assert.deepEqual(plain(web.slotRect({ width: 1280, height: 820 }, size, web.INSETS.cockpit)), { x: 633, y: 51, width: 594, height: 726 });
-  assert.deepEqual(plain(web.slotRect({ width: 1280, height: 820 }, { width: 594, height: 746 }, web.INSETS["cockpit-chat"])), { x: 633, y: 65, width: 594, height: 746 });
-  assert.equal(web.slotRect({ width: 1280, height: 820 }, null, web.INSETS.cockpit), null, "no size yet, no slot");
+  assert.deepEqual(plain(web.slotRect({ width: 1280, height: 820 }, size, web.INSETS.flightdeck)), { x: 633, y: 51, width: 594, height: 726 });
+  assert.deepEqual(plain(web.slotRect({ width: 1280, height: 820 }, { width: 594, height: 746 }, web.INSETS["flightdeck-chat"])), { x: 633, y: 65, width: 594, height: 746 });
+  assert.equal(web.slotRect({ width: 1280, height: 820 }, null, web.INSETS.flightdeck), null, "no size yet, no slot");
   assert.deepEqual(plain(web.insetsOf({ width: 1280, height: 820 }, { x: 631, y: 51, width: 594, height: 726 })), { right: 55, bottom: 43 }, "a pointer over it measures them");
 });
 
 test("the slot shows only with the panel open on it and the agent's screen in front", async () => {
-  const { web, tree, node } = await load("cockpit");
-  assert.equal(web.slotShown(tree, "cockpit"), false, "the panel starts hidden");
+  const { web, tree, node } = await load("flightdeck");
+  assert.equal(web.slotShown(tree, "flightdeck"), false, "the panel starts hidden");
   node("panel").hidden = false;
   node("panel-body").active = web.WEB;
   node("center").active = "work";
-  assert.equal(web.slotShown(tree, "cockpit"), true);
+  assert.equal(web.slotShown(tree, "flightdeck"), true);
   node("center").active = "inbox";
-  assert.equal(web.slotShown(tree, "cockpit"), false, "another screen in front");
+  assert.equal(web.slotShown(tree, "flightdeck"), false, "another screen in front");
   node("center").active = "work";
   node("panel-body").active = "show";
-  assert.equal(web.slotShown(tree, "cockpit"), false, "the panel on another child");
+  assert.equal(web.slotShown(tree, "flightdeck"), false, "the panel on another child");
 });
 
 test("a page an agent opens brings the panel to the browser, for the session in front only", async () => {
-  const { web } = await load("cockpit-chat");
+  const { web } = await load("flightdeck-chat");
   const f = { terminal: "t3", cwd: "/work/acme/web-eng-412/apps/site" };
   const opened = { at: 2000, owner: "app:t3" };
   assert.equal(web.wantsPanel({ opened, seen: 1000, f, showing: false }), true);
@@ -128,7 +128,7 @@ test("a page an agent opens brings the panel to the browser, for the session in 
 });
 
 test("the panel leaves with a session that has no browser and comes back with one that has", async () => {
-  const { web } = await load("cockpit");
+  const { web } = await load("flightdeck");
   const plain = (v) => JSON.parse(JSON.stringify(v));
   const model = { tabs: { "app:t3": 2 } };
   assert.equal(web.tabsOf(model, "t3"), 2);
@@ -144,15 +144,15 @@ test("the panel leaves with a session that has no browser and comes back with on
 });
 
 test("opening the panel on the browser widens it for a page", async () => {
-  const { web, ran, node } = await load("cockpit");
+  const { web, ran, node } = await load("flightdeck");
   web.openWeb();
   assert.deepEqual(plain(ran[0]), ["layout.resize", { id: "panel", px: 640 }]);
   assert.equal(node("panel-body").active, web.WEB);
   assert.equal(node("panel").hidden, false);
 });
 
-test("a popup of cockpit's covers the slot while it lives", async () => {
-  const { web } = await load("cockpit");
+test("a popup of flightdeck's covers the slot while it lives", async () => {
+  const { web } = await load("flightdeck");
   const now = 100_000;
   assert.equal(web.covered(now, [{ app: "web", overlay: false, beat: now }]), false, "the slot itself is no cover");
   assert.equal(web.covered(now, [{ app: "palette", overlay: true, beat: now - 500 }]), true);
@@ -161,18 +161,18 @@ test("a popup of cockpit's covers the slot while it lives", async () => {
 });
 
 test("the toolbar takes the theme's colours that are plain hex", async () => {
-  const { web } = await load("cockpit");
+  const { web } = await load("flightdeck");
   const theme = web.toolbarTheme({ chrome: "#16171b", background: "#101114", foreground: "#e8e8e6", mutedFg: "#8a8b90", border: "#2a2b30", ring: "#a3b3e0", accent: "rgba(255,255,255,0.06)" });
   assert.deepEqual(plain(theme), { bg: "#16171b", panel: "#101114", fg: "#e8e8e6", muted: "#8a8b90", line: "#2a2b30", accent: "#a3b3e0" });
 });
 
 test("the slot is told once per change, one request at a time, with the session in front", async () => {
-  const { web, Web, sent, node, state, world, context } = await load("cockpit");
+  const { web, Web, sent, node, state, world, context } = await load("flightdeck");
   const view = new Web();
   view.init({}, { notify() {} });
   const shared = web.followState();
   shared.model = { enabled: true, running: true, run: 1 };
-  state.set("cockpit.web.size", { width: 594, height: 726 });
+  state.set("flightdeck.web.size", { width: 594, height: 726 });
   world.focus = { terminal: "t3", cwd: "/work/acme/web-eng-412" };
   node("panel").hidden = false;
   node("panel-body").active = "web";
@@ -183,7 +183,7 @@ test("the slot is told once per change, one request at a time, with the session 
   assert.equal(sent[0][1], "slot");
   assert.deepEqual(plain(sent[0][2].rect), { x: 633, y: 51, width: 594, height: 726 });
   assert.deepEqual([sent[0][2].visible, sent[0][2].terminal, sent[0][2].seq], [true, "t3", 1]);
-  state.set("cockpit.web.size", { width: 594, height: 700 });
+  state.set("flightdeck.web.size", { width: 594, height: 700 });
   web.reportSlot();
   assert.equal(sent.length, 1, "the first request is still out");
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -199,20 +199,20 @@ test("the slot is told once per change, one request at a time, with the session 
   web.reportSlot();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.deepEqual([sent.at(-1)[2].visible, sent.at(-1)[2].terminal], [true, "t7"], "another session in front is told too");
-  state.set("cockpit.web.insets", { cockpit: { right: 55, bottom: 43 } });
+  state.set("flightdeck.web.insets", { flightdeck: { right: 55, bottom: 43 } });
   web.reportSlot();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(plain(sent.at(-1)[2].rect).x, 631, "measured insets correct the table");
   const told = sent.length;
   shared.model = { enabled: false, running: true };
-  state.set("cockpit.web.size", { width: 500, height: 500 });
+  state.set("flightdeck.web.size", { width: 500, height: 500 });
   web.reportSlot();
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(sent.length, told, "off, it tells nothing");
 });
 
 test("the panel follows the session in front", async () => {
-  const { web, node, state, world, context } = await load("cockpit");
+  const { web, node, state, world, context } = await load("flightdeck");
   const shared = web.followState();
   shared.model = { enabled: true, running: true, tabs: { "app:t3": 1 } };
   node("panel").hidden = false;
@@ -223,8 +223,8 @@ test("the panel follows the session in front", async () => {
   world.focus = { terminal: "t7" };
   assert.equal(web.followPanel(), true);
   assert.equal(node("panel").hidden, true, "a session with no browser takes the panel away");
-  assert.equal(state.get("cockpit.web.away"), true);
+  assert.equal(state.get("flightdeck.web.away"), true);
   world.focus = { terminal: "t3" };
   assert.equal(web.followPanel(), true);
-  assert.deepEqual([node("panel").hidden, node("panel-body").active, state.get("cockpit.web.away")], [false, "web", false]);
+  assert.deepEqual([node("panel").hidden, node("panel-body").active, state.get("flightdeck.web.away")], [false, "web", false]);
 });

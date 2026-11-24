@@ -15,10 +15,10 @@ const READ_W = 800;
 
 /** Routines in view in this layout, that run or routine selected: the view takes the target once it has its model. */
 export function openRoutine(key) {
-  const navigation = (globalThis.cockpitRemoteFocus ??= { targets: new Map(), listeners: new Set() });
+  const navigation = (globalThis.flightdeckRemoteFocus ??= { targets: new Map(), listeners: new Set() });
   const target = { app: "routines", key };
   navigation.targets.set("routines", target);
-  run("cockpit.go:routines");
+  run("flightdeck.go:routines");
   for (const listener of navigation.listeners) if (listener(target)) break;
 }
 
@@ -71,8 +71,8 @@ export default class Needs {
           .hover((s) => s.bg(k.accent).text_color(k.foreground))
           .tooltip("Read the conversation")
           .on_click((_e, cx) => {
-            // A session cockpit drives has no terminal to focus: the chat opens on it.
-            if (row.driven) run(keyed(`cockpit.via:chat|chat:open:${row.terminal}`));
+            // A session flightdeck drives has no terminal to focus: the chat opens on it.
+            if (row.driven) run(keyed(`flightdeck.via:chat|chat:open:${row.terminal}`));
             else {
               goToAgent({ address: row.address });
               show("chat");

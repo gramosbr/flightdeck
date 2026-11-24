@@ -1,6 +1,6 @@
 //! What a found item reads as inside an agent session: enough for the session to act on it without asking which one.
 
-use cockpit_core::hub::Found;
+use flightdeck_core::hub::Found;
 use serde_json::Value;
 
 /// A PR's URL, a ticket's id and URL, a release with its environment and verdict, an event with its time; anything

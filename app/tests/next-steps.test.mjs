@@ -3,10 +3,10 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-/** Cockpit Chat on a stand-in Herdr and hub, with the next-steps module beside it: a chat without its init. */
+/** Flightdeck Chat on a stand-in Herdr and hub, with the next-steps module beside it: a chat without its init. */
 async function fixture() {
   const acts = [], calls = [];
-  const shared = { layout: "cockpit-chat", "cockpit.app": "chat" };
+  const shared = { layout: "flightdeck-chat", "flightdeck.app": "chat" };
   const context = createContext({ console });
   // Drawn elements as the calls made on them, so a test reads what the strip drew.
   const element = () => {
@@ -36,7 +36,7 @@ async function fixture() {
     },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -177,8 +177,8 @@ test("the chat's key context takes 1, 2, 3 and 0 only while next steps show", as
   assert.deepEqual(flags({ next: true, confirm: true }), ["chat_escape"], "the confirm keeps only ⎋");
   const bindings = plain(mod.chatBindings().filter((b) => b.context.includes("chat_next")));
   assert.deepEqual(bindings.map((b) => b.keystroke), ["1", "1", "2", "2", "3", "3", "0", "0"]);
-  assert.deepEqual(bindings.map((b) => b.action), ["cockpit_chat_next_1", "cockpit_chat_next_1", "cockpit_chat_next_2", "cockpit_chat_next_2", "cockpit_chat_next_3", "cockpit_chat_next_3", "cockpit_chat_next_0", "cockpit_chat_next_0"]);
-  assert.ok(bindings.every((b, i) => b.context === `CockpitChat && chat_next${i % 2 ? " > Input" : ""}`), "anywhere in the chat, and in its box before the box's own");
+  assert.deepEqual(bindings.map((b) => b.action), ["flightdeck_chat_next_1", "flightdeck_chat_next_1", "flightdeck_chat_next_2", "flightdeck_chat_next_2", "flightdeck_chat_next_3", "flightdeck_chat_next_3", "flightdeck_chat_next_0", "flightdeck_chat_next_0"]);
+  assert.ok(bindings.every((b, i) => b.context === `FlightdeckChat && chat_next${i % 2 ? " > Input" : ""}`), "anywhere in the chat, and in its box before the box's own");
 });
 
 test("the list draws a line per suggestion with the key that picks it, its prompt in the tooltip, and 0 to put them away", async () => {

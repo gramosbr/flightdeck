@@ -5,7 +5,7 @@ use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use unicode_width::UnicodeWidthChar;
 
-use cockpit_core::text::width;
+use flightdeck_core::text::width;
 
 /// What a click on a span does, handled by the block the row belongs to (links by the app).
 #[derive(Clone, Debug, PartialEq)]

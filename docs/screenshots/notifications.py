@@ -1,4 +1,4 @@
-"""An animated SVG of cockpit's notifications sliding in, each with where its click leads and the buttons it carries."""
+"""An animated SVG of flightdeck's notifications sliding in, each with where its click leads and the buttons it carries."""
 import html, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +17,7 @@ SANS = "-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Helvetica,Aria
 
 
 def logo(x, y, size):
-    """The cockpit logo, drawn from the same shapes as docs/logo.svg."""
+    """The flightdeck logo, drawn from the same shapes as docs/logo.svg."""
     k = size / 512
     return f'''<g transform="translate({x} {y}) scale({k})">
   <rect x="8" y="8" width="496" height="496" rx="112" fill="#101010" stroke="#2C2C30" stroke-width="8"/>
@@ -53,7 +53,7 @@ for i, (title, body, click, buttons) in enumerate(ITEMS):
 <g class="n{i}">
   <rect x="{BX}" y="{y}" width="{BW}" height="{BH}" rx="18" fill="#2A2A30" fill-opacity="0.96" stroke="#3A3A42"/>
   {logo(BX + 14, y + 17, 40)}
-  <text x="{BX + 66}" y="{y + 24}" fill="#9A9AA2" font-size="11" letter-spacing="0.6">COCKPIT</text>
+  <text x="{BX + 66}" y="{y + 24}" fill="#9A9AA2" font-size="11" letter-spacing="0.6">FLIGHTDECK</text>
   <text x="{BX + BW - 16}" y="{y + 24}" text-anchor="end" fill="#9A9AA2" font-size="11">now</text>
   <text x="{BX + 66}" y="{y + 43}" fill="#F2F2F2" font-size="14" font-weight="600">{html.escape(title)}</text>
   <text x="{BX + 66}" y="{y + 61}" fill="#C8C8CE" font-size="13">{html.escape(body)}</text>
@@ -64,7 +64,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
 <defs><linearGradient id="desk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B1B24"/><stop offset="1" stop-color="#0F0F12"/></linearGradient></defs>
 <style>text{{font-family:{SANS}}}{style}@media (prefers-reduced-motion:reduce){{g{{animation:none!important;opacity:1!important}}}}</style>
 <rect width="100%" height="100%" rx="12" fill="url(#desk)" stroke="#2C2C30"/>
-<text x="28" y="{H - 22}" fill="#707070" font-size="12">macOS notifications from cockpit: a click or a button leads to where you act</text>
+<text x="28" y="{H - 22}" fill="#707070" font-size="12">macOS notifications from flightdeck: a click or a button leads to where you act</text>
 {"".join(groups)}
 </svg>'''
 open(os.path.join(HERE, "..", "notifications.svg"), "w").write(svg)

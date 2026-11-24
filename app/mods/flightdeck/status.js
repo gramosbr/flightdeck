@@ -1,4 +1,4 @@
-// The status bar under the cockpit layout: the agents by whose move it is (each count a click), then on the right the
+// The status bar under the flightdeck layout: the agents by whose move it is (each count a click), then on the right the
 // branch of the agent in view and its links named after their service (GitHub, Linear, CircleCI, Argo, Slack…), queued
 // prompts, stopped agents, the hub only when it is offline, and the agent's documents at the right end.
 // Always shown, it runs the window's commands in this layout (commands.js).
@@ -36,9 +36,9 @@ export function findNode(node, id) {
 export function hubTip(state, startable = false) {
   if (state === "connecting") {
     const last = hub.lastFailure();
-    return last ? `Reaching the cockpit hub… The last try failed: ${last.message}` : "Reaching the cockpit hub…";
+    return last ? `Reaching the flightdeck hub… The last try failed: ${last.message}` : "Reaching the flightdeck hub…";
   }
-  return `${hub.downTip(state)}${startable ? ". Click to start it; Cockpit settings, under Health, says more" : ""}`;
+  return `${hub.downTip(state)}${startable ? ". Click to start it; Flightdeck settings, under Health, says more" : ""}`;
 }
 
 export default class Status {
@@ -76,7 +76,7 @@ export default class Status {
   }
 
   command(c, cx, key = null) {
-    runCommand(c, cx, "cockpit", { rows: this.rows, home: this.home, key });
+    runCommand(c, cx, "flightdeck", { rows: this.rows, home: this.home, key });
     cx.notify();
   }
 
@@ -108,11 +108,11 @@ export default class Status {
     const left = [
       item("st-needs", [dot(needs ? k.blocked : k.border, needs > 0), div().when(needs > 0, (e) => e.text_color(k.blocked).font_medium()).child(`${needs} need${needs === 1 ? "s" : ""} you`)], {
         onClick: (_e, cx) => this.command("next-waiting", cx),
-        tooltip: hint("Next agent waiting", "cockpit.next-waiting"),
+        tooltip: hint("Next agent waiting", "flightdeck.next-waiting"),
       }),
-      item("st-working", [count("working") ? Spinner({ size: 12, color: k.working }) : dot(k.border), div().child(`${count("working")} working`)], { onClick: () => show("home"), tooltip: hint("Home", "cockpit.home") }),
+      item("st-working", [count("working") ? Spinner({ size: 12, color: k.working }) : dot(k.border), div().child(`${count("working")} working`)], { onClick: () => show("home"), tooltip: hint("Home", "flightdeck.home") }),
       w >= 640 && item("st-ready", [dot(ready ? k.success : k.border), div().child(`${ready} ready`)], { onClick: () => show("home"), tooltip: "Agents whose PR is approved and green" }),
-      w >= 640 && item("st-done", [dot(count("done") ? k.done : k.border), div().child(`${count("done")} done`)], { onClick: (_e, cx) => this.command("next:done", cx), tooltip: hint("Next finished agent", "cockpit.next:done") }),
+      w >= 640 && item("st-done", [dot(count("done") ? k.done : k.border), div().child(`${count("done")} done`)], { onClick: (_e, cx) => this.command("next:done", cx), tooltip: hint("Next finished agent", "flightdeck.next:done") }),
     ].filter(Boolean);
 
     // The branch and links of the agent in view on the right, always in the hub's order (PR, ticket, CI, deploy, cited pages);
@@ -147,8 +147,8 @@ export default class Status {
           }),
         );
     }
-    if (queued) right.push(item("st-queue", [Icon("list-ordered", { size: 14, color: k.info }), div().child(w >= 800 ? `${queued} queued` : String(queued))], { tooltip: hint("Prompts waiting to be sent", "cockpit.queue"), onClick: () => run("cockpit.queue", {}) }));
-    if (lost) right.push(item("st-lost", [Icon("rotate-ccw", { size: 14, color: k.info }), div().text_color(k.info).child(`${lost} to resume`)], { tooltip: hint("Agents a restart stopped: resume them", "cockpit.resume"), onClick: (_e, cx) => this.command("resume", cx) }));
+    if (queued) right.push(item("st-queue", [Icon("list-ordered", { size: 14, color: k.info }), div().child(w >= 800 ? `${queued} queued` : String(queued))], { tooltip: hint("Prompts waiting to be sent", "flightdeck.queue"), onClick: () => run("flightdeck.queue", {}) }));
+    if (lost) right.push(item("st-lost", [Icon("rotate-ccw", { size: 14, color: k.info }), div().text_color(k.info).child(`${lost} to resume`)], { tooltip: hint("Agents a restart stopped: resume them", "flightdeck.resume"), onClick: (_e, cx) => this.command("resume", cx) }));
     // The hub shows only when it does not answer; down on this machine, a click starts it.
     const stopped = hub.isStoppedOnPurpose(this.state);
     const startable = String(this.state).startsWith("error") && !hub.isNotInstalled(this.state) && !hub.remoteMachine();
@@ -169,7 +169,7 @@ export default class Status {
       );
 
     return h_flex()
-      .id("cockpit-status")
+      .id("flightdeck-status")
       .size_full()
       .on_size_change((size, cx) => {
         if (Math.abs((this.width ?? 0) - size.width) < 1) return;

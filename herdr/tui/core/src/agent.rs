@@ -1,4 +1,4 @@
-//! The coding agents cockpit starts, resumes, forks and runs headless, one entry per agent Herdr integrates, with argv
+//! The coding agents flightdeck starts, resumes, forks and runs headless, one entry per agent Herdr integrates, with argv
 //! templates the config's `agents.commands` overrides. A template argument whose `{prompt}`, `{session}` or `{model}`
 //! has no value is dropped whole, so `start(None)` opens the agent at its prompt and `"-i {prompt}"` goes as one.
 
@@ -86,9 +86,9 @@ pub struct Agent {
     /// go in, a plan is carried out or a folder is trusted. Empty where not measured.
     pub permission: Vec<String>,
     /// The switches that drive it over its streaming protocol, permission asks on the same pipe. None where not
-    /// measured: cockpit drives no session of it.
+    /// measured: flightdeck drives no session of it.
     pub stream: Option<Vec<String>>,
-    /// How a new driven session takes the id cockpit picks for it, `{session}`.
+    /// How a new driven session takes the id flightdeck picks for it, `{session}`.
     pub new_session: Vec<String>,
     /// The models its pickers offer, as it takes them (aliases or full names). Empty where none is listed.
     pub offered: Vec<String>,
@@ -105,7 +105,7 @@ pub struct Agent {
     /// How fast mode is set at start: `{fast}` as true or false, `{speed}` as fast or default. Switches without a value
     /// turn it on and are left out for the agent's default.
     pub fast: Option<Vec<String>>,
-    /// The settings a session cockpit drives takes while it runs; the others take effect at its next message.
+    /// The settings a session flightdeck drives takes while it runs; the others take effect at its next message.
     pub live: Vec<Setting>,
     /// How each setting changes in its own terminal while it runs.
     pub typing: Typing,
@@ -373,7 +373,7 @@ const ASIDE: &[(&str, &[&str])] = &[
     ),
 ];
 
-/// The agents cockpit's plugin serves: its tools and the statusline's limits reach them through it, not an MCP config.
+/// The agents flightdeck's plugin serves: its tools and the statusline's limits reach them through it, not an MCP config.
 const PLUGIN: &[&str] = &["claude"];
 
 /// The models only a routine of an agent takes, beside the ones it offers everywhere: Claude Code's `lightest` is haiku
@@ -1246,7 +1246,7 @@ fn mark_for(icon: &str, id: &str) -> String {
     }
 }
 
-/// The agent cockpit starts when nothing says which: `agents.default` in the config, else the first one installed in
+/// The agent flightdeck starts when nothing says which: `agents.default` in the config, else the first one installed in
 /// table order, else Claude Code.
 pub fn default() -> Agent {
     let config = files::config();
@@ -1267,8 +1267,8 @@ pub fn for_headless() -> Agent {
     all().into_iter().find(|a| a.can_run() && a.installed()).unwrap_or(first)
 }
 
-/// How to ask the default agent for what a cockpit command writes: Claude Code has the slash commands, every other
-/// agent is asked in words. `cockpit setup` picks which agent this is.
+/// How to ask the default agent for what a flightdeck command writes: Claude Code has the slash commands, every other
+/// agent is asked in words. `flightdeck setup` picks which agent this is.
 pub fn ask_for(command: &str, in_words: &str) -> String {
     let agent = default();
     if agent.id == "claude" { format!("run /{command} in a Claude Code session") } else { format!("ask {} to {in_words}", agent.name) }
@@ -1297,15 +1297,15 @@ fn runs(p: &Path) -> bool {
 }
 
 impl Agent {
-    /// Whether cockpit's own plugin serves it, rather than its MCP config.
+    /// Whether flightdeck's own plugin serves it, rather than its MCP config.
     pub fn has_plugin(&self) -> bool {
         PLUGIN.contains(&self.id.as_str())
     }
 
-    /// Its executable: `COCKPIT_<ID>`, else its own install places (before PATH, which lacks the shell's aliases in a
+    /// Its executable: `FLIGHTDECK_<ID>`, else its own install places (before PATH, which lacks the shell's aliases in a
     /// Herdr app terminal), else the first on PATH, else an app's bundled copy, else the bare name.
     pub fn path(&self) -> String {
-        let var = format!("COCKPIT_{}", self.id.to_ascii_uppercase().replace('-', "_"));
+        let var = format!("FLIGHTDECK_{}", self.id.to_ascii_uppercase().replace('-', "_"));
         if let Some(set) = std::env::var(var).ok().filter(|c| !c.is_empty()) {
             return set;
         }
@@ -1399,7 +1399,7 @@ impl Agent {
         template.iter().map(|a| a.replace(key, value)).collect()
     }
 
-    /// Its command line, less the executable, for a session cockpit drives under `session`: the stream's switches first,
+    /// Its command line, less the executable, for a session flightdeck drives under `session`: the stream's switches first,
     /// then the permission `mode`, what was `picked` (model, effort, fast mode), then the session (new, or `resume`d).
     /// None when it is not driven, or the mode or the resume is not known for it.
     pub fn stream_argv(&self, session: &str, mode: &str, resume: bool, picked: &Picked) -> Option<Vec<String>> {
@@ -1694,7 +1694,7 @@ const REPORTS: &[(&str, Reports)] = &[
         Reports {
             short: "Claude",
             letter: "C",
-            sources: &[("claude-statusline", "Claude Code's status line"), ("claude-stream", "a session cockpit drives")],
+            sources: &[("claude-statusline", "Claude Code's status line"), ("claude-stream", "a session flightdeck drives")],
             account: "This machine's Claude Code: {account}",
             signed_out: "This machine's Claude Code is not signed in to a Claude account",
         },

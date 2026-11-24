@@ -5,13 +5,13 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 /// The view a plan is kept as for `owner` (an app terminal's address, or a driven session's key), writing it the first
 /// time this plan is seen: the next number of the session's plans, titled after the plan's first heading.
 pub fn record(owner: &str, session: &str, cwd: &str, plan: &str) -> Option<String> {
-    record_in(&files::cache().join("show"), owner, session, cwd, plan, cockpit_core::seen::now_ms())
+    record_in(&files::cache().join("show"), owner, session, cwd, plan, flightdeck_core::seen::now_ms())
 }
 
 /// `record` in `dir`, at `now` (ms).

@@ -1,4 +1,4 @@
-"""The whole cockpit at once, animated: herdr's sidebar, an agent working on a ticket, the page it tests in terminal-browser
+"""The whole flightdeck at once, animated: herdr's sidebar, an agent working on a ticket, the page it tests in terminal-browser
 beside it and its footer, from fictional data. The page is a real screenshot of the fake app in webapp/ (see README.md).
 
     overall.py [<shots dir>]
@@ -7,7 +7,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from term2svg import BAR, CW, LH, PAD, animate, put_ops, screen_of, timed_pictures, with_pictures
 
-SHOTS = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cache/cockpit/shots/acme-web-quota")
+SHOTS = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cache/flightdeck/shots/acme-web-quota")
 COLS, ROWS, SIDE, B = 150, 30, 34, 104
 L = SIDE + 4
 ORANGE, TEAL, RED, DIMC, INK, QUIET, WHITE, LINE = "FFC799", "99FFE4", "FF8080", "707070", "101010", "2C2C30", "D2D2D2", "2C2C30"
@@ -103,5 +103,5 @@ frames = [
 box = (PAD + B * CW + 6, BAR + PAD + 3 * LH, (COLS - B - 1) * CW - 12, (ROWS - 6) * LH)
 style, images = timed_pictures(frames, {0: None, 2: os.path.join(SHOTS, "before", "mobile.png"), 3: os.path.join(SHOTS, "after", "mobile.png")}, box)
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "overview.svg"), "w").write(
-    with_pictures(animate(frames, "herdr · cockpit"), style, images))
+    with_pictures(animate(frames, "herdr · flightdeck"), style, images))
 print(len(frames), "frames")

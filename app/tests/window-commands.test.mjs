@@ -1,4 +1,4 @@
-// Window commands (`herdr-app do 'cockpit.<command>'`) reach the views from any process of the user, so alone they only
+// Window commands (`herdr-app do 'flightdeck.<command>'`) reach the views from any process of the user, so alone they only
 // navigate: what acts takes the one-time key its menu, the palette or a click minted, and nothing a command selected,
 // focused or typed is armed for the person's next key.
 import assert from "node:assert/strict";
@@ -7,24 +7,24 @@ import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
 const app = new URL("../", import.meta.url);
-const folder = new URL("mods/cockpit/", app);
+const folder = new URL("mods/flightdeck/", app);
 
 // The mod loaded in a VM with Herdr's natives stubbed. Every effect a command could have is recorded: hub actions and
-// requests, cockpit CLI runs, Herdr commands run, overlays opened, shared values set. `sandbox` says what the window's
+// requests, flightdeck CLI runs, Herdr commands run, overlays opened, shared values set. `sandbox` says what the window's
 // own environment holds (person.js's testKeys).
-async function fixture({ layout = "cockpit", shown = "home", sandbox = false, focusedPane = { terminal: "t3", agent: "t3" }, spacesList = [] } = {}) {
+async function fixture({ layout = "flightdeck", shown = "home", sandbox = false, focusedPane = { terminal: "t3", agent: "t3" }, spacesList = [] } = {}) {
   const acts = [], requests = [], clis = [], calls = [], notices = [], overlays = [], urls = [], sets = [];
-  const shared = { layout, "cockpit.app": shown };
+  const shared = { layout, "flightdeck.app": shown };
   const tree = () => {
-    const now = shared["cockpit.app"];
-    if (shared.layout === "cockpit-chat") {
+    const now = shared["flightdeck.app"];
+    if (shared.layout === "flightdeck-chat") {
       const inner = now === "chat" || now === "tab";
       return { id: "root", children: [{ id: "screen", type: "stack", active: inner ? "work" : now, children: [{ id: "work", children: [{ id: "view", type: "stack", active: inner ? now : "chat", children: [] }] }] }] };
     }
     return { id: "root", children: [{ id: "center", type: "stack", active: now, children: [{ id: "home" }] }] };
   };
   const context = createContext({ console, setTimeout });
-  const env = sandbox ? "COCKPIT_SANDBOX=/tmp/cc-x\nCOCKPIT_TEST_KEYS=1\nHOME=/h\n" : "COCKPIT_TEST_KEYS=1\nHOME=/h\n";
+  const env = sandbox ? "FLIGHTDECK_SANDBOX=/tmp/cc-x\nFLIGHTDECK_TEST_KEYS=1\nHOME=/h\n" : "FLIGHTDECK_TEST_KEYS=1\nHOME=/h\n";
   const imports = {
     herdr: {
       agents: () => [], spaces: () => spacesList, run: (...a) => calls.push(a), notify: (n) => notices.push(n),
@@ -42,7 +42,7 @@ async function fixture({ layout = "cockpit", shown = "home", sandbox = false, fo
     "./hub.js": {
       act: async (app, action, args) => (acts.push({ app, action, args }), { note: "ok", error: null }),
       request: async (op, body) => (requests.push({ op, ...body }), { note: "ok" }),
-      cockpit: async (args) => (clis.push(args), { code: 0, stdout: "", stderr: "" }),
+      flightdeck: async (args) => (clis.push(args), { code: 0, stdout: "", stderr: "" }),
       view: async () => null, openUrl: async (url) => urls.push(url), install: async () => ({}), sleep: async () => {},
       subscribe: () => ({ stop() {} }), remoteMachine: () => null, isUnconfirmed: () => false, fetchDetails: async () => ({}), events: async () => [],
     },
@@ -133,7 +133,7 @@ function home(mod, rows) {
 // The fifth review's reproductions, fixed
 
 test("a toast's target, a button's included, only ever brings its row into view, in both layouts", async () => {
-  for (const layout of ["cockpit", "cockpit-chat"]) {
+  for (const layout of ["flightdeck", "flightdeck-chat"]) {
     const { mod, clis, acts, overlays } = await fixture({ layout });
     const { cx, settled } = context();
     const pr = "https://github.com/acme/api/pull/1";
@@ -144,7 +144,7 @@ test("a toast's target, a button's included, only ever brings its row into view,
     assert.deepEqual(plain(clis), [
       ["focus", `inbox:${pr}`], ["focus", `inbox:${pr}`], ["focus", `inbox:${pr}`], ["focus", `inbox:${pr}`],
       ["focus", "inbox:ENG-1"], ["focus", "routine:sweep"], ["focus", `inbox:${pr}`], ["focus", "inbox:ENG-2"], ["focus", "resume"],
-    ], "rows, never `cockpit focus act:…`; resume stays, as `cockpit focus resume` does");
+    ], "rows, never `flightdeck focus act:…`; resume stays, as `flightdeck focus resume` does");
     assert.equal(acts.length, 0);
     assert.equal(overlays.at(-1)?.props?.app, "update", "the update's click opens its dialog, where the person installs it");
   }
@@ -153,17 +153,17 @@ test("a toast's target, a button's included, only ever brings its row into view,
 test("a link from a window command opens a web page, never a file or an app", async () => {
   const { mod, urls } = await fixture();
   const { cx, settled } = context();
-  mod.runCommand("link:/Applications/Calculator.app", cx, "cockpit");
-  mod.runCommand("link:file:///tmp/x.command", cx, "cockpit");
-  mod.runCommand("link:https://acme.example/dash", cx, "cockpit");
+  mod.runCommand("link:/Applications/Calculator.app", cx, "flightdeck");
+  mod.runCommand("link:file:///tmp/x.command", cx, "flightdeck");
+  mod.runCommand("link:https://acme.example/dash", cx, "flightdeck");
   await settled();
   assert.deepEqual(plain(urls), ["https://acme.example/dash"]);
 });
 
 test("a bare `session` opens a menu naming the start; picked from it, with its key, the session starts", async () => {
-  const { mod, acts, overlays } = await fixture({ layout: "cockpit-chat", shown: "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
+  const { mod, acts, overlays } = await fixture({ layout: "flightdeck-chat", shown: "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
   const { cx, settled } = context();
-  mod.runCommand("session", cx, "cockpit-chat");
+  mod.runCommand("session", cx, "flightdeck-chat");
   await settled();
   assert.equal(acts.length, 0, "a window command, ⌘⌥N's binding included, starts nothing by itself");
   const item = overlays.at(-1).props.items[0];
@@ -171,14 +171,14 @@ test("a bare `session` opens a menu naming the start; picked from it, with its k
   assert.equal(overlays.at(-1).props.picked, undefined, "nothing picked");
   assert.equal(overlays.at(-1).props.clickOnly, true, "and ⏎ picks nothing in it: the person's keys were meant for something else");
   const { command, key } = mod.unkey(item.command);
-  mod.runCommand(command, cx, "cockpit-chat", { key });
-  mod.runCommand(command, cx, "cockpit-chat", { key });
+  mod.runCommand(command, cx, "flightdeck-chat", { key });
+  mod.runCommand(command, cx, "flightdeck-chat", { key });
   await settled();
   assert.deepEqual(plain(acts), [{ app: "session", action: "start", args: [{ cwd: "/Users/me/code/api", mode: "default" }] }], "once");
   const resumed = await fixture();
-  resumed.mod.runCommand("resume", cx, "cockpit");
+  resumed.mod.runCommand("resume", cx, "flightdeck");
   await settled();
-  assert.deepEqual(plain(resumed.acts), [{ app: "home", action: "resume", args: [] }], "resume stays a window command, as `cockpit focus resume` is");
+  assert.deepEqual(plain(resumed.acts), [{ app: "home", action: "resume", args: [] }], "resume stays a window command, as `flightdeck focus resume` is");
 });
 
 test("an agent's menu items act only with the key their menu opened with, once", async () => {
@@ -404,7 +404,7 @@ test("start:type fills Start work's prompt; ⏎ leaves it to a click on Start", 
 });
 
 test("the chat's box, focused by a bare chat:open, takes no digit until the person presses another key or clicks", async () => {
-  const { mod } = await fixture({ layout: "cockpit-chat", shown: "chat" });
+  const { mod } = await fixture({ layout: "flightdeck-chat", shown: "chat" });
   const q = { kind: "single", permission: false, choices: [{ n: 1, label: "Drop the table" }, { n: 2, label: "Keep it" }] };
   assert.equal(mod.digitAnswers({ keystroke: "1" }, { question: q, typed: "", focused: true, pointed: true }), null);
   assert.equal(mod.digitAnswers({ keystroke: "1" }, { question: q, typed: "", focused: true }), 1);
@@ -420,7 +420,7 @@ test("the chat's box, focused by a bare chat:open, takes no digit until the pers
 
 test("chat:start:send starts only with a key or in a sandbox; chat:start:type never types into an agent's box", async () => {
   for (const sandbox of [false, true]) {
-    const { mod } = await fixture({ layout: "cockpit-chat", shown: "chat", sandbox });
+    const { mod } = await fixture({ layout: "flightdeck-chat", shown: "chat", sandbox });
     const started = [];
     const chat = Object.create(mod.Chat.prototype);
     let text = "";
@@ -444,7 +444,7 @@ test("chat:start:send starts only with a key or in a sandbox; chat:start:type ne
 
 test("the palette types from a shell only in a sandbox, and its picks carry their key", async () => {
   for (const sandbox of [false, true]) {
-    const { mod } = await fixture({ layout: "cockpit-chat", sandbox });
+    const { mod } = await fixture({ layout: "flightdeck-chat", sandbox });
     const p = Object.create(mod.Palette.prototype);
     let typed = "";
     Object.assign(p, { input: { set_value: (v) => (typed = v) }, changed() {} });
@@ -509,7 +509,7 @@ test("an agent's menu dismisses and brings back only with the key it opened with
   await settled();
   assert.deepEqual(dismissals(acts), [{ terminal: "app:t52", undo: false, wait: "1:limit" }], "once, with the menu's key and the wait it showed");
   // Its Undo shows wherever the person is: on Herdr's toast, whose click opens a menu naming the agent.
-  assert.equal(notices.at(-1).action.name, "cockpit.dismiss:undo:app:t52");
+  assert.equal(notices.at(-1).action.name, "flightdeck.dismiss:undo:app:t52");
   // The fixture's timers run at once, so the Undo is taken from the act itself.
   model.offerUndo({ notify() {}, spawn: cx.spawn, timer: { after() {} } }, "app:t52", "Agent t52");
   assert.equal(model.undo.title, "Agent t52");
@@ -600,24 +600,24 @@ test("x in the recap dismisses only the row the person moved to; the palette's c
   // The palette's This agent entries: a bare window command opens a menu naming the agent in front; its key acts.
   for (const [command, undo] of [["dismiss", false], ["dismiss:back", true]]) {
     const had = { acts: acts.length, overlays: overlays.length };
-    mod.runCommand(command, cx, "cockpit", {});
+    mod.runCommand(command, cx, "flightdeck", {});
     await settled();
     assert.equal(acts.length, had.acts, `a bare ${command} acts on nothing`);
     assert.equal(overlays.length, had.overlays + 1, "it opens a menu the person picks from");
     assert.equal(overlays.at(-1).props.items[0].command.replace(/~[0-9a-f]{32}$/, ""), undo ? "dismiss:back:app:t52" : "dismiss:at:app:t52|", "naming the agent, and the wait it shows");
-    const { command: named, key } = mod.unkey(mod.keyed(`cockpit.${command}`));
-    mod.runCommand(named.slice(8), cx, "cockpit", { key });
+    const { command: named, key } = mod.unkey(mod.keyed(`flightdeck.${command}`));
+    mod.runCommand(named.slice(8), cx, "flightdeck", { key });
     await settled();
     assert.deepEqual(dismissals(acts).at(-1), { terminal: "app:t52", undo });
   }
   assert.match(notices.at(-2).title, /^Dismissed /);
-  assert.equal(notices.at(-2).action.name, "cockpit.dismiss:undo:app:t52", "the toast's click carries no key: it opens a menu");
+  assert.equal(notices.at(-2).action.name, "flightdeck.dismiss:undo:app:t52", "the toast's click carries no key: it opens a menu");
   const had = overlays.length;
-  mod.runCommand("dismiss:undo:app:t52", cx, "cockpit", {});
+  mod.runCommand("dismiss:undo:app:t52", cx, "flightdeck", {});
   await settled();
   assert.equal(overlays.length, had + 1);
   assert.equal(overlays.at(-1).props.items[0].command.replace(/~[0-9a-f]{32}$/, ""), "dismiss:back:app:t52", "that menu brings back the agent it names");
-  for (const name of ["cockpit.dismiss", "cockpit.dismiss:back"]) assert.ok(mod.CATALOGUE.some((e) => e.command === name && e.group === "This agent"), `${name} is one of the palette's agent actions`);
+  for (const name of ["flightdeck.dismiss", "flightdeck.dismiss:back"]) assert.ok(mod.CATALOGUE.some((e) => e.command === name && e.group === "This agent"), `${name} is one of the palette's agent actions`);
 });
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -671,7 +671,7 @@ const SHAPES = {
   "*:edit:*:status": ["runbook:edit:eng-1#2:status", "nav"], "*:edit:*:step": ["runbook:edit:eng-1#2:step", "nav"], "*:edit:*:where": ["runbook:edit:eng-1#2:where", "nav"],
   "*:pick:*": ["runbook:pick:eng-1#2", "act"], "*:status:*:*": ["runbook:status:eng-1#2:0", "act"],
   "tabs:select:*": ["tabs:select:t1", "nav"], "tabs:open:*": ["tabs:open:claude:1", "nav"], "tabs:restore:*": ["tabs:restore:t2", "nav"], "tabs:restore:": ["tabs:restore:t2", "nav"],
-  "bell:*": ["bell:t3", "nav"], "cockpit.go:*": ["go:inbox", "nav"], "cockpit.go:needs": ["go:needs", "nav"],
+  "bell:*": ["bell:t3", "nav"], "flightdeck.go:*": ["go:inbox", "nav"], "flightdeck.go:needs": ["go:needs", "nav"],
   // Commands views parse that no menu lists: shells, other views and Herdr's toasts send them.
   "chat:open:*": ["chat:open:app:t3", "nav"], reply: ["reply", "nav"], "chat:earlier": ["chat:earlier", "nav"], "chat:end": ["chat:end", "nav"],
   "chat:handover": ["chat:handover", "nav"], "chat:start:type:*": ["chat:start:type:hello", "nav"], "chat:start:send": ["chat:start:send", "act"],
@@ -686,7 +686,7 @@ const SHAPES = {
   "update:next": ["update:next", "act"], "update:save": ["update:save", "act"], "update:skip": ["update:skip", "act"], "update:try": ["update:try", "act"],
 };
 
-/** The command shapes the mod's sources register: menu items, `run("cockpit.…")`, the catalogue, keys.json, the runner. */
+/** The command shapes the mod's sources register: menu items, `run("flightdeck.…")`, the catalogue, keys.json, the runner. */
 async function registered(mod) {
   const shapes = new Set();
   const shape = (s) => s.replace(/\$\{[^}]*\}/g, "*").replace(/\*\*+/g, "*");
@@ -700,8 +700,8 @@ async function registered(mod) {
   shapes.delete("Command");
   for (const e of mod.CATALOGUE) shapes.add(e.command.slice(8));
   const keys = JSON.parse(await readFile(new URL("keys.json", app), "utf8"));
-  for (const map of Object.values(keys)) for (const a of Object.values(map)) if (a.startsWith("cockpit.")) shapes.add(a.slice(8));
-  for (const layout of ["cockpit", "cockpit-chat"]) for (const n of mod.runnerCommands(layout)) shapes.add(n);
+  for (const map of Object.values(keys)) for (const a of Object.values(map)) if (a.startsWith("flightdeck.")) shapes.add(a.slice(8));
+  for (const layout of ["flightdeck", "flightdeck-chat"]) for (const n of mod.runnerCommands(layout)) shapes.add(n);
   return shapes;
 }
 
@@ -753,10 +753,10 @@ function views(mod, f) {
   chat.row = () => ({ terminal: "app:t3", pr: { url: PR, number: 9 } });
   const top = Object.create(mod.ChatTop.prototype);
   Object.assign(top, { sizes: new Map(), sessions: [], openTabs() {} });
-  // The update dialog on the options an update brought, one picked differently, and Cockpit settings on its Options tab.
+  // The update dialog on the options an update brought, one picked differently, and Flightdeck settings on its Options tab.
   const update = Object.create(mod.Update.prototype);
   Object.assign(update, { p: {}, phase: "after", steps: ["options", "layout"], at: 0, picks: { "chat.nextSteps": true }, row: 0, saving: false, done: null, error: null, pointed: true, hint: null, person: false, noted: new Set(),
-    after: { from: "0.40.3", to: "0.41.0", notes: [], options: [{ key: "chat.nextSteps", value: false }], layout: "cockpit-chat" }, dismiss: () => f.effects.push("update closed") });
+    after: { from: "0.40.3", to: "0.41.0", notes: [], options: [{ key: "chat.nextSteps", value: false }], layout: "flightdeck-chat" }, dismiss: () => f.effects.push("update closed") });
   const settings = Object.create(mod.Settings.prototype);
   Object.assign(settings, { p: {}, tab: "options", all: false, at: 0, optionAt: 0, pointed: true, asking: null, report: null, toasts: toasts(), handle: focus(), rowAt: {},
     options: [{ key: "chat.nextSteps", title: "Suggest next prompts", kind: "toggle", value: false }, { key: "agents.pace", title: "Pace of the 7-day limit", kind: "choice", value: "week", choices: [{ value: "week", label: "Whole week" }, { value: "weekdays", label: "Weekdays" }] }],
@@ -773,9 +773,9 @@ function effects(f, since) {
   const out = [...f.effects.slice(since.effects)];
   out.push(...f.acts.slice(since.acts).map((a) => `act ${a.app} ${a.action}`));
   out.push(...f.requests.slice(since.requests).map((r) => `request ${r.app} ${r.action}`));
-  out.push(...f.clis.slice(since.clis).filter((a) => !(a[0] === "focus" && a.length === 2 && !/^(herdr-app:)?act:/.test(a[1]) && a[1] !== "update")).map((a) => `cockpit ${a.join(" ")}`));
-  out.push(...f.calls.slice(since.calls).filter(([name]) => !NAV_RUNS.has(name) && !(name.startsWith("cockpit.") && !/~[0-9a-f]{32}$/.test(name))).map(([name]) => `run ${name}`));
-  out.push(...f.sets.slice(since.sets).filter((k) => k === "review.to" || k === "cockpit.queue.for").map((k) => `shared ${k}`));
+  out.push(...f.clis.slice(since.clis).filter((a) => !(a[0] === "focus" && a.length === 2 && !/^(herdr-app:)?act:/.test(a[1]) && a[1] !== "update")).map((a) => `flightdeck ${a.join(" ")}`));
+  out.push(...f.calls.slice(since.calls).filter(([name]) => !NAV_RUNS.has(name) && !(name.startsWith("flightdeck.") && !/~[0-9a-f]{32}$/.test(name))).map(([name]) => `run ${name}`));
+  out.push(...f.sets.slice(since.sets).filter((k) => k === "review.to" || k === "flightdeck.queue.for").map((k) => `shared ${k}`));
   return out;
 }
 const mark = (f) => ({ effects: f.effects.length, acts: f.acts.length, requests: f.requests.length, clis: f.clis.length, calls: f.calls.length, sets: f.sets.length });
@@ -784,15 +784,15 @@ const mark = (f) => ({ effects: f.effects.length, acts: f.acts.length, requests:
 async function dispatch(f, v, layout, command, key) {
   const { cx, settled } = context();
   for (const [name, view] of Object.entries(v.all)) {
-    // The top bar is the reading layout's runner; Cockpit's, the status bar, only runs the window's commands.
-    if (name === "top" && layout !== "cockpit-chat") continue;
+    // The top bar is the reading layout's runner; Flightdeck's, the status bar, only runs the window's commands.
+    if (name === "top" && layout !== "flightdeck-chat") continue;
     try {
       view.command?.(command, cx, key);
     } catch (e) {
       throw new Error(`${command} in ${name}: ${e.message}`);
     }
   }
-  if (layout === "cockpit") f.mod.runCommand(command, cx, layout, { key });
+  if (layout === "flightdeck") f.mod.runCommand(command, cx, layout, { key });
   await settled();
 }
 
@@ -803,9 +803,9 @@ test("every registered command, sent from outside the window, does nothing but n
   const shapes = await registered((await fixture()).mod);
   const unclassified = [...shapes].filter((s) => !classify(s));
   assert.deepEqual(unclassified, [], "a new window command is classified here: navigation, or an action that takes its key");
-  for (const layout of ["cockpit", "cockpit-chat"]) {
+  for (const layout of ["flightdeck", "flightdeck-chat"]) {
     for (const [shape, [sample, kind]] of Object.entries(SHAPES)) {
-      const f = await fixture({ layout, shown: layout === "cockpit" ? "home" : "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
+      const f = await fixture({ layout, shown: layout === "flightdeck" ? "home" : "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
       f.effects = [];
       const v = views(f.mod, f);
       const before = mark(f);
@@ -822,13 +822,13 @@ test("every registered command, sent from outside the window, does nothing but n
 });
 
 test("every action, sent with the key its menu, the palette or a click minted, acts", async () => {
-  const layoutOf = { "chat:mode": "cockpit-chat", "chat:stop": "cockpit-chat", session: "cockpit-chat" };
+  const layoutOf = { "chat:mode": "flightdeck-chat", "chat:stop": "flightdeck-chat", session: "flightdeck-chat" };
   // Acts a sample cannot show here: a confirm's own key (agents|unasked, mode) and palette typing, which takes none.
   const skip = new Set(["*", "mode:*:*", "palette:type:*", "chat:start:send"]);
   for (const [shape, [sample, kind]] of Object.entries(SHAPES)) {
     if (kind !== "act" || skip.has(shape)) continue;
-    const layout = layoutOf[sample] ?? "cockpit";
-    const f = await fixture({ layout, shown: layout === "cockpit" ? "home" : "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
+    const layout = layoutOf[sample] ?? "flightdeck";
+    const f = await fixture({ layout, shown: layout === "flightdeck" ? "home" : "chat", spacesList: [{ id: "s1", active: true, folder: "/Users/me/code/api", tabs: [] }] });
     f.effects = [];
     const v = views(f.mod, f);
     const before = mark(f);
@@ -839,9 +839,9 @@ test("every action, sent with the key its menu, the palette or a click minted, a
   }
 });
 
-test("cockpit.settings opens the sheet and changes nothing, and the name it had still opens it on Health", async () => {
-  for (const layout of ["cockpit", "cockpit-chat"]) {
-    const f = await fixture({ layout, shown: layout === "cockpit" ? "home" : "chat" });
+test("flightdeck.settings opens the sheet and changes nothing, and the name it had still opens it on Health", async () => {
+  for (const layout of ["flightdeck", "flightdeck-chat"]) {
+    const f = await fixture({ layout, shown: layout === "flightdeck" ? "home" : "chat" });
     f.effects = [];
     const v = views(f.mod, f);
     const { cx } = context();
@@ -850,7 +850,7 @@ test("cockpit.settings opens the sheet and changes nothing, and the name it had 
       const before = f.overlays.length;
       assert.equal(f.mod.runCommand(command, cx, layout, {}), true, `${layout}: ${command}`);
       assert.equal(f.overlays.length, before + 1);
-      assert.deepEqual(opened(), { app: "settings", tab, person: false }, `${layout}: cockpit.${command}`);
+      assert.deepEqual(opened(), { app: "settings", tab, person: false }, `${layout}: flightdeck.${command}`);
       assert.equal(f.overlays.at(-1).kind, "window");
     }
     assert.deepEqual([f.acts.length, f.requests.length], [0, 0], "opening it saves and asks nothing");
@@ -868,40 +868,40 @@ test("cockpit.settings opens the sheet and changes nothing, and the name it had 
   }
   // The keys sheet and the palette name the command, and a key bound to the old name reads as what it opens.
   const { mod } = await fixture();
-  assert.deepEqual(plain(mod.describe("cockpit.settings")), { title: "Cockpit settings", group: "Window", icon: "sliders-horizontal" });
-  assert.deepEqual(plain(mod.describe("cockpit.diagnostics")), { title: "Cockpit settings: Health", group: "Window", icon: "shield-check" });
-  const rows = mod.sheet("cockpit", [{ keys: "cmd-,", action: "cockpit.settings", section: "layout:cockpit" }, { keys: "cmd-alt-d", action: "cockpit.diagnostics", section: "layout:cockpit" }], "cockpit").flatMap((g) => g.rows);
-  assert.deepEqual(plain(rows.filter((r) => r.action?.startsWith("cockpit.")).map((r) => [r.keys, r.title])), [["cmd-,", "Cockpit settings"], ["cmd-alt-d", "Cockpit settings: Health"]]);
+  assert.deepEqual(plain(mod.describe("flightdeck.settings")), { title: "Flightdeck settings", group: "Window", icon: "sliders-horizontal" });
+  assert.deepEqual(plain(mod.describe("flightdeck.diagnostics")), { title: "Flightdeck settings: Health", group: "Window", icon: "shield-check" });
+  const rows = mod.sheet("flightdeck", [{ keys: "cmd-,", action: "flightdeck.settings", section: "layout:flightdeck" }, { keys: "cmd-alt-d", action: "flightdeck.diagnostics", section: "layout:flightdeck" }], "flightdeck").flatMap((g) => g.rows);
+  assert.deepEqual(plain(rows.filter((r) => r.action?.startsWith("flightdeck.")).map((r) => [r.keys, r.title])), [["cmd-,", "Flightdeck settings"], ["cmd-alt-d", "Flightdeck settings: Health"]]);
   assert.ok(!mod.CATALOGUE.some((e) => /diagnostics/i.test(`${e.title} ${e.command}`)), "no entry still reads Diagnostics");
 });
 
 test("the palette's Start work opens the chat's own start box with the query; ⏎ starts it only when the person picked it", async () => {
-  const f = await fixture({ layout: "cockpit-chat", shown: "chat" });
+  const f = await fixture({ layout: "flightdeck-chat", shown: "chat" });
   f.effects = [];
   const v = views(f.mod, f);
   const chat = v.all.chat;
   const opened = [];
   chat.open = (key) => opened.push(key);
-  await dispatch(f, v, "cockpit-chat", "chat:start:new:Fix the login redirect", null);
+  await dispatch(f, v, "flightdeck-chat", "chat:start:new:Fix the login redirect", null);
   assert.deepEqual([opened.at(-1), chat.input.value()], ["start:", "Fix the login redirect"]);
   assert.deepEqual(plain(chat.typedOutside), { target: "start:", text: "Fix the login redirect" }, "a bare command types; only a click on ↑ starts it");
   const { command, key } = f.mod.unkey(f.mod.keyed("chat:start:new:Fix the login redirect"));
-  await dispatch(f, v, "cockpit-chat", command, key);
+  await dispatch(f, v, "flightdeck-chat", command, key);
   assert.equal(chat.typedOutside, null, "the person's pick: ⏎ starts it");
   assert.deepEqual(f.effects, [], "nothing starts on its own");
-  await dispatch(f, v, "cockpit-chat", "chat:start:new:", null);
+  await dispatch(f, v, "flightdeck-chat", "chat:start:new:", null);
   assert.equal(chat.typedOutside, null, "an empty box a command opened holds nothing it typed: what the person types starts with ⏎");
 });
 
 test("the chat's PR chip merges only from its menu's item, asked under the header first, on the PR it was opened for", async () => {
-  const f = await fixture({ layout: "cockpit-chat", shown: "chat" });
+  const f = await fixture({ layout: "flightdeck-chat", shown: "chat" });
   f.effects = [];
   const v = views(f.mod, f);
   const chat = v.all.chat;
-  await dispatch(f, v, "cockpit-chat", "chat:merge:0", null);
+  await dispatch(f, v, "flightdeck-chat", "chat:merge:0", null);
   assert.equal(chat.merging, null, "a bare window command asks nothing");
   const { command, key } = f.mod.unkey(f.mod.keyed("chat:merge:0"));
-  await dispatch(f, v, "cockpit-chat", command, key);
+  await dispatch(f, v, "flightdeck-chat", command, key);
   assert.equal(chat.merging.question, "Squash and merge: #9 into main now?");
   assert.equal(f.acts.length, 0, "asked first");
   const { cx, settled } = context();
@@ -911,7 +911,7 @@ test("the chat's PR chip merges only from its menu's item, asked under the heade
   assert.deepEqual(plain(f.acts.at(-1)), { app: "inbox", action: "merge", args: [{ url: PR, number: 9 }, "squash"] });
   chat.row = () => ({ terminal: "app:t4", pr: { url: "https://github.com/acme/web/pull/3", number: 3 } });
   const again = f.mod.unkey(f.mod.keyed("chat:merge:0"));
-  await dispatch(f, v, "cockpit-chat", again.command, again.key);
+  await dispatch(f, v, "flightdeck-chat", again.command, again.key);
   assert.equal(chat.merging, null, "the chat moved to another agent: the menu's PR is not its PR");
 });
 
@@ -1021,16 +1021,16 @@ test("moved to after a hub focus, the row's own key acts", async () => {
   assert.equal(v.pointed, false, "the person's own jump (the palette's Go to, a click) points at nothing");
 });
 
-test("a notification a client sent is drawn plain: never cockpit's icon nor the success its words claim", async () => {
+test("a notification a client sent is drawn plain: never flightdeck's icon nor the success its words claim", async () => {
   const { mod, notices } = await fixture();
   const { cx } = context();
   mod.deliver({ title: "✅ Tests passed", body: "api#9", action: "inbox:ENG-412" }, {}, cx);
   mod.deliver({ title: "From an agent's tools (app:t3): ✅ Tests passed", body: "api#9", action: "inbox:ENG-412", from: "an agent's tools (app:t3)" }, {}, cx);
   const [own, forged] = plain(notices);
   assert.equal(own.level, "success");
-  assert.equal(own.icon, "mods/cockpit/cockpit.svg");
+  assert.equal(own.icon, "mods/flightdeck/flightdeck.svg");
   assert.equal(forged.level, "info", "no success colour");
-  assert.equal(forged.icon, undefined, "no cockpit icon");
+  assert.equal(forged.icon, undefined, "no flightdeck icon");
   assert.equal(forged.title, "From an agent's tools (app:t3): ✅ Tests passed");
-  assert.deepEqual(forged.action, { name: "cockpit.target:inbox:ENG-412" }, "its click still only brings the row into view");
+  assert.deepEqual(forged.action, { name: "flightdeck.target:inbox:ENG-412" }, "its click still only brings the row into view");
 });

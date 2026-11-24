@@ -2,10 +2,10 @@
 //! scope holds, the body (the diff, the walkthrough over it, or a state saying why there is nothing to show and how to
 //! get something), the footer, and the toasts, picker and palette over them.
 
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{BG, FG, LINE, ORANGE, PANEL, base, bold, dim, fg};
-use cockpit_core::widgets;
-use cockpit_show::row::{Row, Target};
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{BG, FG, LINE, ORANGE, PANEL, base, bold, dim, fg};
+use flightdeck_core::widgets;
+use flightdeck_show::row::{Row, Target};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};
@@ -25,7 +25,7 @@ impl App {
             Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Length(1), Constraint::Min(1), Constraint::Length(1)]).areas(area);
         // The shared header: the space reads no feed source, so it draws no chip.
         let cells = head.width.saturating_sub(2) as usize;
-        let title = cockpit_core::header::lines(self.head_line(cells), &[], cells).into_iter().next().unwrap_or_default();
+        let title = flightdeck_core::header::lines(self.head_line(cells), &[], cells).into_iter().next().unwrap_or_default();
         frame.render_widget(Paragraph::new(title), inset(head));
         self.draw_tabs(frame, inset(tabs));
         self.draw_body(frame, inset(body));
@@ -155,7 +155,7 @@ impl App {
         match (&self.agents, &self.hub_error) {
             (None, None) => vec![Row::text("Looking for your agents…", dim())],
             (None, Some(error)) => {
-                let mut rows = vec![Row::text("The cockpit hub did not answer", bold(FG))];
+                let mut rows = vec![Row::text("The flightdeck hub did not answer", bold(FG))];
                 rows.extend(text_rows(&format!("{error}. R asks the hub again, starting it when it is not running."), cols, dim()));
                 rows
             }

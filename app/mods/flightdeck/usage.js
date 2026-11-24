@@ -11,13 +11,13 @@ import { ago } from "./fresh.js";
 import { tokens, alpha, TEXT, RADIUS, Icon, Button, Badge, Spinner, KeyHints, PageHeader, Toaster, HubDown, sourceKey, runSource, AgentLogo, iconOf } from "./ui.js";
 
 export function openUsage() {
-  openOverlay({ mod: "cockpit", props: { app: "usage" }, kind: "dialog", key: "cockpit-usage", width: 680, height: 0.88 });
+  openOverlay({ mod: "flightdeck", props: { app: "usage" }, kind: "dialog", key: "flightdeck-usage", width: 680, height: 0.88 });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Words and figures, the same on every surface
 
-/** "~$1.84", "~$0.004": a cost cockpit estimated, never billed as such; "–" when there is none. */
+/** "~$1.84", "~$0.004": a cost flightdeck estimated, never billed as such; "–" when there is none. */
 export function estimate(usd) {
   if (usd === null || usd === undefined) return "–";
   return usd > 0 && usd < 0.01 ? `~$${usd.toFixed(3)}` : usd >= 100 ? `~$${Math.round(usd)}` : `~$${usd.toFixed(2)}`;

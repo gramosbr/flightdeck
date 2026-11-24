@@ -94,7 +94,7 @@ test("a scope gives a worktree its managed profile, made once", () => {
   assert.equal(again.profiles.length, 2);
   const [, own] = managed(registry, "worktree", place, 3);
   assert.equal(own.owner, "worktree:/work/acme/api-eng-412");
-  assert.equal(partitionOf(own.id), `persist:cockpit-${own.id}`);
+  assert.equal(partitionOf(own.id), `persist:flightdeck-${own.id}`);
 });
 
 test("a person's profile is named once, picked for a worktree, renamed and removed", () => {

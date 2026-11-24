@@ -9,7 +9,7 @@ from term2svg import BAR, CW, LH, PAD, animate, put_ops, screen_of, timed_pictur
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..")
-SHOTS = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cache/cockpit/shots/acme-web-quota")
+SHOTS = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.cache/flightdeck/shots/acme-web-quota")
 ORANGE, TEAL, RED, DIMC, INK, QUIET, WHITE, LINE = "FFC799", "99FFE4", "FF8080", "707070", "101010", "2C2C30", "D2D2D2", "2C2C30"
 
 

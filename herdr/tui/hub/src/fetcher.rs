@@ -1,13 +1,13 @@
 //! A Claude Code session the hub keeps for the sources it cannot reach itself: Linear, CircleCI or the calendar without
-//! a token or a server of the hub's own (`servers` in the config), the platform and the monitor's Datadog. Their data comes from MCP connectors that cockpit's Claude Code
+//! a token or a server of the hub's own (`servers` in the config), the platform and the monitor's Datadog. Their data comes from MCP connectors that flightdeck's Claude Code
 //! plugin calls, so the hub runs one in a hidden herdr-core terminal (no space, no pane): idle at its prompt, it spends
 //! no tokens, and the plugin in it refreshes the inbox, CI, meetings and monitor like any session. It runs only where
 //! Claude Code is installed; `fetcher: false` in the config turns it off, and it goes when nothing needs it any more.
 
 use std::time::Duration;
 
-use cockpit_core::resume::FETCHER;
-use cockpit_core::{agent, files, frontend};
+use flightdeck_core::resume::FETCHER;
+use flightdeck_core::{agent, files, frontend};
 use serde_json::Value;
 
 use crate::config;
@@ -17,7 +17,7 @@ const EVERY: Duration = Duration::from_secs(60);
 /// Starts the watch once, beside the feed.
 pub fn start() {
     static STARTED: std::sync::Once = std::sync::Once::new();
-    if std::env::var("COCKPIT_HUB_FEED").is_ok_and(|v| v == "off") {
+    if std::env::var("FLIGHTDECK_HUB_FEED").is_ok_and(|v| v == "off") {
         return;
     }
     STARTED.call_once(|| {
@@ -109,15 +109,15 @@ fn launch(claude: &str) {
     let cwd = config::load().repos();
     // Not through frontend::hc: its trailing --json would land in Claude's arguments.
     let _ = std::process::Command::new(frontend::program("hc", "HC_BIN"))
-        .args(["run", "--json", "--bg", "--no-parent", "--no-notify", "--name", FETCHER, "--cwd", cwd.as_str(), "--label", "cockpit=fetcher"])
-        .args([claude, "--name", "cockpit fetcher", "--model", "haiku"])
+        .args(["run", "--json", "--bg", "--no-parent", "--no-notify", "--name", FETCHER, "--cwd", cwd.as_str(), "--label", "flightdeck=fetcher"])
+        .args([claude, "--name", "flightdeck fetcher", "--model", "haiku"])
         .env_remove("HC_TERMINAL_ID")
         // A hub started from inside a Claude job would pass the job on: the fetcher is an ordinary session at its prompt.
         .env_remove("CLAUDE_JOB_DIR")
         .env_remove("CLAUDE_CODE_SESSION_KIND")
         .env_remove("CLAUDECODE")
         .env_remove("CLAUDE_CODE_ENTRYPOINT")
-        .env("COCKPIT_FETCHER", "1")
+        .env("FLIGHTDECK_FETCHER", "1")
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())

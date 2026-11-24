@@ -1,10 +1,10 @@
-//! The cockpit config with its defaults, the plugin's scripts, and the URLs and names derived from it.
+//! The flightdeck config with its defaults, the plugin's scripts, and the URLs and names derived from it.
 
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use std::time::Duration;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::proc;

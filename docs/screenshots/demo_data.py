@@ -1,15 +1,15 @@
-"""Writes a fictional cockpit state under a fake HOME, for the README screenshots."""
+"""Writes a fictional flightdeck state under a fake HOME, for the README screenshots."""
 import json, os, pwd, sys
 from datetime import datetime, timedelta, timezone
 
 home = sys.argv[1] if len(sys.argv) > 1 else sys.exit("usage: demo_data.py <fake home>")
-# It overwrites cockpit's caches and config under that folder, so never in the account's own home, whatever HOME says.
+# It overwrites flightdeck's caches and config under that folder, so never in the account's own home, whatever HOME says.
 if os.path.realpath(home) == os.path.realpath(pwd.getpwuid(os.getuid()).pw_dir):
     sys.exit(f"demo_data.py: {home} is your real home; give it a fake one, such as docs/screenshots/home")
 now = datetime.now(timezone.utc)
 iso = lambda **d: (now - timedelta(**d)).isoformat().replace("+00:00", "Z")
 fut = lambda **d: (now + timedelta(**d)).isoformat().replace("+00:00", "Z")
-cache = os.path.join(home, ".cache", "cockpit"); conf = os.path.join(home, ".config", "cockpit")
+cache = os.path.join(home, ".cache", "flightdeck"); conf = os.path.join(home, ".config", "flightdeck")
 os.makedirs(cache, exist_ok=True); os.makedirs(os.path.join(conf, "runbooks"), exist_ok=True)
 os.makedirs(os.path.join(home, "code"), exist_ok=True)
 
@@ -123,7 +123,7 @@ def run(mins, took, ok, why, summary, cost=None, session="", code=0):
             "session": session, "cost": cost, "summary": summary}
 runs = {
     "morning-sweep": [run(70, 72, True, "scheduled for 09:00", "3 PRs wait for review, CI green on all of them", 0.18, "s-sweep-1"),
-                      dict(run(2950, 0, False, "scheduled for 09:00", "missed Fri 09:00: cockpit was not running then", code=None), missed=True),
+                      dict(run(2950, 0, False, "scheduled for 09:00", "missed Fri 09:00: flightdeck was not running then", code=None), missed=True),
                       run(1510, 58, True, "scheduled for 09:00", "2 PRs wait for review, billing#375 fails lint", 0.15, "s-sweep-0")],
     "fix-lint": [dict(run(130, 210, True, "🔴 CI failed: billing me/eng-398-invoice-csv · lint", "Fixed 2 lint errors in billing#375 and pushed", 0.31, "s-lint-0"),
                       worktree={"path": os.path.join(home, ".herdr/worktrees/billing/auto/fix-lint-1"), "branch": "auto/fix-lint-1", "repo": os.path.join(home, "code/billing"), "base": "0" * 40, "commits": 1, "dirty": False})],
@@ -307,9 +307,9 @@ with open(os.path.join(cache, "routines", "review-digest", routines_doc["runs"][
 with open(os.path.join(cache, "routines.json"), "w") as f: json.dump(routines_doc, f)
 
 # parity:f — how fresh each source is, as the hub records it in the documents it fills (`hub.fresh`): every source read
-# a minute ago and the calendar a little stale, or with COCKPIT_DEMO_SOURCES=failing Linear refusing its token, CI
+# a minute ago and the calendar a little stale, or with FLIGHTDECK_DEMO_SOURCES=failing Linear refusing its token, CI
 # offline, mail rate-limited and the calendar two hours old. The intervals keep the ages steady through a session of shots.
-failing = os.environ.get("COCKPIT_DEMO_SOURCES") == "failing"
+failing = os.environ.get("FLIGHTDECK_DEMO_SOURCES") == "failing"
 def fresh(source, label, read_mins, every_s, error=None, next_mins=None, login=None):
     entry = {"source": source, "label": label, "at": ms(minutes=read_mins), "every": every_s * 1000,
              "next": ms(minutes=-(next_mins if next_mins is not None else 1)), "state": "failing" if error else "fresh", "login": login}
@@ -326,15 +326,15 @@ def stamp(name, record, errors=()):
 if failing:
     stamp("inbox", {
         "github": fresh("github", "GitHub", 1, 900, login="gh auth login"),
-        "tickets": fresh("tickets", "Linear", 27, 60, ("auth", "HTTP 401: token refused", 25), login="cockpit connector login Linear"),
-        "platform": fresh("platform", "Deploys", 1, 900, login="cockpit setup"),
+        "tickets": fresh("tickets", "Linear", 27, 60, ("auth", "HTTP 401: token refused", 25), login="flightdeck connector login Linear"),
+        "platform": fresh("platform", "Deploys", 1, 900, login="flightdeck setup"),
     }, errors=["Linear: HTTP 401: token refused"])
     stamp("ci", {"ci": fresh("ci", "CI", 41, 30, ("network", "unreachable: io: Connection refused (os error 61)", 40), next_mins=2, login="gh auth login")})
     ci_doc = json.load(open(os.path.join(cache, "ci.json"))); ci_doc["error"] = "CI unreachable: io: Connection refused (os error 61)"
     json.dump(ci_doc, open(os.path.join(cache, "ci.json"), "w"))
-    stamp("meetings", {"calendar": fresh("calendar", "Calendar", 125, 300, next_mins=-120, login="cockpit setup")})
-    stamp("mail", {"mail": fresh("mail", "Mail", 6, 60, ("rate", "rate limited: read again once the limit resets", 4), next_mins=26, login="cockpit setup")})
-    # Signing in again to Linear goes through a server of cockpit's own, on an address that answers nothing.
+    stamp("meetings", {"calendar": fresh("calendar", "Calendar", 125, 300, next_mins=-120, login="flightdeck setup")})
+    stamp("mail", {"mail": fresh("mail", "Mail", 6, 60, ("rate", "rate limited: read again once the limit resets", 4), next_mins=26, login="flightdeck setup")})
+    # Signing in again to Linear goes through a server of flightdeck's own, on an address that answers nothing.
     config_path = os.path.join(conf, "config.json")
     config = json.load(open(config_path))
     config["tickets"]["server"] = "Linear"
@@ -343,14 +343,14 @@ if failing:
 else:
     stamp("inbox", {
         "github": fresh("github", "GitHub", 1, 900, login="gh auth login"),
-        "tickets": fresh("tickets", "Linear", 1, 900, login="cockpit setup"),
-        "platform": fresh("platform", "Deploys", 1, 900, login="cockpit setup"),
+        "tickets": fresh("tickets", "Linear", 1, 900, login="flightdeck setup"),
+        "platform": fresh("platform", "Deploys", 1, 900, login="flightdeck setup"),
     })
     stamp("ci", {"ci": fresh("ci", "CI", 1, 900, login="gh auth login")})
     # Due 20 minutes ago and not read since: stale once two intervals have gone by.
-    stamp("meetings", {"calendar": fresh("calendar", "Calendar", 25, 300, next_mins=-20, login="cockpit setup")})
-    stamp("mail", {"mail": fresh("mail", "Mail", 1, 900, login="cockpit setup")})
-stamp("monitor", {"monitor": fresh("monitor", "Datadog", 1, 1800, login="cockpit setup")})
+    stamp("meetings", {"calendar": fresh("calendar", "Calendar", 25, 300, next_mins=-20, login="flightdeck setup")})
+    stamp("mail", {"mail": fresh("mail", "Mail", 1, 900, login="flightdeck setup")})
+stamp("monitor", {"monitor": fresh("monitor", "Datadog", 1, 1800, login="flightdeck setup")})
 # parity:d — billing#375's two open review threads, which "address review" hands to its agent.
 with open(os.path.join(cache, "inbox.json")) as f: inbox_doc = json.load(f)
 for p in inbox_doc["mine"]:
@@ -358,7 +358,7 @@ for p in inbox_doc["mine"]:
 with open(os.path.join(cache, "inbox.json"), "w") as f: json.dump(inbox_doc, f)
 
 # parity:d — every agent's limits and the week's tokens: Claude fresh from its status line, Codex stale from its rollout,
-# the Claude account cockpit shows (address and organization only), and token use spread over the last 7 days.
+# the Claude account flightdeck shows (address and organization only), and token use spread over the last 7 days.
 with open(os.path.join(cache, "limits.json"), "w") as f:
     json.dump({"at": ms(minutes=2), "limits": [{"name": "5h", "percent": 64, "resetsAt": fut(minutes=95)},
                                                {"name": "7d", "percent": 38, "resetsAt": fut(minutes=5800)}]}, f)
@@ -389,7 +389,7 @@ with open(os.path.join(helper, "agent-usage.jsonl"), "w") as f:
                                 "message": {"id": f"msg-{day}-{n}", "role": "assistant", "model": "claude-opus-5-5", "content": [{"type": "text", "text": "Checked the quota tests."}],
                                             "usage": {"input_tokens": 1200, "output_tokens": 900, "cache_read_input_tokens": 48_000, "cache_creation_input_tokens": 6_000}}}) + "\n")
 
-# parity:y5 — names: the tabs cockpit named itself (all but "flaky e2e", which the person typed), and a session Claude Code
+# parity:y5 — names: the tabs flightdeck named itself (all but "flaky e2e", which the person typed), and a session Claude Code
 # titled.
 os.makedirs(os.path.join(cache, "names"), exist_ok=True)
 with open(os.path.join(cache, "names", "given.json"), "w") as f:

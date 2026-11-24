@@ -1,5 +1,5 @@
 //! My mail through a mail connector's mapping: the unread or important messages of my inbox, one read whole with its
-//! thread, archived or marked read, and which of them need me. No mail provider has a public MCP server cockpit could
+//! thread, archived or marked read, and which of them need me. No mail provider has a public MCP server flightdeck could
 //! map by default, so setup maps the person's.
 
 use chrono::{DateTime, SecondsFormat, Utc};

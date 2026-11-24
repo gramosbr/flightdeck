@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/doctor.json": {
+    "home/.cache/flightdeck/doctor.json": {
       "agents": [],
       "at": 0,
       "checks": [
@@ -40,7 +40,7 @@
         {
           "category": "claude",
           "fix": {
-            "label": "/plugin install cockpit --marketplace quaresc/cockpit"
+            "label": "/plugin install flightdeck --marketplace gramosbr/flightdeck"
           },
           "id": "claude.plugin",
           "message": "Claude plugin not installed",
@@ -78,7 +78,7 @@
           "status": "warn"
         }
       ],
-      "cockpit": "<VERSION>",
+      "flightdeck": "<VERSION>",
       "getting_started": [],
       "stale": true,
       "summary": {
@@ -88,7 +88,7 @@
       },
       "version": 1
     },
-    "home/.cache/cockpit/refresh-request": "<T>"
+    "home/.cache/flightdeck/refresh-request": "<T>"
   },
   "note": "refresh requested, it lands within a minute",
   "pending": {},

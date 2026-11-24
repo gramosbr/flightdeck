@@ -1,7 +1,7 @@
 // Builders for the cookie stores the import tests read, all on the acme demo world.
 // The Chromium database and its encryption are ported from Orca (https://github.com/stablyai/orca, commit 49498c3),
 // src/main/browser/cookies/browser-cookie-import-test-database.ts, and the Safari bytes from browser-cookie-import.test.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { createCipheriv, createHash, pbkdf2Sync } from "node:crypto";
 import { mkdirSync } from "node:fs";

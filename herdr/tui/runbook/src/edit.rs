@@ -1,9 +1,9 @@
 //! Editing in place: a step's command or status in a text field, or a new step's text, place and command; drawn in a box
 //! over the bottom of the list, written to the runbook file by the app on enter.
 
-use cockpit_core::input::{Edit, Input};
-use cockpit_core::theme::{DIM, FG, ORANGE, SURFACE, dim, fg};
 use crossterm::event::{KeyCode, KeyEvent};
+use flightdeck_core::input::{Edit, Input};
+use flightdeck_core::theme::{DIM, FG, ORANGE, SURFACE, dim, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::Style;

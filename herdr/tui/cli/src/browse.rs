@@ -1,29 +1,29 @@
-//! `cockpit browse`: opens a page in terminal-browser, split right of a pane, else in the default browser, for an
+//! `flightdeck browse`: opens a page in terminal-browser, split right of a pane, else in the default browser, for an
 //! agent's E2E tests and browser views. terminal-browser is used when it is installed and the pane is in herdr; a page
 //! already open beside the pane comes to the front instead of opening twice, and the keyboard stays where it was. In
 //! the Herdr app the browser is a terminal split right of the agent's, found again by its tty, and every terminal-browser
 //! call gets that session's pane and the app's socket. A listing or a herdr call that does not answer is an error, never
 //! taken for "no browser there". With `sideBrowser: chromium`, in the Herdr app on macOS, the same commands go to
-//! cockpit's own Chromium window instead (`crate::browser::side`).
+//! flightdeck's own Chromium window instead (`crate::browser::side`).
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use cockpit_core::browser::{self as chromium, Engine};
-use cockpit_core::frontend::{self, Frontend};
+use flightdeck_core::browser::{self as chromium, Engine};
+use flightdeck_core::frontend::{self, Frontend};
 use serde_json::{Value, json};
 
 use crate::browser::side;
 use crate::proc::{self, Out, dumps, fail, open_url, quote};
 
-const USAGE: &str = "Opens a page in the side browser (terminal-browser split right of a pane, or cockpit's Chromium window), else in the default browser.
+const USAGE: &str = "Opens a page in the side browser (terminal-browser split right of a pane, or flightdeck's Chromium window), else in the default browser.
 
-    cockpit browse [--size <fraction>] [--reload] <url> [<session id>]          beside the session's pane, else the calling one
-    cockpit browse --beside [<session id>]                                      the browser beside it, as JSON ({} when none)
-    cockpit browse --external [<session id>]                                    its page, opened in the default browser
-    cockpit browse --browsers [<session id>]                                    every browser beside it, as JSON
-    cockpit browse --env [<session id>]                                         in the Herdr app, the variables terminal-browser needs, as exports
-    cockpit browse action [--session <session id>] [--] <command>               an agent-browser command (snapshot -i, click @e3, ...) on the page beside it; `action done` ends a run";
+    flightdeck browse [--size <fraction>] [--reload] <url> [<session id>]          beside the session's pane, else the calling one
+    flightdeck browse --beside [<session id>]                                      the browser beside it, as JSON ({} when none)
+    flightdeck browse --external [<session id>]                                    its page, opened in the default browser
+    flightdeck browse --browsers [<session id>]                                    every browser beside it, as JSON
+    flightdeck browse --env [<session id>]                                         in the Herdr app, the variables terminal-browser needs, as exports
+    flightdeck browse action [--session <session id>] [--] <command>               an agent-browser command (snapshot -i, click @e3, ...) on the page beside it; `action done` ends a run";
 
 /// herdr sends a picture of at most 16 MiB through a file, a larger one inline through the terminal, which is far slower.
 const MAX_FRAME: f64 = 16.0 * 1024.0 * 1024.0;
@@ -36,7 +36,7 @@ pub fn main(args: &[String]) {
     let mut args: Vec<String> = args.to_vec();
     let or_fail = |why: String| -> ! { fail(&format!("browse: {why}")) };
     // Asked silently here: only opening a page says why Chromium was wanted and is not used.
-    let side_browser = chromium::engine_for(&cockpit_core::files::config(), frontend::current(), cockpit_core::options::CHROMIUM_HERE).0;
+    let side_browser = chromium::engine_for(&flightdeck_core::files::config(), frontend::current(), flightdeck_core::options::CHROMIUM_HERE).0;
     if args.first().is_some_and(|a| a == "action") {
         let asked = action_args(&args[1..]);
         match side_browser {
@@ -111,7 +111,7 @@ pub fn main(args: &[String]) {
     open_url(&if url.starts_with('/') { format!("file://{url}") } else { url.clone() });
 }
 
-/// What `cockpit browse action` was given: the session it names, terminal-browser's own flags, and the command.
+/// What `flightdeck browse action` was given: the session it names, terminal-browser's own flags, and the command.
 #[derive(Debug, Default, PartialEq, Eq)]
 struct Action {
     session: Option<String>,
@@ -188,10 +188,10 @@ fn listed(out: Result<Out, String>) -> Result<Vec<Value>, String> {
     serde_json::from_str::<Value>(&out.stdout).ok().and_then(|v| v["browsers"].as_array().cloned()).ok_or_else(|| "terminal-browser ls printed no list".into())
 }
 
-/// The terminal-browser command, or None when it is missing; COCKPIT_TERMINAL_BROWSER names the one to use instead,
+/// The terminal-browser command, or None when it is missing; FLIGHTDECK_TERMINAL_BROWSER names the one to use instead,
 /// missing when it is not an executable.
 pub fn terminal_browser() -> Option<String> {
-    match std::env::var("COCKPIT_TERMINAL_BROWSER") {
+    match std::env::var("FLIGHTDECK_TERMINAL_BROWSER") {
         Ok(path) if !path.is_empty() => proc::executable(std::path::Path::new(&path)).then_some(path),
         _ => proc::which("terminal-browser"),
     }
@@ -264,7 +264,7 @@ fn app_env(app: &AppPlace) -> Vec<(String, String)> {
 /// The app terminal and pane of an agent session (as the agents document has it), else of the calling one.
 fn app_place(session: Option<&str>, spaces: &[Value]) -> Result<AppPlace, String> {
     let by_session = session.and_then(|s| {
-        let doc = cockpit_core::hub::request(&json!({"op": "store.get", "name": "agents"}), TIMEOUT).ok()?["value"].clone();
+        let doc = flightdeck_core::hub::request(&json!({"op": "store.get", "name": "agents"}), TIMEOUT).ok()?["value"].clone();
         doc.as_object()?.values().find(|f| f["session"] == s)?["terminal"].as_str().map(|t| t.trim_start_matches(frontend::APP).to_string())
     });
     let own = std::env::var("HC_TERMINAL_ID").ok().filter(|t| !t.is_empty());

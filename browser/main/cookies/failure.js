@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/shared/browser/cookies/browser-cookie-import-failure-copy.ts
 // and src/main/browser/cookies/sources/browser-cookie-macos-privacy-denial.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /** One English sentence per refusal; `{{browser}}` and `{{count}}` are filled in by `failure`. */
 export const FAILURE_MESSAGES = {
@@ -8,7 +8,7 @@ export const FAILURE_MESSAGES = {
   databaseNotFound: "{{browser}} cookies database not found.",
   databaseCopyFailed: "Could not copy {{browser}} cookies database. Try closing {{browser}} first.",
   fullDiskAccess:
-    "macOS denied access to {{browser}} cookies. Grant Full Disk Access to Cockpit Browser in System Settings → Privacy & Security → Full Disk Access, then restart it.",
+    "macOS denied access to {{browser}} cookies. Grant Full Disk Access to Flightdeck Browser in System Settings → Privacy & Security → Full Disk Access, then restart it.",
   keyDenied: "Could not access {{browser}} encryption key. macOS may have denied access to the Keychain.",
   noCookies: "No cookies found in {{browser}}.",
   noValidCookies: "No valid cookies found in {{browser}}.",

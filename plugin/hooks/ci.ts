@@ -2,7 +2,7 @@ import type { EngineInterface } from 'claude-code'
 
 import type { CiFailure, CiRun, CiState, DeployedPr, Inbox, MergedPr, Preview } from '../types'
 
-import { cacheDir, cockpitCommand, fill, home, loadConfig, writeAtomic } from './config'
+import { cacheDir, flightdeckCommand, fill, home, loadConfig, writeAtomic } from './config'
 import { appFor, call, callMapped, can, createPreview, dashboardName, deployedApps, extendPreview, listAt, listPreviews, pick, previewUrl, text } from './platform'
 import { hubOwnsCi } from './feed'
 import { ciChanges, hasTicket } from './match'
@@ -22,13 +22,13 @@ const RESULTS_TTL_MS = 86_400_000
 // ---------------------------------------------------------------------------
 // Shared plumbing
 
-// A system notification; a click opens `action`, a URL or a `cockpit focus` target such as space:inbox or
+// A system notification; a click opens `action`, a URL or a `flightdeck focus` target such as space:inbox or
 // runbook:<slug>, and each button, [label, action], runs its own.
 export async function notify($: $, title: string, body: string, action = '', buttons: [string, string][] = []) {
   if (!(await loadConfig($)).notifications) return
-  const cockpit = await cockpitCommand($)
-  const command = cockpit
-    ? [...cockpit, 'notify', title, body, action, ...buttons.map(([label, target]) => `${label}=${target}`)]
+  const flightdeck = await flightdeckCommand($)
+  const command = flightdeck
+    ? [...flightdeck, 'notify', title, body, action, ...buttons.map(([label, target]) => `${label}=${target}`)]
     : ['herdr', 'notification', 'show', title, '--body', body, '--sound', 'request']
   await $.process.run(command, { timeoutMs: 30_000 })
 }
@@ -36,7 +36,7 @@ export async function notify($: $, title: string, body: string, action = '', but
 // Where a click on a ticket's notification goes: its runbook when there is one, else the ticket.
 export async function ticketAction($: $, id: string, url: string | undefined, steps: string[] = []) {
   const slug = id.toLowerCase()
-  const hasRunbook = await $.fs.stat(`${await home($)}/.config/cockpit/runbooks/${slug}.md`).then(() => true, () => false)
+  const hasRunbook = await $.fs.stat(`${await home($)}/.config/flightdeck/runbooks/${slug}.md`).then(() => true, () => false)
   return hasRunbook ? `runbook:${slug}${steps.length > 0 ? `:${steps.join(',')}` : ''}` : (url ?? 'space:inbox')
 }
 
@@ -353,7 +353,7 @@ export async function deploysFor($: $, tickets: Inbox['tickets'], merged: Merged
 // to the runbook and notifies once (herdr/watch-deploy.sh); one watch per ticket.
 export async function startDeployWatch($: $, ticket: string, prs: DeployedPr[]) {
   if (!(await loadConfig($)).deployWatch.enabled || prs.length === 0) return
-  const script = `${await home($)}/.config/cockpit/herdr/watch-deploy.sh`
+  const script = `${await home($)}/.config/flightdeck/herdr/watch-deploy.sh`
   if (!(await $.fs.stat(script).then(() => true, () => false))) return
   const repos = [...new Set(prs.map(p => p.repo))].join(',')
   const tag = prs.map(p => p.tag).find(t => t) ?? ''
@@ -388,7 +388,7 @@ export async function previewsFor($: $): Promise<Preview[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Requests the herdr inbox app drops in ~/.cache/cockpit/requests: CI reruns, preview redeploys, ticket releases
+// Requests the herdr inbox app drops in ~/.cache/flightdeck/requests: CI reruns, preview redeploys, ticket releases
 
 // A ticket moved to a completed state leaves the inbox at once, without waiting for the next fetch.
 async function dropTicket($: $, id: string) {
@@ -516,7 +516,7 @@ export async function processRequests($: $, onDone: () => void) {
       onDone()
     } catch (err) {
       await result('failed', shortError(err as Error))
-      await notify($, '⚠️ Cockpit', `${request.label}: ${(err as Error).message}`, 'space:inbox')
+      await notify($, '⚠️ Flightdeck', `${request.label}: ${(err as Error).message}`, 'space:inbox')
     }
   }
 }

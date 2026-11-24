@@ -109,7 +109,7 @@ fn is_skipped(event: &Value, calendar: &Value) -> bool {
     entries("skip").iter().any(|(path, values)| names(values, &value(path))) || entries("only").iter().any(|(path, values)| !names(values, &value(path)))
 }
 
-/// An answer as cockpit's responses: the mapping's `responses` renames it, and no answer is an accepted one.
+/// An answer as flightdeck's responses: the mapping's `responses` renames it, and no answer is an accepted one.
 fn response(calendar: &Value, value: Option<&Value>) -> String {
     let raw = text(value).unwrap_or_else(|| "accepted".into());
     calendar["responses"][&raw].as_str().map(str::to_string).unwrap_or(raw)

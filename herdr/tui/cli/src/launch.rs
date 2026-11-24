@@ -1,11 +1,11 @@
-//! `cockpit agent`: the command line that starts, runs, resumes or forks a coding agent, for the plugin's scripts, so
+//! `flightdeck agent`: the command line that starts, runs, resumes or forks a coding agent, for the plugin's scripts, so
 //! none of them names an agent's flags itself.
 
-use cockpit_core::agent::{self, Agent, Headless};
+use flightdeck_core::agent::{self, Agent, Headless};
 
-pub const USAGE: &str = "cockpit agent id [--agent <id>] [--use <key>]
+pub const USAGE: &str = "flightdeck agent id [--agent <id>] [--use <key>]
     the agent's id: the one given (an id or a program Herdr reports), else the config's agents.<key>, else the default
-cockpit agent argv <start|run|resume|fork> [--agent <id>] [--use <key>] [--prompt <text>] [--session <id>] [--model <name>]
+flightdeck agent argv <start|run|resume|fork> [--agent <id>] [--use <key>] [--prompt <text>] [--session <id>] [--model <name>]
                    [--edits] [--dir <folder>]... [--system <text>]
     its command as one shell line: start or resume interactive, run headless (on a fork of --session when given),
     fork interactive. A model it does not take is left out; exits 1 when the agent cannot do it";
@@ -79,7 +79,7 @@ fn argv(kind: &str, asked: &Asked, a: &Agent) -> Result<Vec<String>, String> {
     }
 }
 
-/// `cockpit agent ...`: what it prints, or why not.
+/// `flightdeck agent ...`: what it prints, or why not.
 pub fn run(args: &[String]) -> Result<String, String> {
     match args.split_first() {
         Some((what, rest)) if what == "id" => Ok(agent_of(&parse(rest)?)?.id),

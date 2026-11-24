@@ -17,11 +17,11 @@ const SPACES: AppSpace[] = [
   ] },
 ]
 
-// Just what the frontend and the facts reach for: the environment, herdr-app, cockpit store and the plugin manifest.
+// Just what the frontend and the facts reach for: the environment, herdr-app, flightdeck store and the plugin manifest.
 function fake(env: Record<string, string>, ancestry = 1) {
   const patches: Record<string, unknown>[] = []
   const exported: Record<string, string | undefined> = {}
-  const files = new Map<string, string>([['/plugin/.claude-plugin/plugin.json', '{"version": "0.26.0"}'], [`${HOME}/.config/cockpit/herdr/cockpit.sh`, '']])
+  const files = new Map<string, string>([['/plugin/.claude-plugin/plugin.json', '{"version": "0.26.0"}'], [`${HOME}/.config/flightdeck/herdr/flightdeck.sh`, '']])
   const $ = {
     env: {
       get: async (name: string) => (name === 'HOME' ? HOME : name in exported ? exported[name] : env[name]),

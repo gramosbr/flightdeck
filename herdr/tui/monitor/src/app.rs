@@ -5,14 +5,14 @@
 use std::collections::HashSet;
 use std::time::SystemTime;
 
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::files::{self, Density};
-use cockpit_core::hub::{self, Docs};
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::seen::Seen;
-use cockpit_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::hub::{self, Docs};
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::seen::Seen;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
 use ratatui::layout::Rect;
 use serde_json::Value;
 
@@ -193,7 +193,7 @@ impl App {
     /// A notification click (monitor-focus.json) or a palette jump: that app selected, unfolded and in view.
     fn take_focus(&mut self) -> bool {
         let notified = pinned::take_focus(&mut self.notified_seen);
-        let jumped = cockpit_core::focus::take("monitor", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string));
+        let jumped = flightdeck_core::focus::take("monitor", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string));
         let Some(app) = jumped.or(notified) else { return false };
         self.focus(&app);
         true

@@ -1,5 +1,5 @@
 name: Bug
-description: Something in cockpit does not work as it should
+description: Something in flightdeck does not work as it should
 labels: [bug]
 body:
   - type: textarea
@@ -36,7 +36,7 @@ body:
     id: versions
     attributes:
       label: Versions and doctor
-      description: The cockpit version, your OS, the Herdr or herdr version, and the output of `cockpit doctor`. Remove anything private (tokens, URLs, names) first.
+      description: The flightdeck version, your OS, the Herdr or herdr version, and the output of `flightdeck doctor`. Remove anything private (tokens, URLs, names) first.
       render: text
     validations:
       required: true

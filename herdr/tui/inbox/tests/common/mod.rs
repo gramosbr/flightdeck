@@ -3,12 +3,12 @@
 
 use std::collections::HashMap;
 
-use cockpit_core::term::App as _;
-use cockpit_inbox::app::App;
-use cockpit_inbox::facts;
-use cockpit_inbox::inputs::Inputs;
-use cockpit_inbox::sessions::Local;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::term::App as _;
+use flightdeck_inbox::app::App;
+use flightdeck_inbox::facts;
+use flightdeck_inbox::inputs::Inputs;
+use flightdeck_inbox::sessions::Local;
 use serde_json::{Value, json};
 
 pub fn fixture(name: &str) -> Value {

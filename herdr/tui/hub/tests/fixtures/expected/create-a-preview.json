@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/requests/<MS>-create-preview.req": {
+    "home/.cache/flightdeck/requests/<MS>-create-preview.req": {
       "app": "web",
       "branch": "me/eng-401-form",
       "label": "preview for web me/eng-401-form",

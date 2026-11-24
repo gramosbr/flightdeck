@@ -1,14 +1,14 @@
 //! Keys and clicks: the filter field, picking rows, the highlighted row's actions (or the picked rows' shared ones,
 //! asked once for all), the palette, and the dialog's answers.
 
-use cockpit_core::dialog::{Answer, Dialog};
-use cockpit_core::hub;
-use cockpit_core::input::{Edit, Input};
-use cockpit_core::keys::{self, Move};
-use cockpit_core::palette::{Entry, Outcome};
-use cockpit_core::pointed::MOVE_FIRST;
-use cockpit_core::toast::Kind as Toast;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
+use flightdeck_core::dialog::{Answer, Dialog};
+use flightdeck_core::hub;
+use flightdeck_core::input::{Edit, Input};
+use flightdeck_core::keys::{self, Move};
+use flightdeck_core::palette::{Entry, Outcome};
+use flightdeck_core::pointed::MOVE_FIRST;
+use flightdeck_core::toast::Kind as Toast;
 
 use crate::app::{App, Asked, Command};
 use crate::row::Call;

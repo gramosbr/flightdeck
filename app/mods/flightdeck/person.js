@@ -10,7 +10,7 @@ const KEYED = /~([0-9a-f]{32})$/;
 const KEY_FOR_MS = 10 * 60_000;
 
 /** The keys minted and not used yet, shared by every copy of the window: key -> {commands, at}. */
-const minted = () => (globalThis.cockpitPersonKeys ??= new Map());
+const minted = () => (globalThis.flightdeckPersonKeys ??= new Map());
 
 /** A key nobody outside this window can guess: the system's random source where the runtime has one. */
 export function oneTimeKey() {
@@ -20,7 +20,7 @@ export function oneTimeKey() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const bare = (command) => (command.startsWith("cockpit.") ? command.slice(8) : command);
+const bare = (command) => (command.startsWith("flightdeck.") ? command.slice(8) : command);
 
 /** A new key, good once for any of these commands (one opening of a menu); old keys are forgotten. */
 function mint(commands) {
@@ -33,7 +33,7 @@ function mint(commands) {
   return key;
 }
 
-/** The command as the person's own, `cockpit.` kept when it has it: sent from a click, a real key or a menu pick. */
+/** The command as the person's own, `flightdeck.` kept when it has it: sent from a click, a real key or a menu pick. */
 export function keyed(command) {
   return `${command}~${mint([command])}`;
 }
@@ -64,14 +64,14 @@ export function take(command, key) {
 let testing = null;
 
 /**
- * Whether this window takes keys and typing from a shell (`cockpit.key:`, `palette:type:`): only a sandbox's, whose
- * own process was started with COCKPIT_SANDBOX and COCKPIT_TEST_KEYS=1. Read once; no file anyone can write says so.
+ * Whether this window takes keys and typing from a shell (`flightdeck.key:`, `palette:type:`): only a sandbox's, whose
+ * own process was started with FLIGHTDECK_SANDBOX and FLIGHTDECK_TEST_KEYS=1. Read once; no file anyone can write says so.
  */
 export function testKeys() {
   testing ??= exec("/usr/bin/env", [])
     .then((r) => {
       const env = new Map(String(r?.stdout ?? "").split("\n").map((line) => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
-      return r?.code === 0 && Boolean(env.get("COCKPIT_SANDBOX")) && env.get("COCKPIT_TEST_KEYS") === "1";
+      return r?.code === 0 && Boolean(env.get("FLIGHTDECK_SANDBOX")) && env.get("FLIGHTDECK_TEST_KEYS") === "1";
     })
     .catch(() => false);
   return testing;

@@ -3,10 +3,10 @@
 
 mod common;
 
-use cockpit_core::testing::render;
-use cockpit_inbox::start::{Form, Outcome, Popup};
 use common::{app, focus, typed};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::testing::render;
+use flightdeck_inbox::start::{Form, Outcome, Popup};
 use serde_json::{Value, json};
 
 fn modes() -> Value {

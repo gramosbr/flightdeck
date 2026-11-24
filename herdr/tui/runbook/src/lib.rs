@@ -18,9 +18,9 @@ pub mod steps;
 pub mod table;
 pub mod view;
 
-/// `cockpit runbook`: the runbooks in the terminal until it quits.
+/// `flightdeck runbook`: the runbooks in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
-    cockpit_core::term::run(&mut app::App::new())
+    flightdeck_core::term::run(&mut app::App::new())
 }
 
 use std::time::Duration;
@@ -28,7 +28,7 @@ use std::time::Duration;
 use crossterm::event::Event;
 use ratatui::Frame;
 
-impl cockpit_core::term::App for app::App {
+impl flightdeck_core::term::App for app::App {
     fn draw(&mut self, frame: &mut Frame) {
         app::App::draw(self, frame);
     }
@@ -37,7 +37,7 @@ impl cockpit_core::term::App for app::App {
         app::App::event(self, event)
     }
 
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         let busy = self.dialog.is_some() || self.palette.is_open;
         (!busy).then(|| ("the runbook".to_string(), Vec::new()))
     }

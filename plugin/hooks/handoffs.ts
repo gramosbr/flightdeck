@@ -10,7 +10,7 @@ type $ = EngineInterface
 // The runbook app's run button hands a step to a session, which then owes its outcome: this tool records it.
 const REPORT = MCP.tools.report_step
 export const REPORT_TOOL = REPORT.name
-export const REPORT_TOOL_FULL = `mcp__cockpit__${REPORT_TOOL}` as const
+export const REPORT_TOOL_FULL = `mcp__flightdeck__${REPORT_TOOL}` as const
 
 const OUTCOMES = REPORT.inputSchema.properties.outcome.enum
 type Reported = (typeof OUTCOMES)[number]
@@ -130,8 +130,8 @@ export async function settleTurn($: $) {
 // Asks the runbook app for a background refresh of the ticket's runbook; false when there is no runbook or no app running.
 export async function requestRunbookRefresh($: $, id: string, reason: string) {
   const slug = id.toLowerCase()
-  const hasBook = await $.fs.exists(`${await home($)}/.config/cockpit/runbooks/${slug}.md`)
-  const isRunning = (await $.process.run(['pgrep', '-f', 'cockpit runbook cockpit-space'])).exitCode === 0
+  const hasBook = await $.fs.exists(`${await home($)}/.config/flightdeck/runbooks/${slug}.md`)
+  const isRunning = (await $.process.run(['pgrep', '-f', 'flightdeck runbook flightdeck-space'])).exitCode === 0
   if (!hasBook || !isRunning) return false
   const dir = `${await cacheDir($)}/runbook-refresh`
   await $.process.run(['mkdir', '-p', dir])

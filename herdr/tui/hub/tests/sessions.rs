@@ -53,7 +53,7 @@ fn sessions_come_after_the_apps_entries() {
         search_with_sessions(&hub, "sign-in").iter().filter(|e| e["app"] == "session").map(|e| e["target"]["key"].as_str().unwrap().to_string()).collect();
     sessions.sort();
     assert_eq!(sessions, ["s-dark", "s-login"]);
-    assert!(sandbox.home().join(".cache/cockpit/sessions-index/v3/manifest.json").exists());
+    assert!(sandbox.home().join(".cache/flightdeck/sessions-index/v3/manifest.json").exists());
 }
 
 #[test]
@@ -85,15 +85,15 @@ fn going_to_a_session_forks_it_in_a_tab_of_the_actions_space() {
     assert_eq!(real(&after("--cwd")), real(&sandbox.root.join("repos/api").to_string_lossy()));
     let run = calls.iter().find(|c| c.starts_with(&["pane".into(), "run".into()])).unwrap();
     assert!(run[3].starts_with("claude --resume s-login --fork-session 'This is a fork of a past session"), "{run:?}");
-    assert!(!sandbox.home().join(".cache/cockpit/focus/session.json").exists());
-    let kept: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/cockpit/actions.json")).unwrap()).unwrap();
+    assert!(!sandbox.home().join(".cache/flightdeck/focus/session.json").exists());
+    let kept: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/actions.json")).unwrap()).unwrap();
     assert_eq!(kept["session s-login"], "wT:p1");
 }
 
 #[test]
 fn a_session_already_open_comes_back_into_view() {
     let sandbox = Sandbox::new(&json!({"pane get": {"pane": {"pane_id": "w3:p7", "tab_id": "w3:t7", "agent": "claude"}}}), &json!({}));
-    std::fs::write(sandbox.home().join(".cache/cockpit/actions.json"), r#"{"session s-login": "w3:p7"}"#).unwrap();
+    std::fs::write(sandbox.home().join(".cache/flightdeck/actions.json"), r#"{"session s-login": "w3:p7"}"#).unwrap();
     let hub = Hub::start(&sandbox, &[]);
     let target = json!({"app": "session", "key": "s-login", "cwd": sandbox.root.join("repos/api"), "title": "Google sign-in"});
     let reply = hub.request(&json!({"op": "go", "target": target}));

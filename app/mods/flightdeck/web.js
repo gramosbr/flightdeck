@@ -1,5 +1,5 @@
-// The Chromium side browser's slot in the side panel. cockpit's own browser is a separate window: this says where it
-// goes (its rectangle inside the Herdr window, whether it shows, whether something of cockpit's covers it, and which
+// The Chromium side browser's slot in the side panel. flightdeck's own browser is a separate window: this says where it
+// goes (its rectangle inside the Herdr window, whether it shows, whether something of flightdeck's covers it, and which
 // session is in front) and the browser lays itself exactly over it. A browser belongs to the session it was opened
 // for: it shows with that session only, and the panel follows. While the browser is hidden the slot draws its last
 // frame, so nothing blinks.
@@ -20,18 +20,18 @@ const WIDTH = 640;
 
 /** What lies between the slot and the window's right and bottom edges in each layout: padding, the panel's border, the activity bar, the status bar. */
 export const INSETS = {
-  cockpit: { right: 8 + 1 + 44, bottom: 34 + 8 + 1 },
-  "cockpit-chat": { right: 8 + 1 + 44, bottom: 8 + 1 },
+  flightdeck: { right: 8 + 1 + 44, bottom: 34 + 8 + 1 },
+  "flightdeck-chat": { right: 8 + 1 + 44, bottom: 8 + 1 },
 };
 
 /** The insets a pointer over the slot measured, by layout: they correct the table above to the pixel. */
-const MEASURED = "cockpit.web.insets";
+const MEASURED = "flightdeck.web.insets";
 
-/** Set while cockpit closed the panel because the session in front has no browser: it opens again with one that has. */
-export const AWAY = "cockpit.web.away";
+/** Set while flightdeck closed the panel because the session in front has no browser: it opens again with one that has. */
+export const AWAY = "flightdeck.web.away";
 
 /** The slot's size as its view last drew it. The view and the follower are separate copies of the mod: this is how one tells the other. */
-const SIZE = "cockpit.web.size";
+const SIZE = "flightdeck.web.size";
 
 /** What the follower keeps about the slot: what was last told, the hub's view, and who is in front. It starts afresh with each load of the mod. */
 const state = { viewport: null, sent: "", next: null, sending: 0, seq: 0, since: Date.now(), model: null, terminal: undefined, unseen: new Set() };
@@ -60,12 +60,12 @@ export const insetsOf = (viewport, bounds) => ({ right: Math.round(viewport.widt
 
 /** Whether the slot is what the window shows: the side panel open on it, with the agent's screen in front. */
 export function slotShown(tree, name = layoutName()) {
-  const stack = name === "cockpit-chat" ? "screen" : "center";
+  const stack = name === "flightdeck-chat" ? "screen" : "center";
   return panelOpen(tree) && nodeOf("panel-body", tree)?.active === WEB && nodeOf(stack, tree)?.active === "work";
 }
 
-/** Whether a popup, a dialog or the palette of cockpit's is open over the window: the browser steps aside for it. */
-export function covered(now = Date.now(), copies = globalThis.cockpitCopies ?? []) {
+/** Whether a popup, a dialog or the palette of flightdeck's is open over the window: the browser steps aside for it. */
+export function covered(now = Date.now(), copies = globalThis.flightdeckCopies ?? []) {
   for (const copy of copies) if (copy.overlay && now - (copy.beat ?? copy.at ?? 0) < 3000) return true;
   return false;
 }
@@ -87,7 +87,7 @@ export function wantsPanel({ opened, seen, f, showing }) {
 
 /**
  * What the panel does when another session comes in front: it closes when that session has no browser (and remembers
- * it did), and opens on the browser of one that has, when cockpit had closed it or that session's agent opened a page
+ * it did), and opens on the browser of one that has, when flightdeck had closed it or that session's agent opened a page
  * meanwhile (`unseen`). Nothing while the same session stays in front.
  */
 export function panelSteps({ terminal, last, showing, away, count, unseen = false }) {
@@ -149,7 +149,7 @@ function took(model) {
   const st = slot();
   if (model?.run !== st.model?.run) st.sent = "";
   st.model = model;
-  setShared("cockpit.web.model", model);
+  setShared("flightdeck.web.model", model);
 }
 
 /**
@@ -206,7 +206,7 @@ export function followPanel() {
 
 export default class Web {
   init(_props, cx) {
-    this.model = shared("cockpit.web.model") ?? null;
+    this.model = shared("flightdeck.web.model") ?? null;
     this.sub = hub.subscribe(cx, { views: ["browser"] }, (m, cx) => {
       if (m.view !== "browser") return;
       this.model = m.value;
@@ -250,11 +250,11 @@ export default class Web {
         .when(Boolean(action), (e) => e.child(action));
     const mine = Boolean(m?.current) && m.current === ownerOf(f?.terminal);
     let body;
-    if (!m) body = message("globe", "The browser", "Waiting for cockpit's hub.");
-    else if (!m.enabled) body = message("globe", "The Chromium side browser is off", "Turn it on in Cockpit settings: Side browser, Chromium.");
-    else if (!m.installed) body = message("arrow-down", "The Chromium side browser is not installed", "Run cockpit browser install in a terminal: it downloads Electron and agent-browser once.");
+    if (!m) body = message("globe", "The browser", "Waiting for flightdeck's hub.");
+    else if (!m.enabled) body = message("globe", "The Chromium side browser is off", "Turn it on in Flightdeck settings: Side browser, Chromium.");
+    else if (!m.installed) body = message("arrow-down", "The Chromium side browser is not installed", "Run flightdeck browser install in a terminal: it downloads Electron and agent-browser once.");
     else if (!f?.terminal) body = message("globe", "No session in front", "A browser belongs to an agent session: put one in front.");
-    else if (!m.docked) body = message("globe", "The browser is a window of its own", "Docking is off in Cockpit settings.", Button("web-open", { label: "Open a tab", onClick: () => this.open() }));
+    else if (!m.docked) body = message("globe", "The browser is a window of its own", "Docking is off in Flightdeck settings.", Button("web-open", { label: "Open a tab", onClick: () => this.open() }));
     else if (!m.running || tabsOf(m, f.terminal) === 0) {
       body = message("globe", "No page open for this session", "Its agent opens one beside its work, or start with a new tab.", Button("web-new", { label: "New tab", onClick: () => this.open() }));
     } else if (!m.shown && mine && m.frame?.page) {

@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/policy/cookie-domain.ts,
 // policy/cookie-import-scope.ts and policy/cookie-import-exclusions.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 // A short built-in list of public suffixes stands in for the public-suffix library Orca links.
 
 import { isIP } from "node:net";

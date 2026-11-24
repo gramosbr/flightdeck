@@ -2,15 +2,15 @@
 // (https://github.com/stablyai/orca, commit 49498c3, MIT licence, Copyright (c) 2026 Lovecast Inc.); each file names its source.
 //
 // Step scripts: `grabScript(step)` returns the string to pass to `webContents.executeJavaScript`, which resolves to:
-//   "arm"           `true`. Installs `window.__cockpitGrab` and the overlay, and starts the hover outline; arming again
+//   "arm"           `true`. Installs `window.__flightdeckGrab` and the overlay, and starts the hover outline; arming again
 //                   replaces the earlier picker.
 //   "awaitClick"    a promise, settled by the next trusted click or right-click:
 //                     click        -> the raw payload `{ page, target, nearbyText, ancestorPath, screenshot: null }`
-//                     right-click  -> `{ __cockpitContextMenu: true, payload }`
-//                     teardown     -> `{ __cockpitCancelled: true }`
+//                     right-click  -> `{ __flightdeckContextMenu: true, payload }`
+//                     teardown     -> `{ __flightdeckCancelled: true }`
 //                   It rejects with "Grab not armed" before an arm, "cancelled" when nothing is hovered, or the
 //                   extraction error. After a pick the outline stays frozen on the element, which carries
-//                   `data-cockpit-grab-selected="<payload.page.capturedAt>"`, until a teardown or a new arm.
+//                   `data-flightdeck-grab-selected="<payload.page.capturedAt>"`, until a teardown or a new arm.
 //                   Pass the result to `readGrabSelection`, a rejection to `readGrabFailure`.
 //                   Presses are kept from the page from the arm on, so a click that lands before this script runs
 //                   is dropped without a pick: run it right after the arm.
@@ -30,10 +30,10 @@
 //   ANNOTATION_INTENTS                       ["fix", "change", "question", "approve"].
 //   ANNOTATION_PRIORITIES                    ["blocking", "important", "suggestion"].
 //   DEFAULT_ANNOTATION_PRIORITY              "important".
-//   GRAB_GLOBAL                              "__cockpitGrab", the global the arm script installs.
-//   GRAB_SELECTED_ATTRIBUTE                  "data-cockpit-grab-selected", set on the frozen element.
-//   GRAB_CONTEXT_MENU_KEY                    "__cockpitContextMenu".
-//   GRAB_CANCELLED_KEY                       "__cockpitCancelled".
+//   GRAB_GLOBAL                              "__flightdeckGrab", the global the arm script installs.
+//   GRAB_SELECTED_ATTRIBUTE                  "data-flightdeck-grab-selected", set on the frozen element.
+//   GRAB_CONTEXT_MENU_KEY                    "__flightdeckContextMenu".
+//   GRAB_CANCELLED_KEY                       "__flightdeckCancelled".
 //   isAnnotationPageFull(count)              whether a page already holds 20 notes.
 //   isAriaAttribute(name)                    whether an attribute name starts with "aria-".
 // payload.js
@@ -77,7 +77,7 @@
 //                                            carrying this token, else null.
 //   parseAnnotationViewportReport(json)      the same from the JSON alone.
 //   isValidGrabRect(value)                   whether a value is a finite rectangle of non-negative size.
-//   ANNOTATION_VIEWPORT_MESSAGE_PREFIX       "__cockpit_annotation_viewport__:".
+//   ANNOTATION_VIEWPORT_MESSAGE_PREFIX       "__flightdeck_annotation_viewport__:".
 
 export { grabScript } from "./scripts.js";
 export {

@@ -3,9 +3,9 @@
 
 use std::sync::mpsc::{Receiver, channel};
 
-use cockpit_core::keys::Move;
-use cockpit_core::term;
-use cockpit_core::theme::{DIM, FG, GREEN, ORANGE, PANEL, RED, SURFACE, bold, fg};
+use flightdeck_core::keys::Move;
+use flightdeck_core::term;
+use flightdeck_core::theme::{DIM, FG, GREEN, ORANGE, PANEL, RED, SURFACE, bold, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
@@ -33,26 +33,31 @@ pub struct Report {
 }
 
 impl Report {
-    /// `cockpit doctor` run in the background by this same binary, its lines shown once it is done.
+    /// `flightdeck doctor` run in the background by this same binary, its lines shown once it is done.
     pub fn doctor() -> Report {
         let (tx, rx) = channel();
         std::thread::spawn(move || {
-            let exe = std::env::current_exe().unwrap_or_else(|_| "cockpit".into());
+            let exe = std::env::current_exe().unwrap_or_else(|_| "flightdeck".into());
             let rows = match std::process::Command::new(exe).arg("doctor").stdin(std::process::Stdio::null()).output() {
                 Ok(out) => doctor_rows(&String::from_utf8_lossy(&out.stdout)),
-                Err(error) => vec![row("✗", RED, format!("cockpit doctor did not run: {error}"))],
+                Err(error) => vec![row("✗", RED, format!("flightdeck doctor did not run: {error}"))],
             };
             let _ = tx.send(rows);
             term::redraw();
         });
-        Report { title: "Cockpit doctor".into(), rows: vec![row("…", DIM, "checking every part of cockpit")], state: ListState::default(), running: Some(rx) }
+        Report {
+            title: "Flightdeck doctor".into(),
+            rows: vec![row("…", DIM, "checking every part of flightdeck")],
+            state: ListState::default(),
+            running: Some(rx),
+        }
     }
 
-    /// Every agent's limits and the week's tokens, as `cockpit usage` shows them, read in the background.
+    /// Every agent's limits and the week's tokens, as `flightdeck usage` shows them, read in the background.
     pub fn usage() -> Report {
         let (tx, rx) = channel();
         std::thread::spawn(move || {
-            let _ = tx.send(usage_rows(&cockpit_core::usage::fetch(true)));
+            let _ = tx.send(usage_rows(&flightdeck_core::usage::fetch(true)));
             term::redraw();
         });
         Report { title: "Usage and limits".into(), rows: vec![row("…", DIM, "Loading usage…")], state: ListState::default(), running: Some(rx) }
@@ -76,7 +81,7 @@ impl Report {
             .collect();
         let title = if date == today || date.is_empty() { "Today's brief".to_string() } else { format!("The last brief, of {date}") };
         if rows.is_empty() {
-            rows.push(row("·", DIM, "No brief yet: the first Claude session of the day with cockpit writes it."));
+            rows.push(row("·", DIM, "No brief yet: the first Claude session of the day with flightdeck writes it."));
         }
         let mut state = ListState::default();
         state.select(Some(0));
@@ -106,9 +111,9 @@ impl Report {
         serde_json::json!({"title": self.title, "running": self.running.is_some(), "rows": rows})
     }
 
-    /// The doctor's page once `cockpit doctor` printed `out`.
+    /// The doctor's page once `flightdeck doctor` printed `out`.
     pub fn doctor_done(out: &str) -> Report {
-        Report { title: "Cockpit doctor".into(), rows: doctor_rows(out), state: ListState::default(), running: None }
+        Report { title: "Flightdeck doctor".into(), rows: doctor_rows(out), state: ListState::default(), running: None }
     }
 
     pub fn selected_url(&self) -> Option<String> {
@@ -175,15 +180,15 @@ pub fn doctor_rows(out: &str) -> Vec<Row> {
         .collect();
     rows.sort_by_key(|(rank, _)| *rank);
     if rows.is_empty() {
-        return vec![row("✗", RED, "cockpit doctor printed nothing")];
+        return vec![row("✗", RED, "flightdeck doctor printed nothing")];
     }
     rows.into_iter().map(|(_, r)| r).collect()
 }
 
 /// The usage page's lines as rows, the mark saying what each is.
 fn usage_rows(view: &Value) -> Vec<Row> {
-    use cockpit_core::usage::Tone;
-    cockpit_core::usage::text(view)
+    use flightdeck_core::usage::Tone;
+    flightdeck_core::usage::text(view)
         .into_iter()
         .filter(|(_, text)| !text.is_empty())
         .map(|(tone, text)| match tone {
@@ -204,9 +209,9 @@ mod tests {
 
     #[test]
     fn the_doctor_puts_failures_first() {
-        let rows = doctor_rows("ok    herdr 0.9.5\nwarn  no Claude session with cockpit is running\nfail  jq is missing: brew install jq\n");
+        let rows = doctor_rows("ok    herdr 0.9.5\nwarn  no Claude session with flightdeck is running\nfail  jq is missing: brew install jq\n");
         let marks: Vec<(&str, &str)> = rows.iter().map(|r| (r.mark, r.text.as_str())).collect();
-        assert_eq!(marks, [("✗", "jq is missing: brew install jq"), ("!", "no Claude session with cockpit is running"), ("✓", "herdr 0.9.5")]);
+        assert_eq!(marks, [("✗", "jq is missing: brew install jq"), ("!", "no Claude session with flightdeck is running"), ("✓", "herdr 0.9.5")]);
         assert_eq!(doctor_rows("").len(), 1);
     }
 

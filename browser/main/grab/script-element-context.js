@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/grab-guest-element-context-script.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /** Builds an element's unique selector, its readable and full DOM paths, its computed styles and what sits around it. */
 export const GRAB_ELEMENT_CONTEXT_SCRIPT = `  function getComputedStyleSubset(el) {

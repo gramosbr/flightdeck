@@ -1,7 +1,7 @@
 //! The list's rows: by app (troubled apps first and unfolded, each with its alerting monitors, new issues and releases
 //! under it) or as a timeline of every release, newest first; each row's actions, and the keys its marker stands for.
 
-use cockpit_core::acts::Act;
+use flightdeck_core::acts::Act;
 use serde_json::json;
 
 use crate::app::{App, Cmd};

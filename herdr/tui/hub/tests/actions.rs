@@ -1,6 +1,6 @@
 //! Every action against its expected outcome: the request runs through the hub on a sandbox, and the herdr, claude and
 //! script calls, the reply and the files it changed must match `tests/fixtures/expected/<case>.json`.
-//! `RECORD_EXPECTED=1 cargo test -p cockpit-hub --test actions` rewrites those files from the hub's outcomes.
+//! `RECORD_EXPECTED=1 cargo test -p flightdeck-hub --test actions` rewrites those files from the hub's outcomes.
 
 mod common;
 
@@ -179,7 +179,7 @@ fn cases() -> Vec<Case> {
         case("talk about a runbook", "runbook", "talk", r#"[{"$book": "eng-401"}]"#),
         case("talk about a runbook with no ticket", "runbook", "talk", r#"[{"$book": "notes"}]"#),
         case("delete asks first", "runbook", "delete", r#"[{"$book": "notes"}]"#),
-        case("delete", "runbook", "delete", r#"[{"$book": "notes"}]"#).armed("delete-@BOX@/home/.config/cockpit/runbooks/notes.md"),
+        case("delete", "runbook", "delete", r#"[{"$book": "notes"}]"#).armed("delete-@BOX@/home/.config/flightdeck/runbooks/notes.md"),
         case("announce a refresh", "runbook", "announce", r#"["eng-401"]"#).notifies(),
         case("announce while in view", "runbook", "announce", r#"["eng-401"]"#)
             .herdr(r#"{"workspace list": {"workspaces": [{"workspace_id": "w5", "label": "[5] x  runbook", "focused": true}]}}"#),
@@ -223,7 +223,7 @@ fn moved() -> String {
     answers.to_string()
 }
 
-const BOOK_WHOLE: &str = r#"[{"path": "@BOX@/home/.config/cockpit/runbooks/notes.md", "slug": "notes", "title": "Notes for later", "updated": "", "steps": [], "notes": []}, {"n": "1", "step": "Look", "where": "api#4", "status": "⬜ to do", "command": ""}]"#;
+const BOOK_WHOLE: &str = r#"[{"path": "@BOX@/home/.config/flightdeck/runbooks/notes.md", "slug": "notes", "title": "Notes for later", "updated": "", "steps": [], "notes": []}, {"n": "1", "step": "Look", "where": "api#4", "status": "⬜ to do", "command": ""}]"#;
 
 /// Text with the sandbox's root and the clock taken out: today's date too, as a step marked done says it.
 fn norm_text(text: &str, root: &Path) -> String {
@@ -240,7 +240,7 @@ fn norm_text(text: &str, root: &Path) -> String {
 
 fn norm(value: &Value, root: &Path) -> Value {
     match value {
-        // This cockpit's version, which the doctor's report carries, is the same in every release's outcome.
+        // This flightdeck's version, which the doctor's report carries, is the same in every release's outcome.
         Value::String(s) if s == env!("CARGO_PKG_VERSION") => json!("<VERSION>"),
         Value::String(s) => Value::String(norm_text(s, root)),
         Value::Array(items) => Value::Array(items.iter().map(|v| norm(v, root)).collect()),
@@ -323,7 +323,7 @@ fn outcome(sandbox: &Sandbox, reply: &Value, before: &BTreeMap<String, Value>) -
     let root = &sandbox.root;
     // A background refresh logs its claude call whenever it gets to it: its exit file says it has.
     for slug in reply["refreshing"].as_object().into_iter().flatten().map(|(slug, _)| slug) {
-        let exit = sandbox.home().join(format!(".cache/cockpit/runbook-refresh-{slug}.exit"));
+        let exit = sandbox.home().join(format!(".cache/flightdeck/runbook-refresh-{slug}.exit"));
         let start = std::time::Instant::now();
         while !exit.exists() && start.elapsed() < std::time::Duration::from_secs(10) {
             std::thread::sleep(std::time::Duration::from_millis(50));
@@ -389,16 +389,16 @@ fn every_action_has_its_expected_outcome() {
 }
 
 #[test]
-fn a_doctor_fix_refuses_a_report_another_cockpit_wrote() {
+fn a_doctor_fix_refuses_a_report_another_flightdeck_wrote() {
     let sandbox = Sandbox::new(&json!({}), &json!({}));
-    let kept = sandbox.home().join(".cache/cockpit/doctor.json");
+    let kept = sandbox.home().join(".cache/flightdeck/doctor.json");
     let mut report: Value = serde_json::from_str(&std::fs::read_to_string(&kept).unwrap()).unwrap();
-    report["cockpit"] = json!("0.0.1");
+    report["flightdeck"] = json!("0.0.1");
     std::fs::write(&kept, report.to_string()).unwrap();
     let hub = Hub::start(&sandbox, &[]);
     let reply = hub.request(&json!({"op": "act", "app": "doctor", "action": "fix", "args": ["tools.gh", report["at"], "gh auth login"], "armed": null}));
     let error = reply["error"].as_str().unwrap_or_default();
-    assert!(error.starts_with("the last report is from cockpit 0.0.1"), "{reply}");
+    assert!(error.starts_with("the last report is from flightdeck 0.0.1"), "{reply}");
     assert!(sandbox.calls().is_empty(), "nothing ran: {:?}", sandbox.calls());
 }
 

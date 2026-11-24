@@ -1,9 +1,9 @@
 {
-  "name": "cockpit",
-  "interface": { "displayName": "cockpit" },
+  "name": "flightdeck",
+  "interface": { "displayName": "flightdeck" },
   "plugins": [
     {
-      "name": "cockpit",
+      "name": "flightdeck",
       "source": { "source": "local", "path": "./codex" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
       "category": "Productivity"

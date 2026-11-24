@@ -1,4 +1,4 @@
-//! What is left of getting started, from the doctor's kept report (`cockpit doctor --json` writes it to the cache): each
+//! What is left of getting started, from the doctor's kept report (`flightdeck doctor --json` writes it to the cache): each
 //! step done or not, with the command that does it, for the spaces' empty states.
 
 use std::sync::Mutex;
@@ -42,7 +42,7 @@ pub fn steps(report: &Value) -> Vec<Step> {
         .collect()
 }
 
-/// Runs `cockpit doctor --json --cached` in the background, at most every ten minutes, so the next read has a report.
+/// Runs `flightdeck doctor --json --cached` in the background, at most every ten minutes, so the next read has a report.
 pub fn refresh() {
     static LAST: Mutex<Option<Instant>> = Mutex::new(None);
     let mut last = LAST.lock().unwrap_or_else(|e| e.into_inner());
@@ -69,7 +69,7 @@ pub fn lines(steps: &[Step], cells: usize) -> Vec<Line<'static>> {
         Line::raw(""),
         Line::from(vec![
             Span::styled("Getting started", bold(FG)),
-            Span::styled(format!("   {} of {} done · cockpit doctor --all says more", steps.len() - left, steps.len()), dim()),
+            Span::styled(format!("   {} of {} done · flightdeck doctor --all says more", steps.len() - left, steps.len()), dim()),
         ]),
     ];
     let label_w = steps.iter().map(|s| width(&s.label)).max().unwrap_or(0).min(cells.saturating_sub(6));
@@ -101,16 +101,16 @@ mod tests {
     #[test]
     fn the_steps_left_read_with_their_fix() {
         let report = json!({"getting_started": [
-            {"id": "setup", "label": "Set up cockpit", "done": true, "fix": null},
+            {"id": "setup", "label": "Set up flightdeck", "done": true, "fix": null},
             {"id": "github", "label": "Sign in to GitHub", "done": false, "fix": {"label": "gh auth login", "command": "gh auth login"}},
-            {"id": "tools", "label": "Give Claude Code cockpit's tools", "done": false, "fix": {"label": "/plugin install cockpit"}},
+            {"id": "tools", "label": "Give Claude Code flightdeck's tools", "done": false, "fix": {"label": "/plugin install flightdeck"}},
         ]});
         let found = steps(&report);
         assert_eq!(found[1], Step { label: "Sign in to GitHub".into(), done: false, fix: Some("gh auth login".into()) });
-        assert_eq!(found[2].fix.as_deref(), Some("/plugin install cockpit"), "words when no command does it");
+        assert_eq!(found[2].fix.as_deref(), Some("/plugin install flightdeck"), "words when no command does it");
         let shown: Vec<String> = lines(&found, 80).iter().map(text).collect();
-        assert_eq!(shown[1], "Getting started   1 of 3 done · cockpit doctor --all says more");
-        assert_eq!(shown[2], " ✓ Set up cockpit");
+        assert_eq!(shown[1], "Getting started   1 of 3 done · flightdeck doctor --all says more");
+        assert_eq!(shown[2], " ✓ Set up flightdeck");
         assert_eq!(shown[3], " ○ Sign in to GitHub                  gh auth login");
         let narrow: Vec<String> = lines(&found, 30).iter().skip(2).map(text).collect();
         assert!(narrow.iter().all(|l| width(l) <= 30 && !l.contains("gh auth login")), "a narrow pane drops the fixes first: {narrow:?}");
@@ -118,7 +118,7 @@ mod tests {
 
     #[test]
     fn nothing_when_every_step_is_done_or_no_report() {
-        assert!(lines(&steps(&json!({"getting_started": [{"label": "Set up cockpit", "done": true}]})), 80).is_empty());
+        assert!(lines(&steps(&json!({"getting_started": [{"label": "Set up flightdeck", "done": true}]})), 80).is_empty());
         assert!(lines(&steps(&Value::Null), 80).is_empty());
     }
 }

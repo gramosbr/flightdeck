@@ -5,10 +5,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
-use cockpit_core::files::Density;
-use cockpit_core::testing::render;
-use cockpit_runbook::app::{App, Paths};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::files::Density;
+use flightdeck_core::testing::render;
+use flightdeck_runbook::app::{App, Paths};
 
 /// A fresh copy of the fixtures for one test, the runbooks' mtimes set so the tabs read ENG-410, ENG-420, ENG-398.
 fn sandbox(name: &str) -> PathBuf {

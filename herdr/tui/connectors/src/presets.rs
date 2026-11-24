@@ -1,4 +1,4 @@
-//! The MCP servers cockpit knows: their public address, the source they feed and, for most, how to read them; one
+//! The MCP servers flightdeck knows: their public address, the source they feed and, for most, how to read them; one
 //! without a mapping is mapped by the person's agent at setup.
 
 use serde_json::{Value, json};
@@ -19,7 +19,7 @@ pub struct Preset {
     pub app_scopes: &'static [&'static str],
     /// Text that tells it in a URL or a command.
     pub marks: &'static [&'static str],
-    /// The section's mapping (`tools`, `fields`…), when cockpit has one.
+    /// The section's mapping (`tools`, `fields`…), when flightdeck has one.
     pub mapping: Option<fn() -> Value>,
 }
 
@@ -138,7 +138,7 @@ pub fn for_source(source: &str) -> impl Iterator<Item = &'static Preset> {
     PRESETS.iter().filter(move |p| p.sources.contains(&source))
 }
 
-/// Words that tell a server of a source in its name or address, for one cockpit has no preset for.
+/// Words that tell a server of a source in its name or address, for one flightdeck has no preset for.
 pub fn hints(source: &str) -> &'static [&'static str] {
     match source {
         "tickets" => &["jira", "linear", "asana", "trello", "youtrack", "shortcut", "clickup", "monday", "plane", "issue", "ticket", "github", "gitlab"],

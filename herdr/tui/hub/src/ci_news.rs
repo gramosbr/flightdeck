@@ -24,7 +24,7 @@ pub fn start() {
     std::thread::spawn(|| {
         acts_for_the_person();
         let mut since = now_ms();
-        let (mut told, mut retry) = (Told::load(&cockpit_core::files::cache().join("ci-told.json")), Vec::new());
+        let (mut told, mut retry) = (Told::load(&flightdeck_core::files::cache().join("ci-told.json")), Vec::new());
         let hooks = Hooks {
             agent_of: &crate::act::agent_on,
             queue: &|action, args| crate::views::act("queue", action, args),
@@ -37,7 +37,7 @@ pub fn start() {
             if (events.is_empty() && retry.is_empty()) || crate::config::load().0["ci"]["tellAgents"] == false {
                 continue;
             }
-            let (inbox, ci) = (crate::config::read_inbox(), cockpit_core::files::load(&cockpit_core::files::cache().join("ci.json")).unwrap_or_default());
+            let (inbox, ci) = (crate::config::read_inbox(), flightdeck_core::files::load(&flightdeck_core::files::cache().join("ci.json")).unwrap_or_default());
             pass(&events, &inbox, &ci, &mut told, &mut retry, &hooks, now_ms());
         }
     });
@@ -79,9 +79,9 @@ fn pass(events: &[Value], inbox: &Value, ci: &Value, told: &mut Told, retry: &mu
     }
 }
 
-/// The news is cockpit's own work for the person: the queue it writes to takes it from them, not from an unknown sender.
+/// The news is flightdeck's own work for the person: the queue it writes to takes it from them, not from an unknown sender.
 fn acts_for_the_person() {
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
 }
 
 fn now_ms() -> u64 {
@@ -152,7 +152,7 @@ struct Told {
 impl Told {
     /// What a hub before this one told, from `file`, which each new outcome told is written to.
     fn load(file: &Path) -> Told {
-        let kept = cockpit_core::files::load(file).unwrap_or(Value::Null);
+        let kept = flightdeck_core::files::load(file).unwrap_or(Value::Null);
         let seen = kept["seen"].as_object().into_iter().flatten().filter_map(|(k, at)| Some((k.clone(), at.as_u64()?))).collect();
         let red = list(&kept["red"]).iter().filter_map(|k| k.as_str().map(str::to_string)).collect();
         Told { seen, red, file: Some(file.to_path_buf()) }
@@ -175,7 +175,7 @@ impl Told {
         if let Some(file) = &self.file {
             let mut red: Vec<&String> = self.red.iter().collect();
             red.sort();
-            let _ = cockpit_core::files::write(file, &json!({"seen": self.seen, "red": red}));
+            let _ = flightdeck_core::files::write(file, &json!({"seen": self.seen, "red": red}));
         }
     }
 }
@@ -272,12 +272,12 @@ mod tests {
     fn the_news_thread_acts_for_the_person() {
         let sender = std::thread::spawn(|| {
             acts_for_the_person();
-            cockpit_core::peer::current()
+            flightdeck_core::peer::current()
         })
         .join()
         .unwrap();
-        assert_eq!(sender, cockpit_core::peer::Sender::InProcess, "a guarded act from it is not refused as unknown");
-        assert_eq!(std::thread::spawn(cockpit_core::peer::current).join().unwrap(), cockpit_core::peer::Sender::Unknown, "without it, it would be");
+        assert_eq!(sender, flightdeck_core::peer::Sender::InProcess, "a guarded act from it is not refused as unknown");
+        assert_eq!(std::thread::spawn(flightdeck_core::peer::current).join().unwrap(), flightdeck_core::peer::Sender::Unknown, "without it, it would be");
     }
 
     #[test]
@@ -368,17 +368,17 @@ mod tests {
         assert!(calls.borrow().iter().all(|c| c == "add" || c == "remove"), "never tell, send or resume: {:?}", calls.borrow());
     }
 
-    /// A session Cockpit Chat started carries the repo, branch and PR of its worktree, so Fix CI, Address review and the
+    /// A session Flightdeck Chat started carries the repo, branch and PR of its worktree, so Fix CI, Address review and the
     /// news reach it as they reach a terminal.
     #[test]
     fn a_driven_session_on_the_pr_s_branch_is_picked_and_gets_the_news() {
         let branch = "me/eng-412-daily-quotas";
         let inbox =
             json!({"mine": [{"repo": "api", "number": 2198, "url": PR, "branch": branch, "base": "main", "headOid": "c1", "title": "Enforce daily quotas"}]});
-        let git = cockpit_agents::gui::Git { repo: "api".into(), branch: Some(branch.into()), ..Default::default() };
+        let git = flightdeck_agents::gui::Git { repo: "api".into(), branch: Some(branch.into()), ..Default::default() };
         let summary = json!({"key": "claude:1794-0", "agent": "claude", "cwd": "/w/.herdr/worktrees/api/me-eng-412-daily-quotas", "title": "Enforce daily quotas",
             "session": "", "working": false, "pending": [], "started": 1});
-        let row = cockpit_agents::gui::driven_row(&summary, Some(&git), &inbox, &Value::Null, None, &Value::Null);
+        let row = flightdeck_agents::gui::driven_row(&summary, Some(&git), &inbox, &Value::Null, None, &Value::Null);
         assert_eq!((row["repo"].as_str(), row["branch"].as_str(), row["pr"]["url"].as_str()), (Some("api"), Some(branch), Some(PR)), "{row}");
         assert_eq!(row["stage"], "review", "at rest, its open PR says whose move it is");
         let view = json!({"agents": [row]});

@@ -1,4 +1,4 @@
-// Who a review goes to: the agents working in the reviewed repository (sessions cockpit drives among them), the one the
+// Who a review goes to: the agents working in the reviewed repository (sessions flightdeck drives among them), the one the
 // panel follows by default, the person's choice kept per repository, or a new agent Start work opens there on the review.
 
 /**
@@ -67,7 +67,7 @@ export function recipientLabel(to) {
 }
 
 /** The recipient menu: the repo's agents, a long name cut so what it is stays in view, then a new agent; each item runs
- * `cockpit.review:to:<handle|new>|<repo>`, so only the review of that repo takes it. */
+ * `flightdeck.review:to:<handle|new>|<repo>`, so only the review of that repo takes it. */
 export function menuItems(rows, here, to, repo) {
   const current = to.kind === "agent" ? to.row.terminal : to.kind === "new" ? "new" : null;
   const short = (text) => (text.length > 30 ? `${text.slice(0, 29)}…` : text);

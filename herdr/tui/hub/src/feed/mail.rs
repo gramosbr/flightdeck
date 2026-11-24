@@ -1,12 +1,12 @@
 //! My mail through the hub's own mail server (the config's `mail` section): the store's `mail` document, the new
-//! unread messages worth a notification, and the threads read whole, kept a week in ~/.cache/cockpit/mail/.
+//! unread messages worth a notification, and the threads read whole, kept a week in ~/.cache/flightdeck/mail/.
 
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use cockpit_connectors::mail;
-use cockpit_connectors::tools::{Mapped, Tools};
+use flightdeck_connectors::mail;
+use flightdeck_connectors::tools::{Mapped, Tools};
 use serde_json::{Value, json};
 
 use crate::value::list;
@@ -41,7 +41,7 @@ pub fn fetch(raw: &Value, config: &Value) -> Option<Result<Vec<Value>, String>> 
 
 /// Whether the message's thread is kept, read since the message's date: a reply landing makes it stale.
 pub fn kept_fresh(message: &Value) -> bool {
-    let Some(doc) = cockpit_core::files::load(&thread_path(message["id"].as_str().unwrap_or_default())) else { return false };
+    let Some(doc) = flightdeck_core::files::load(&thread_path(message["id"].as_str().unwrap_or_default())) else { return false };
     let date = message["date"].as_str().and_then(|d| chrono::DateTime::parse_from_rfc3339(d).ok()).map_or(0, |d| d.timestamp_millis());
     doc["error"].is_null() && doc["at"].as_i64().unwrap_or(0) >= date
 }
@@ -91,7 +91,7 @@ pub fn news(before: &Value, after: &Value) -> Vec<(String, String, String)> {
 
 /// The folder of the threads read whole.
 pub fn threads_dir() -> PathBuf {
-    cockpit_core::files::cache().join("mail")
+    flightdeck_core::files::cache().join("mail")
 }
 
 /// Where a message's thread is kept, as `{at, id, messages, error?}`.
@@ -106,7 +106,7 @@ pub fn keep_thread(id: &str, read: Result<Vec<Value>, String>) {
         Ok(messages) => doc["messages"] = Value::from(messages),
         Err(error) => doc["error"] = Value::from(error.chars().take(300).collect::<String>()),
     }
-    let _ = cockpit_core::files::write(&thread_path(id), &doc);
+    let _ = flightdeck_core::files::write(&thread_path(id), &doc);
 }
 
 /// The message as the `mail` document lists it, else its id alone (its thread then taken for its own).

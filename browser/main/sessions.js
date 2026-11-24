@@ -10,7 +10,7 @@ import { verdict, siteOf, allowedNow, WORDS } from "./permissions.js";
 const ready = new Map();
 
 /** A user agent with Electron's and the app's tokens taken out. */
-export const cleanAgent = (agent) => agent.replace(/\s(Electron|cockpit-browser|Cockpit Browser)\/\S+/gi, "");
+export const cleanAgent = (agent) => agent.replace(/\s(Electron|flightdeck-browser|Flightdeck Browser)\/\S+/gi, "");
 
 /** A file name that is free in a folder: `report.pdf`, then `report (1).pdf`. */
 export function freeName(dir, name, exists = fs.existsSync) {

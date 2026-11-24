@@ -22,12 +22,12 @@ import { clearRows, closeIdleBrowsers, notifyFinished, reportSide, reportUsage }
 import { checkUpdate, forget, heartbeat } from './upkeep'
 import { branchOf, seedWork, trackWork } from './work'
 
-const links = atom({ plugin: 'cockpit', key: 'links' } as const, null)
-const sidePage = atom({ plugin: 'cockpit', key: 'sidePage' } as const, null)
-const ticket = atom({ plugin: 'cockpit', key: 'ticket' } as const, null)
-const usage = atom({ plugin: 'cockpit', key: 'usage' } as const, null)
-const views = atom({ plugin: 'cockpit', key: 'views' } as const, [])
-const work = atom({ plugin: 'cockpit', key: 'work' } as const, null)
+const links = atom({ plugin: 'flightdeck', key: 'links' } as const, null)
+const sidePage = atom({ plugin: 'flightdeck', key: 'sidePage' } as const, null)
+const ticket = atom({ plugin: 'flightdeck', key: 'ticket' } as const, null)
+const usage = atom({ plugin: 'flightdeck', key: 'usage' } as const, null)
+const views = atom({ plugin: 'flightdeck', key: 'views' } as const, [])
+const work = atom({ plugin: 'flightdeck', key: 'work' } as const, null)
 
 // What this turn's prompt asked for and whether show ran since: a hand-made page or an artifact is the fallback.
 let turn = freshTurn()
@@ -125,9 +125,9 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // The to-do list is ~/.config/cockpit/todo.md, Markdown checkboxes the herdr to-do app also edits.
+  // The to-do list is ~/.config/flightdeck/todo.md, Markdown checkboxes the herdr to-do app also edits.
   on('command.run', { command: 'todo' }, async ($, e) => {
-    const path = `${await home($)}/.config/cockpit/todo.md`
+    const path = `${await home($)}/.config/flightdeck/todo.md`
     const body = await $.fs.read(path).catch(() => '# To-do\n\n')
     const items = body.split('\n').filter(l => /^- \[( |x)\] /.test(l))
     const text = e.args.trim()
@@ -141,7 +141,7 @@ export const register: Register = on => {
 
   // /runbook is the plugin's markdown command (commands/runbook.md), a prompt the engine runs itself.
   // This hook only records which session ran it, the one the runbook app hands steps to.
-  on('command.run', { command: ['runbook', 'cockpit:runbook'] }, async ($, e, next) => {
+  on('command.run', { command: ['runbook', 'flightdeck:runbook'] }, async ($, e, next) => {
     const target = e.args.trim() || (await read($, ticket)) || ''
     const here = await herdrHere($).catch(() => undefined)
     if (/^[A-Za-z]+-\d+$/.test(target) && here) await recordRunbookOwner($, target, here.pane)
@@ -150,7 +150,7 @@ export const register: Register = on => {
     .catch(($, e, next) => next(e))
 
   on('tool.call', { tool: REPORT_TOOL_FULL }, async ($, e) => reportStep($, e as unknown as Record<string, unknown>))
-  // It writes cockpit's own files and one runbook status cell, so it needs no permission prompt.
+  // It writes flightdeck's own files and one runbook status cell, so it needs no permission prompt.
   on('tool.check', { tool: REPORT_TOOL_FULL }, async () => ({ decision: 'allow' }))
   on('tool.call', { tool: SHOW_TOOL_FULL }, async ($, e) => {
     if (e.agentId === undefined) turn.shown = true
@@ -159,7 +159,7 @@ export const register: Register = on => {
     void reportSide($).catch(() => undefined)
     return answer
   })
-  // It writes the view to cockpit's cache and splits a pane beside this session; a view that runs commands asks first.
+  // It writes the view to flightdeck's cache and splits a pane beside this session; a view that runs commands asks first.
   on('tool.check', { tool: SHOW_TOOL_FULL }, async ($, e) => {
     const commands = commandsOf((e.input ?? {}) as Record<string, unknown>)
     return commands.length > 0 ? { decision: 'ask', reason: `The pane will run, again and again: ${commands.join(' ; ')}` } : { decision: 'allow' }
@@ -190,7 +190,7 @@ export const register: Register = on => {
     return { ...composed, sections: [...composed.sections.filter(s => s.id !== DRAWING_SECTION.id), DRAWING_SECTION] }
   })
 
-  // A blueprint's .mmd file is cockpit's own, outside every repo: keeping the plan current asks nothing.
+  // A blueprint's .mmd file is flightdeck's own, outside every repo: keeping the plan current asks nothing.
   on('tool.check', { tool: ['Write', 'Edit'] }, async ($, e, next) =>
     (await isBlueprintFile($, (e.input as { file_path?: unknown } | undefined)?.file_path)) ? { decision: 'allow' } : next(e))
 
@@ -198,7 +198,7 @@ export const register: Register = on => {
   on('tool.call', { tool: CHANGES_TOOL_FULL }, async ($, e) => find($, e as unknown as Record<string, unknown>, changesArgs))
   on('tool.call', { tool: READ_TOOL_FULL }, async ($, e) => find($, e as unknown as Record<string, unknown>, readArgs))
   on('tool.call', { tool: HEALTH_TOOL_FULL }, async ($, e) => find($, e as unknown as Record<string, unknown>, healthArgs))
-  // Both only read what cockpit keeps, so they need no permission prompt.
+  // Both only read what flightdeck keeps, so they need no permission prompt.
   on('tool.check', { tool: [SEARCH_TOOL_FULL, CHANGES_TOOL_FULL, READ_TOOL_FULL, HEALTH_TOOL_FULL] }, async () => ({ decision: 'allow' }))
 
   on('tool.call', async ($, e, next) => {

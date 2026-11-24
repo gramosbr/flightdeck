@@ -1,4 +1,4 @@
-//! The meetings space: the week from ~/.cache/cockpit/meetings.json grouped by day, the running meeting highlighted and
+//! The meetings space: the week from ~/.cache/flightdeck/meetings.json grouped by day, the running meeting highlighted and
 //! the next one about to start pulsing, briefs prepared and folded open, and the same week drawn as a picture.
 
 pub mod app;
@@ -10,7 +10,7 @@ pub mod timeline;
 mod view;
 pub mod week;
 
-/// `cockpit meetings`: the week in the terminal until it quits.
+/// `flightdeck meetings`: the week in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
     picture::warm_up();
     // Asked before the screen is taken: the terminal's graphics protocol and font size, else half blocks.
@@ -19,7 +19,7 @@ pub fn run() -> std::io::Result<()> {
     picker.set_background_color(Some(image::Rgba([16, 16, 16, 255])));
     let mut app = app::App::start(picker);
     app.report();
-    cockpit_core::term::run(&mut app)
+    flightdeck_core::term::run(&mut app)
 }
 
 use std::time::Duration;
@@ -29,7 +29,7 @@ use ratatui::Frame;
 use ratatui_image::picker::Picker;
 use ratatui_image::picker::cap_parser::QueryStdioOptions;
 
-impl cockpit_core::term::App for app::App {
+impl flightdeck_core::term::App for app::App {
     fn draw(&mut self, frame: &mut Frame) {
         app::App::draw(self, frame);
     }
@@ -38,7 +38,7 @@ impl cockpit_core::term::App for app::App {
         app::App::event(self, event)
     }
 
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         (!self.palette.is_open).then(|| ("meetings".to_string(), self.acts().into_iter().map(|(act, _)| act).collect()))
     }
     fn tick(&mut self) -> bool {

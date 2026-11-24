@@ -1,6 +1,6 @@
 //! Agents a restart stopped, brought back where they were. While they run, the hub notes which agent and session each
 //! terminal holds (Herdr's `agent_session`, else for Claude Code its own `~/.claude/sessions/<pid>.json`) in
-//! `~/.cache/cockpit/resume/agents.json`; after a reboot or a herdr-core restart, the ones not running again are resumed
+//! `~/.cache/flightdeck/resume/agents.json`; after a reboot or a herdr-core restart, the ones not running again are resumed
 //! in their terminal, or in a new space when it is gone. Only agents that can resume a session by its id are noted.
 
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ const KEEP_LOST_MS: u64 = 7 * 86_400_000;
 pub struct Seen {
     /// `app:t3` or a herdr pane id.
     pub handle: String,
-    /// The agent's id in cockpit's table (`claude`, `codex`).
+    /// The agent's id in flightdeck's table (`claude`, `codex`).
     pub agent: String,
     pub session: String,
     pub cwd: String,
@@ -69,7 +69,7 @@ fn agent_of(entry: &Value) -> Option<Agent> {
     agent::get(entry["agent"].as_str().unwrap_or("claude"))
 }
 
-/// The agent Herdr says a terminal runs, when cockpit can resume its sessions.
+/// The agent Herdr says a terminal runs, when flightdeck can resume its sessions.
 fn resumable(program: &str) -> Option<Agent> {
     agent::of_program(program).filter(|a| !a.resume.is_empty())
 }
@@ -85,8 +85,8 @@ pub fn seen_now() -> (Option<Vec<Seen>>, Option<Vec<Seen>>) {
     (app, tui)
 }
 
-/// The name of the terminal where the hub keeps a Claude Code session for the MCP-only sources (`cockpit-hub`'s fetcher).
-pub const FETCHER: &str = "cockpit-fetch";
+/// The name of the terminal where the hub keeps a Claude Code session for the MCP-only sources (`flightdeck-hub`'s fetcher).
+pub const FETCHER: &str = "flightdeck-fetch";
 
 /// Claude Code's registry of running sessions: pid → {sessionId, cwd, name}.
 fn claude_sessions() -> Map<String, Value> {
@@ -141,7 +141,7 @@ fn seen_in_app() -> Option<Vec<Seen>> {
 }
 
 fn seen_in_tui() -> Option<Vec<Seen>> {
-    if std::env::var_os("COCKPIT_NO_TUI").is_some() {
+    if std::env::var_os("FLIGHTDECK_NO_TUI").is_some() {
         return None;
     }
     let listed = frontend::herdr(&["pane", "list"])?;
@@ -299,7 +299,7 @@ fn resume_in(handle: &str, behind: bool) -> Result<String, String> {
         return Err(format!("no stopped agent in {handle}"));
     }
     let cwd = entry["cwd"].as_str().unwrap_or_default().to_string();
-    let agent = agent_of(&entry).ok_or_else(|| format!("{handle} ran an agent cockpit no longer knows"))?;
+    let agent = agent_of(&entry).ok_or_else(|| format!("{handle} ran an agent flightdeck no longer knows"))?;
     let line = resume_line(&cwd, &agent, &session).ok_or_else(|| format!("{} cannot resume a session", agent.name))?;
     let which = if handle.starts_with(APP) { Frontend::App } else { Frontend::Tui };
     let name = entry["name"].as_str().filter(|n| !n.is_empty()).map(str::to_string).unwrap_or_else(|| folder_name(&cwd));

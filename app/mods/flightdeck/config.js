@@ -1,22 +1,22 @@
-// cockpit's install and config.json as the window reads them, for the few options a mod acts on by itself. It imports
-// nothing of cockpit's, so a link handler loads it without the hub.
+// flightdeck's install and config.json as the window reads them, for the few options a mod acts on by itself. It imports
+// nothing of flightdeck's, so a link handler loads it without the hub.
 
 import { appHome, readTextFile } from "herdr";
 
-/** Where cockpit lives, as `cockpit app install` wrote it: {bin, home, cache, env, machine?}, or null. */
+/** Where flightdeck lives, as `flightdeck app install` wrote it: {bin, home, cache, env, machine?}, or null. */
 export async function installOf() {
   try {
-    return JSON.parse((await readTextFile(`${appHome()}/cockpit.json`)) ?? "null");
+    return JSON.parse((await readTextFile(`${appHome()}/flightdeck.json`)) ?? "null");
   } catch {
     return null;
   }
 }
 
-/** config.json as the hub reads it: the cache's copy first, else the one in ~/.config/cockpit; null when neither reads. */
+/** config.json as the hub reads it: the cache's copy first, else the one in ~/.config/flightdeck; null when neither reads. */
 export async function readConfig(install) {
   const where = install ?? (await installOf());
   if (!where || where.machine) return null;
-  for (const path of [where.cache && `${where.cache}/config.json`, where.home && `${where.home}/.config/cockpit/config.json`].filter(Boolean)) {
+  for (const path of [where.cache && `${where.cache}/config.json`, where.home && `${where.home}/.config/flightdeck/config.json`].filter(Boolean)) {
     try {
       const config = JSON.parse((await readTextFile(path)) ?? "null");
       if (config) return config;

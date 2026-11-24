@@ -7,13 +7,13 @@ import { createHash } from "node:crypto";
 const home = () => process.env.HOME || os.homedir();
 
 /** What must last: profiles, sign-ins, each session's tabs. */
-export const dataDir = () => path.join(home(), ".config", "cockpit", "browser");
+export const dataDir = () => path.join(home(), ".config", "flightdeck", "browser");
 
 /** What can be made again: picked elements, frames, the log. */
-export const cacheDir = () => path.join(home(), ".cache", "cockpit", "browser");
+export const cacheDir = () => path.join(home(), ".cache", "flightdeck", "browser");
 
 /** The control socket, the one the hub says, else the one beside the hub's. */
-export const socketPath = () => process.env.COCKPIT_BROWSER_SOCKET || path.join(home(), ".cache", "cockpit", "browser.sock");
+export const socketPath = () => process.env.FLIGHTDECK_BROWSER_SOCKET || path.join(home(), ".cache", "flightdeck", "browser.sock");
 
 /** A short stable name for a folder, used for file names and session names. */
 export const keyOf = (folder) => createHash("sha256").update(String(folder)).digest("hex").slice(0, 12);

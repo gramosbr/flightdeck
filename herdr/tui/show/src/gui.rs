@@ -1,11 +1,11 @@
-//! The show views for the Herdr app's cockpit mod: `show` (one view by name, or a terminal's views), `show-block` (the
+//! The show views for the Herdr app's flightdeck mod: `show` (one view by name, or a terminal's views), `show-block` (the
 //! data of a block that runs something: a diff read, a log, a command's rows) and the answers written back for the
 //! plugin to hand to the session, the same `<name>.<block>.answer` files the TUI app writes.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::blueprint;
@@ -435,7 +435,7 @@ pub fn act_in(dir: &Path, action: &str, args: &[Value]) -> Option<Result<String,
 
 fn answer(dir: &Path, name: &str, args: &[Value]) -> Result<String, String> {
     // A view's answer is the person's: an agent's tools neither answer their own question nor comment for another's.
-    cockpit_core::peer::person("a view is answered by a person, not by an agent's tools")?;
+    flightdeck_core::peer::person("a view is answered by a person, not by an agent's tools")?;
     if !valid(name) {
         return Err(format!("no view named {name:?}"));
     }
@@ -599,7 +599,7 @@ mod tests {
 
     #[test]
     fn answers_are_written_once_and_not_twice_at_a_time() {
-        cockpit_core::peer::trusted();
+        flightdeck_core::peer::trusted();
         let root = tempfile::tempdir().unwrap();
         let dir = root.path();
         files::write(&dir.join("q.json"), &json!({"title": "Q", "blocks": [{"type": "choice", "options": [{"label": "a"}, {"label": "b"}]}]})).unwrap();
@@ -613,7 +613,7 @@ mod tests {
 
     #[test]
     fn a_blueprint_draws_its_file_and_takes_change_requests() {
-        cockpit_core::peer::trusted();
+        flightdeck_core::peer::trusted();
         let root = tempfile::tempdir().unwrap();
         let dir = root.path();
         let spec = json!({"title": "Plan", "at": 1, "blocks": [{"type": "blueprint", "text": "flowchart TD\n A --> B"}]});
@@ -637,8 +637,8 @@ mod tests {
         let dir = root.path();
         files::write(&dir.join("ship.json"), &json!({"title": "Ship", "blocks": [{"type": "confirm", "summary": "Deploy?"}, {"type": "diff", "patch": ""}]}))
             .unwrap();
-        for who in [cockpit_core::peer::Who::Agent("app:t3".into()), cockpit_core::peer::Who::Unplaced("unknown".into())] {
-            cockpit_core::peer::adopt(cockpit_core::peer::Sender::Placed(who));
+        for who in [flightdeck_core::peer::Who::Agent("app:t3".into()), flightdeck_core::peer::Who::Unplaced("unknown".into())] {
+            flightdeck_core::peer::adopt(flightdeck_core::peer::Sender::Placed(who));
             assert!(act_in(dir, "answer", &[json!("ship"), json!(0), json!("confirm"), json!(true), json!("yes")]).unwrap().is_err(), "its own confirm");
             let comment = json!({"path": "a.rs", "line": 1, "text": "rm -rf"});
             assert!(act_in(dir, "answer", &[json!("ship"), json!(1), json!("comment"), comment, json!("a.rs")]).unwrap().is_err(), "a comment");
@@ -656,7 +656,7 @@ mod tests {
         files::write(&dir.join("d.json"), &json!({"title": "D", "at": 4, "blocks": []})).unwrap();
         let names = |t: Option<&str>| listed(dir, t).into_iter().map(|(n, _)| n).collect::<Vec<_>>();
         assert_eq!(names(Some("t1")), ["c", "a"]);
-        assert_eq!(names(Some("t2")), ["b"], "a plain shell's own view, from `cockpit show` in it");
+        assert_eq!(names(Some("t2")), ["b"], "a plain shell's own view, from `flightdeck show` in it");
         assert!(names(Some("t9")).is_empty(), "a tab that showed nothing lists nothing of the others'");
         assert!(names(Some("")).is_empty(), "an empty panel subject lists no documents, including unowned ones");
         assert_eq!(names(None), ["d", "c", "b", "a"], "following no terminal, every recent view");

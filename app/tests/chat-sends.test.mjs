@@ -4,11 +4,11 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 async function subjectFixture({ focusedOn = "t41" } = {}) {
   const calls = [], acts = [];
-  const shared = { layout: "cockpit-chat" };
+  const shared = { layout: "flightdeck-chat" };
   // Herdr's focus as it is with an agent in front: its pane's terminal, its tab, and the agent its blocks would show.
   const focus = focusedOn ? { agent: focusedOn, terminal: focusedOn, tab: `tab-${focusedOn}` } : {};
   // Each hub act waits until the test answers it.
@@ -32,7 +32,7 @@ async function subjectFixture({ focusedOn = "t41" } = {}) {
       openUrl: () => {},
       sleep: async () => {},
       install: async () => ({}),
-      cockpit: async () => ({ code: 0, stdout: "", stderr: "" }),
+      flightdeck: async () => ({ code: 0, stdout: "", stderr: "" }),
       isUnconfirmed: (e) => Boolean(e?.unconfirmed),
       remoteMachine: () => null,
     },
@@ -139,7 +139,7 @@ test("an answer from the box whose hub reply never came is 'Not confirmed', not 
   await f.tick();
   assert.deepEqual(JSON.parse(JSON.stringify(f.acts[0].slice(0, 2))), ["agents", "answer"]);
   // The hub took the answer, then the connection dropped before its reply (hub.js marks this unconfirmed).
-  f.waiting[0].reject(Object.assign(new Error("the cockpit hub closed the connection"), { unconfirmed: true }));
+  f.waiting[0].reject(Object.assign(new Error("the flightdeck hub closed the connection"), { unconfirmed: true }));
   await f.settled();
   await f.tick();
   assert.equal(f.chat.sent?.state, "unconfirmed", "the answer may have gone: it is not 'Not sent'");
@@ -159,7 +159,7 @@ test("…and sending after that does not send the answer's words again as a prom
   f.type("main");
   f.chat.send(f.cx);
   await f.tick();
-  f.waiting[0].reject(Object.assign(new Error("the cockpit hub closed the connection"), { unconfirmed: true }));
+  f.waiting[0].reject(Object.assign(new Error("the flightdeck hub closed the connection"), { unconfirmed: true }));
   await f.settled();
   await f.tick();
   // It had gone: the agent took the answer and the question is gone.

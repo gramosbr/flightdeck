@@ -1,16 +1,16 @@
-# Cockpit
+# Flightdeck
 
 See every coding agent you are running and what it is working on, and answer the ones waiting for you without
 leaving what you are doing. Each agent is shown with its ticket, PR and CI run; your inbox, runbooks and meetings
 are one key away.
 
-![Cockpit](preview.png)
+![Flightdeck](preview.png)
 
 The preview shows the real window on demo data: an agent with its page in the Chromium side browser, the links of
 its session from the status bar, and the inbox, mail, runbook and meetings views.
 
 Works with Claude Code, Codex and the other agents Herdr runs. The layout needs the
-[cockpit](https://github.com/quaresc/cockpit) app for its data; without it, Home shows how to install it.
+[flightdeck](https://github.com/gramosbr/flightdeck) app for its data; without it, Home shows how to install it.
 
 ## What you see
 
@@ -19,9 +19,9 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
 
 - **Sidebar**, 268px wide (folds to a 44px rail), on the theme's `chrome` (`#101114` dark), not resizable:
   - **Brand**, 46px: Herdr's `workspace-chrome` (the Herdr mark, search, sidebar toggle), draggable.
-  - **Cockpit sidebar**, the rest: a "Search or run…" field with its `⌘⇧P` hint; with Claude Code, two quota bars, 5h
+  - **Flightdeck sidebar**, the rest: a "Search or run…" field with its `⌘⇧P` hint; with Claude Code, two quota bars, 5h
     and 7d, each with its percent and a tick where the even pace would be (fill `#a6bd91`, track `#2c2e31`); a row of
-    app icons, Home first, then the apps among the cockpit config's `spaces` in their order (Inbox, To-do, Runbook,
+    app icons, Home first, then the apps among the flightdeck config's `spaces` in their order (Inbox, To-do, Runbook,
     Meetings, Monitor, Routines, Mail; without a config Home, Inbox, To-do, Runbook, Meetings), each with a count badge in a
     corner, the shown one on a raised tile; the **NEEDS YOU** band, on every view but Home (Home answers them itself):
     one card per agent waiting on you, three at most (a red-tinted card: its task, how long it has waited, its question
@@ -30,8 +30,8 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
     whose move (a button cycles), each agent a row with its status mark, title, PR number, `+adds −dels` and age; then
     Herdr's spaces list, each space followed by what runs in it, one line per terminal (status mark, agent or program,
     title; waiting ones first, four lines at most, then "+N more"). At the bottom, over the footer, an **Update**
-    tag whenever a newer cockpit is published ("Update cockpit to 0.41.0"), folded to its arrow on the rail, and a
-    quiet **Cockpit settings** row with how many checks fail ("2 failing") when some do: it opens a sheet with every
+    tag whenever a newer flightdeck is published ("Update flightdeck to 0.41.0"), folded to its arrow on the rail, and a
+    quiet **Flightdeck settings** row with how many checks fail ("2 failing") when some do: it opens a sheet with every
     option as a switch, a choice or a field, the health checks with their fixes, the agents, and in its header the
     installed and published versions with Check for updates.
   - **Footer**, 69px: Herdr's `workspace-chrome` footer (Settings, Add machine).
@@ -44,13 +44,13 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
     buttons, Reply, Open beside, Go to agent); the agents by stage as wrapped cards; your PRs no agent works on. On the
     right: Up next (meetings with Join), Apps (each app in a few words: "1 PR failing", "8 steps left", "Mail · 2 messages
     need you", a click opening its app) and Activity.
-  - **Home without cockpit** (no `cockpit.json` in the Herdr home): a centered column, 620px at most: the cockpit mark
-    (44px) beside "cockpit isn't installed" (18px, semibold) and a muted line; one line of what cockpit is; two cards,
-    "In Claude Code" (`/plugin install cockpit --marketplace quaresc/cockpit`, `/cockpit:setup`) and "With any other
-    agent, in a shell" (`curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh`,
-    `cockpit setup`), each command in monospace on a muted strip with a copy button; an outline Install guide button
+  - **Home without flightdeck** (no `flightdeck.json` in the Herdr home): a centered column, 620px at most: the flightdeck mark
+    (44px) beside "flightdeck isn't installed" (18px, semibold) and a muted line; one line of what flightdeck is; two cards,
+    "In Claude Code" (`/plugin install flightdeck --marketplace gramosbr/flightdeck`, `/flightdeck:setup`) and "With any other
+    agent, in a shell" (`curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh`,
+    `flightdeck setup`), each command in monospace on a muted strip with a copy button; an outline Install guide button
     opening the README's install section, and a note that Home fills in by itself once setup is done.
-  - **Work**: the active tab's panes (each with a 30px cockpit header: agent, folder, branch, status), or the focused
+  - **Work**: the active tab's panes (each with a 30px flightdeck header: agent, folder, branch, status), or the focused
     agent alone with a 34px head. A hidden right **panel**, 420px (280–900): the agent's charts and diagrams (Show),
     its diff with line comments (Review), its runbook, Herdr's Files and Changes, and a 44px activity bar of their icons.
   - **Inbox, Runbook, To-do, Meetings, Monitor, Routines, Mail**: one full card each (PRs, reviews and tickets by
@@ -88,7 +88,7 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
 - **Home keys**: `j k h l` move between cards, `⏎` goes to the agent, `1–9` answer, `t` reply, `f` the agent beside
   the board, `m` merge, `a` archive (Undo on the toast), `o` PR, `r` recap, `s` snooze, `q` queue, `n` new agent;
   right-click for the rest. With no card picked, keys act on the NEXT MOVE agent.
-- **Window keys** (`keys.json`, section `layout:cockpit`): `⌘⇧P` cockpit's palette (Herdr's commands plus PRs, tickets,
+- **Window keys** (`keys.json`, section `layout:flightdeck`): `⌘⇧P` flightdeck's palette (Herdr's commands plus PRs, tickets,
   runbooks, meetings, past sessions); `⌘⌥0` Home ↔ work; `⌘⌥1…7` Inbox, Runbook, To-do, Meetings, Monitor, Routines, Mail;
   `⌘⌥A` the focused agent alone; `⌘⌥B` the right panel, `⌃⌘1…5` its Show / Review / Runbook / Files / Changes;
   `⌘J` the next agent waiting, `⌘⇧J` the next blocked, `⌘⇧U` the next done; `⌘⌥Q` the queue; `⌘⌥R` resume agents
@@ -97,9 +97,9 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
   waiting on you first, in the same order as the herdr TUI's palette.
 - **Updating**: the hub reads the published version and the changelog every six hours into `update.json`; the tag
   shows while it is newer than the installed one, and a click opens a dialog with each version's changes and an Install
-  button. Install runs `cockpit focus update` (update.sh in the background) and the dialog follows `update.log` until
-  cockpit.json names the new version, then goes on: what changed since the version that ran, the options it brought
-  (each with one line, its default and a switch; Save writes `config.json` through the hub, Skip keeps them), and Cockpit
+  button. Install runs `flightdeck focus update` (update.sh in the background) and the dialog follows `update.log` until
+  flightdeck.json names the new version, then goes on: what changed since the version that ran, the options it brought
+  (each with one line, its default and a switch; Save writes `config.json` through the hub, Skip keeps them), and Flightdeck
   Chat to try when the window shows another layout (⌘⇧L comes back). An update installed any other way opens the same
   steps once at the window's next start. A checkout running its own build gets no tag.
 - **Bell**: while agents wait, a bell-dot icon in `blocked` with a red count that breathes from 70% to full every
@@ -110,17 +110,17 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
   reading panel).
 - **Mail keys**: `j k` move, `] [` between the groups, `⏎` See, `esc` closes the panel, `c` reply, `b` archive, `m` mark
   read, `o` open in the mail client, `⇧R` fetch now; right-click for the same.
-- **Without the hub**: when cockpit isn't installed Home shows its install panel; whenever the hub doesn't answer the
+- **Without the hub**: when flightdeck isn't installed Home shows its install panel; whenever the hub doesn't answer the
   sidebar lists Herdr's own agents (status mark, title, click to focus) with no band, menu or recap, and the apps show
-  "Cannot reach the cockpit hub" with the reason. Once `cockpit.json` appears every view connects by itself within
+  "Cannot reach the flightdeck hub" with the reason. Once `flightdeck.json` appears every view connects by itself within
   seconds.
 - Hover shows row actions; right-click opens a menu; drag a grip to reorder; toasts carry Undo instead of confirms.
 
 ## Built from
 
-- **Layout** `layouts/cockpit.json` (preview art `layouts/cockpit.svg`): root `row` (`titlebar: none`, traffic lights
+- **Layout** `layouts/flightdeck.json` (preview art `layouts/flightdeck.svg`): root `row` (`titlebar: none`, traffic lights
   at `[12, 16]`, `canvas` background, 1px `border` dividers, terminal padding `[14, 12]`) → `sidebar` column (px 268,
-  min 44, max 480, `chrome`) of `brand` (`workspace-chrome`, 46) · `cockpit-sidebar` (`{app: "sidebar"}`, weight 1, min
+  min 44, max 480, `chrome`) of `brand` (`workspace-chrome`, 46) · `flightdeck-sidebar` (`{app: "sidebar"}`, weight 1, min
   120) · `sidebar-footer` (`workspace-chrome {footer: true}`, 69); `main-area` column of `topbar` row (42: `tabs` ·
   `bell` 52) · `center` stack (padding 8, active `home`) · `status` (28). `center` holds `home` (row: `home-board` + a
   hidden `home-agent` column, 600px, of `agent-head {place: "home"}` 34 over `{agent: "focused"}`), `work` (row, gap 8:
@@ -129,11 +129,11 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
   (`runbook {scope: "focused"}`), Herdr's `files` and `changes`, and `activity` 44px), then `inbox`, `runbook`,
   `todo`, `meetings`, `monitor`, `routines`, `mail` blocks. `floating`: `queue` (`{app: "queue"}`, edge right, align center,
   peek 44).
-- **One mod** `mods/cockpit/` (`mod.json`: `place: none`, focusable): every block is the same mod with `props.app`
+- **One mod** `mods/flightdeck/` (`mod.json`: `place: none`, focusable): every block is the same mod with `props.app`
   (`sidebar`, `home`, `bell`, `status`, `pane`, `agent-head`, `activity`, `queue`, `show`, `review`, `runbook`, `inbox`,
   `todo`, `meetings`, `monitor`, `routines`, `mail`), and so is every overlay it opens (`palette`, `menu`, `recap`, `code`,
   `reader`, `kit`, `update`, `monitor-window`); `main.js` maps the name to a view class. `ui.js` is a shadcn-style kit on
-  `theme()`; icons are lucide SVGs in `icons/`, the mark is `cockpit.svg`. Shipped mods used: `workspace-chrome`,
+  `theme()`; icons are lucide SVGs in `icons/`, the mark is `flightdeck.svg`. Shipped mods used: `workspace-chrome`,
   `tabs`, `files`, `changes`, `menu` (a space's right-click) and `prompt` (the palette's Duplicate mod).
 - **herdr functions**: `agents`, `terminals`, `spaces`, `panes`, `focused`, `layout`, `layouts`, `theme`, `settings`,
   `window` (the platform), `placement`, `props`, `home`, `appHome`, `knownAgents`, `setAgentOrder`,
@@ -142,53 +142,53 @@ dark theme); type is the theme's UI font at 13px, monospace for branches, refs a
   `agent.focus`, `space.select`/`new`/`rename`/`move`, `tab.new`/`select`/`settle`/`unsettle`,
   `pane.split`/`close`/`zoom`/`focus`, `terminal.peek` (the palette runs any command `commands()` lists).
 - **Outside its folder**:
-  - reads `cockpit.json` in the Herdr home (where `cockpit app install` put the binary and cache), the cache's
-    `hub.json`, `config.json` and `update.json`, and `~/.config/cockpit/config.json` under the install's HOME;
+  - reads `flightdeck.json` in the Herdr home (where `flightdeck app install` put the binary and cache), the cache's
+    `hub.json`, `config.json` and `update.json`, and `~/.config/flightdeck/config.json` under the install's HOME;
   - opens a TCP connection to the hub on `127.0.0.1` (port and token from `hub.json`); nothing else reaches the
     network but `curl` fetching a show picture an agent gives by URL;
-  - runs the `cockpit` binary (through `env`, on the install's HOME; `cockpit focus update` for the update tag),
+  - runs the `flightdeck` binary (through `env`, on the install's HOME; `flightdeck focus update` for the update tag),
     `git` (a space's repo, the code view), `hc machine ls` (Open in editor on another machine),
     `~/.local/bin/herdr-app do pane.split` (the code view), the
     editor from the config's `editor` (`code`, `cursor`, `zed`, …; `code -g` from the code view; on macOS
     `open -a <app>` when its command isn't on the PATH), `open` on macOS, `xdg-open` on Linux and `cmd /c start` on
     Windows for links, and `sh -c` with `mkdir`, `curl` or `cp`, then `sips` (macOS) or `file` (elsewhere), to copy a
-    show picture into `data/cockpit/show/` in the Herdr home and read its size;
+    show picture into `data/flightdeck/show/` in the Herdr home and read its size;
   - reads and writes the repo file open in the code view, and reads the files the routines and the reader show.
 
 ## Watch out
 
-- **It needs cockpit** for everything but the shell: copying `layouts/` and `mods/` alone gives the install panel on
-  Home and Herdr's agents in the sidebar. Install cockpit first, either way:
-  - in Claude Code: `/plugin install cockpit --marketplace quaresc/cockpit`, then `/cockpit:setup`;
-  - any agent: `curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh`, then
-    `cockpit setup`.
+- **It needs flightdeck** for everything but the shell: copying `layouts/` and `mods/` alone gives the install panel on
+  Home and Herdr's agents in the sidebar. Install flightdeck first, either way:
+  - in Claude Code: `/plugin install flightdeck --marketplace gramosbr/flightdeck`, then `/flightdeck:setup`;
+  - any agent: `curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh`, then
+    `flightdeck setup`.
 
-  Setup runs `cockpit app install`, which copies this layout and mod into the Herdr home, writes `cockpit.json`,
+  Setup runs `flightdeck app install`, which copies this layout and mod into the Herdr home, writes `flightdeck.json`,
   merges `keys.json` and switches to the layout once.
 - **Claude Code only**: the quota bars and the Agent spend tile. The inbox requests (CI reruns, preview
   create/redeploy/stop/extend, marking a ticket Done) and Mail's (reading a thread, archiving, marking read) are carried
   out by the hub through the source's MCP server, or by a Claude Code session with its connectors; GitHub Actions reruns
   go through `gh`. **Monitor** needs a deploy-platform
   server and Datadog's; without them it says what to set.
-- Answering in place parses the question screens cockpit knows (Claude Code's first): another agent's question may
+- Answering in place parses the question screens flightdeck knows (Claude Code's first): another agent's question may
   show as its status alone.
 - Herdr refuses imports outside a mod's folder, hence one mod for every place and every overlay. Don't split it.
 - The hub serves every view's model (`view`, pushed on `subscribe`) and runs every action (`act`); the JS only draws.
-  When `cockpit.json` names a binary that's gone, the mod tries `cockpit hub start` once per 30s for all views.
+  When `flightdeck.json` names a binary that's gone, the mod tries `flightdeck hub start` once per 30s for all views.
 - A window behind others does not repaint, so `herdr-app shot` returns its last frame: bring it to the front first.
-- **Platforms**: built and tested on macOS; cockpit ships release binaries for macOS and Linux, none for Windows (there
+- **Platforms**: built and tested on macOS; flightdeck ships release binaries for macOS and Linux, none for Windows (there
   the window stays on the install panel). The keys are `cmd` keys: Herdr reads `cmd` as the platform key everywhere,
   which on Linux and Windows is the Super / Windows key that many desktops keep for themselves, and `keys.json` has no
-  per-platform sections, so rebind them under `layout:cockpit` there. macOS only: the `open -a` editor fallback, and
+  per-platform sections, so rebind them under `layout:flightdeck` there. macOS only: the `open -a` editor fallback, and
   `sips` (elsewhere a picture's size comes from `file`; without it the picture is drawn at 800×500).
 
 ## Done when
 
-- `herdr-app check mods/cockpit` passes.
-- `layout.switch {"name": "cockpit"}` shows the sidebar, top bar with bell, Home and the status bar.
-- Without `cockpit.json` in the Herdr home, Home shows "cockpit isn't installed" with both install commands, and an
+- `herdr-app check mods/flightdeck` passes.
+- `layout.switch {"name": "flightdeck"}` shows the sidebar, top bar with bell, Home and the status bar.
+- Without `flightdeck.json` in the Herdr home, Home shows "flightdeck isn't installed" with both install commands, and an
   agent running in a Herdr terminal shows in the sidebar's Agents with its status.
-- With cockpit installed and an agent waiting on a question, its card shows in NEEDS YOU (on any view but Home) and on
+- With flightdeck installed and an agent waiting on a question, its card shows in NEEDS YOU (on any view but Home) and on
   Home's NEXT MOVE, the bell counts it, and pressing `1` on Home answers it (the agent moves on, the card goes).
 - `⌘⌥1…7` switch the center to each app, `⌘⌥0` back to Home; `⌘⇧P` opens the palette and finds a PR by a word of its
   title.

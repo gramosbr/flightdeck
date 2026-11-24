@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test, beforeEach } from "node:test";
 
-import { normalize, keyOf, join, sharing, together, feedsNow, BEAT_MS, STALL_MS } from "../mods/cockpit/feed.js";
+import { normalize, keyOf, join, sharing, together, feedsNow, BEAT_MS, STALL_MS } from "../mods/flightdeck/feed.js";
 
 // A copy's async context: its tasks run and its timers fire every few ms. `drop()` stops its timers, as Herdr does for a
 // copy a layout switch drops, while a task already waiting on a promise still wakes when another copy resolves it;
@@ -179,7 +179,7 @@ test("a subscription the window's watchdog stopped is noticed and opened again",
 });
 
 // hub.subscribe with the hub stopped: "connecting", then the error, again at each retry until stopped.
-const STOPPED = "error: the cockpit hub was stopped on purpose";
+const STOPPED = "error: the flightdeck hub was stopped on purpose";
 function stoppedHub() {
   const opened = [];
   const open = (cx, opts, onMessage, onState) => {

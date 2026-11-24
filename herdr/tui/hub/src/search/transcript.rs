@@ -1,9 +1,9 @@
-//! A past session as the session index reads it, from any agent's transcript (`cockpit_core::transcripts`): its agent,
+//! A past session as the session index reads it, from any agent's transcript (`flightdeck_core::transcripts`): its agent,
 //! folder, title, times, and the words typed and answered, without tool calls, their output or the agent's reasoning.
 
 use std::path::Path;
 
-use cockpit_core::transcripts::{self, Transcripts};
+use flightdeck_core::transcripts::{self, Transcripts};
 
 /// The most text kept per session: enough to find it by what was said, little enough to keep the index small.
 pub const TEXT_CAP: usize = 200 * 1024;

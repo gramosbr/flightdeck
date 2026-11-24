@@ -3,4 +3,4 @@
 H="${HERDR_BIN_PATH:-herdr}"
 pane=${HERDR_PANE_ID:-}
 [ -n "$pane" ] || pane=$("$H" pane current | jq -r '.result.pane.pane_id // empty')
-"$H" plugin pane open --plugin cockpit --entrypoint palette --placement popup --env "PALETTE_PANE=$pane" >/dev/null
+"$H" plugin pane open --plugin flightdeck --entrypoint palette --placement popup --env "PALETTE_PANE=$pane" >/dev/null

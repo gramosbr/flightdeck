@@ -1,4 +1,4 @@
-//! The hub: one background process (`cockpit hub`) every app talks to over a unix socket. It runs the actions, searches
+//! The hub: one background process (`flightdeck hub`) every app talks to over a unix socket. It runs the actions, searches
 //! across the apps, brings a found item into view, fetches details on demand and keeps history for sparklines; the first
 //! app that needs it starts it.
 //!
@@ -29,7 +29,7 @@ use serde_json::{Value, json};
 
 use crate::files;
 
-/// ~/.cache/cockpit/hub.sock, or a name in the temp folder when that path is longer than a unix socket allows
+/// ~/.cache/flightdeck/hub.sock, or a name in the temp folder when that path is longer than a unix socket allows
 /// (104 bytes on macOS), keyed by the cache folder so two homes never share a hub.
 pub fn socket() -> PathBuf {
     let path = files::cache().join("hub.sock");
@@ -39,21 +39,21 @@ pub fn socket() -> PathBuf {
     use std::hash::{Hash, Hasher};
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     files::cache().hash(&mut hasher);
-    std::env::temp_dir().join(format!("cockpit-hub-{:016x}.sock", hasher.finish()))
+    std::env::temp_dir().join(format!("flightdeck-hub-{:016x}.sock", hasher.finish()))
 }
 
-/// The `cockpit` binary beside the app's own (the app itself, outside tests), which serves as the hub with `hub`.
+/// The `flightdeck` binary beside the app's own (the app itself, outside tests), which serves as the hub with `hub`.
 fn binary() -> PathBuf {
-    std::env::current_exe().ok().and_then(|exe| exe.parent().map(|dir| dir.join("cockpit"))).unwrap_or_else(|| "cockpit".into())
+    std::env::current_exe().ok().and_then(|exe| exe.parent().map(|dir| dir.join("flightdeck"))).unwrap_or_else(|| "flightdeck".into())
 }
 
-/// Written by `cockpit hub stop` and taken away by `cockpit hub start` alone: while it is there, nothing starts a hub.
+/// Written by `flightdeck hub stop` and taken away by `flightdeck hub start` alone: while it is there, nothing starts a hub.
 pub fn stopped_file() -> PathBuf {
     files::cache().join("hub.stopped")
 }
 
 /// What a request says when the hub was stopped on purpose and is not started again on its behalf.
-pub const STOPPED: &str = "the cockpit hub was stopped: run cockpit hub start";
+pub const STOPPED: &str = "the flightdeck hub was stopped: run flightdeck hub start";
 
 fn connect(timeout: Duration) -> Option<UnixStream> {
     if let Ok(stream) = UnixStream::connect(socket()) {
@@ -73,7 +73,7 @@ fn connect(timeout: Duration) -> Option<UnixStream> {
         *started = Some(Instant::now());
     }
     // Whatever the hub says on its way down goes to this file: started detached, it has nowhere else to say it, and
-    // "the cockpit hub did not start" is otherwise a dead end.
+    // "the flightdeck hub did not start" is otherwise a dead end.
     let log = files::cache().join("hub.log");
     // Kept small: what matters is the last start, not every one of them.
     if std::fs::metadata(&log).is_ok_and(|m| m.len() > 256 * 1024) {
@@ -100,14 +100,14 @@ fn connect(timeout: Duration) -> Option<UnixStream> {
 pub fn request(req: &Value, timeout: Duration) -> Result<Value, String> {
     let mut stream = connect(timeout).ok_or_else(|| match stopped_file().exists() {
         true => STOPPED.to_string(),
-        false => "the cockpit hub did not start; what it said is in ~/.cache/cockpit/hub.log".to_string(),
+        false => "the flightdeck hub did not start; what it said is in ~/.cache/flightdeck/hub.log".to_string(),
     })?;
     stream.set_read_timeout(Some(timeout)).ok();
     stream.set_write_timeout(Some(timeout)).ok();
     writeln!(stream, "{req}").map_err(|e| e.to_string())?;
     let mut line = String::new();
     BufReader::new(stream).read_line(&mut line).map_err(|e| e.to_string())?;
-    let answer: Value = serde_json::from_str(&line).map_err(|_| "the cockpit hub sent no answer".to_string())?;
+    let answer: Value = serde_json::from_str(&line).map_err(|_| "the flightdeck hub sent no answer".to_string())?;
     match answer.get("error").and_then(Value::as_str) {
         Some(error) if answer.get("note").is_none() => Err(error.to_string()),
         _ => Ok(answer),

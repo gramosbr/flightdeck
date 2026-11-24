@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/requests/<MS>-redeploy.req": {
+    "home/.cache/flightdeck/requests/<MS>-redeploy.req": {
       "app": "api",
       "label": "redeploy api on pv-eng-401",
       "preview": "pv-eng-401",

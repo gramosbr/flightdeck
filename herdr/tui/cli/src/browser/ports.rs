@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use cockpit_core::cleanup::{self, Process};
+use flightdeck_core::cleanup::{self, Process};
 use serde_json::{Value, json};
 
 /// `lsof -nP -iTCP -sTCP:LISTEN -Fpcn` output as (pid, command, port), one per program and port.

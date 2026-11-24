@@ -1,4 +1,4 @@
-//! `cockpit show <name>` shows ~/.cache/cockpit/show/<name>.json beside an agent session, keeps `<name>.pid` while it
+//! `flightdeck show <name>` shows ~/.cache/flightdeck/show/<name>.json beside an agent session, keeps `<name>.pid` while it
 //! runs (the mod reads it to update the open pane) and writes the session's answers back.
 
 use std::path::PathBuf;
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use ratatui_image::picker::Picker;
 use ratatui_image::picker::cap_parser::QueryStdioOptions;
 
-use cockpit_core::{files, term};
+use flightdeck_core::{files, term};
 
 use crate::{ShowApp, release_freed_pages, warm_up};
 

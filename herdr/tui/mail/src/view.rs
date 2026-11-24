@@ -2,11 +2,11 @@
 //! whole, else its snippet) beside or under it, the actions and keys at the foot, and the toasts over them.
 
 use chrono::{DateTime, Local, Utc};
-use cockpit_core::acts;
-use cockpit_core::sources;
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{FG, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
-use cockpit_core::widgets;
+use flightdeck_core::acts;
+use flightdeck_core::sources;
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{FG, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
+use flightdeck_core::widgets;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};
@@ -58,7 +58,7 @@ impl App {
         if let Some(updated) = updated {
             line.push(Span::styled(format!(" · {updated}"), dim()));
         }
-        let mut lines = cockpit_core::header::lines(Line::from(line), &self.mail.sources, cells);
+        let mut lines = flightdeck_core::header::lines(Line::from(line), &self.mail.sources, cells);
         if let Some(error) = &self.mail.error {
             lines.push(Line::styled(error.clone(), fg(RED)));
         }
@@ -74,7 +74,7 @@ impl App {
                 &[sources::Source::Mail],
                 "No mail yet",
                 "the hub fills it in from your mail connector, within two minutes.",
-                "no mail server is connected · cockpit setup adds one.",
+                "no mail server is connected · flightdeck setup adds one.",
             );
             let text = if self.mail.at.is_none() { waiting.as_str() } else { "Inbox zero." };
             frame.render_widget(Paragraph::new(Line::styled(text, dim())), inner);

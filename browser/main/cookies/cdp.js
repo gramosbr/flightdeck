@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/browser-cdp-cookie.ts,
 // browser-cookie-clear-store.ts, storage/cookie-store-contracts.ts and the command deadline of browser-cookie-debugger-session.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { normalizeCookieDomain } from "./policy.js";
 import { normalizeCookiePartitionSite } from "./partition.js";

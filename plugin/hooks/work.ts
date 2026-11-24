@@ -7,8 +7,8 @@ import { home, loadConfig } from './config'
 
 type $ = EngineInterface
 
-const work = atom({ plugin: 'cockpit', key: 'work' } as const, null)
-const inbox = atom({ plugin: 'cockpit', key: 'inbox' } as const, null)
+const work = atom({ plugin: 'flightdeck', key: 'work' } as const, null)
+const inbox = atom({ plugin: 'flightdeck', key: 'inbox' } as const, null)
 
 // Which checkout this session works in, followed from the paths its tools touch: the repos folder, herdr's worktrees,
 // and Claude Code's worktrees inside a repo. The checkout is git's own top folder, so a worktree reads its own branch.
@@ -81,8 +81,8 @@ export async function seedWork($: $, cwd: string) {
 
 // A review session works on the PR it was opened for, whatever branch its checkout has.
 export async function reviewFocus($: $) {
-  const url = await $.env.get('COCKPIT_REVIEW_PR')
-  return url ? { url, number: Number(url.split('/').pop()), branch: (await $.env.get('COCKPIT_REVIEW_BRANCH')) || undefined } : null
+  const url = await $.env.get('FLIGHTDECK_REVIEW_PR')
+  return url ? { url, number: Number(url.split('/').pop()), branch: (await $.env.get('FLIGHTDECK_REVIEW_BRANCH')) || undefined } : null
 }
 
 export async function branchOf($: $, current: Work) {

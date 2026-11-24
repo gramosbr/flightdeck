@@ -7,7 +7,7 @@ function setUp(on: Parameters<TestBody>[1], config?: Record<string, unknown>) {
   on('env.get', (_, e) => ({ value: (e as { name?: string }).name === 'HOME' ? HOME : undefined }))
   on('fs.read', (_, e) => {
     const path = (e as { path?: string }).path ?? ''
-    if (config && path === `${HOME}/.config/cockpit/config.json`) return { value: JSON.stringify(config) }
+    if (config && path === `${HOME}/.config/flightdeck/config.json`) return { value: JSON.stringify(config) }
     throw new Error('ENOENT')
   })
   on('fs.write', () => ({ value: undefined }))
@@ -22,14 +22,14 @@ test('a new artifact is refused when no config turns the guard off', async ($, o
   setUp(on)
   const done = await $.tool.call(PUBLISH)
   expect(done.isError).toBe(true)
-  expect(done.text).toContain('mcp__cockpit__show')
+  expect(done.text).toContain('mcp__flightdeck__show')
 })
 
 test('a new artifact is refused when the config keeps the guard on', async ($, on) => {
   setUp(on, { artifactGuard: true })
   const done = await $.tool.call(PUBLISH)
   expect(done.isError).toBe(true)
-  expect(done.text).toContain('mcp__cockpit__show')
+  expect(done.text).toContain('mcp__flightdeck__show')
 })
 
 test('a new artifact is published when the config turns the guard off', async ($, on) => {

@@ -16,13 +16,13 @@ use std::time::Duration;
 use crossterm::event::Event;
 use ratatui::Frame;
 
-/// `cockpit mail`: the mail in the terminal until it quits.
+/// `flightdeck mail`: the mail in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
     let mut app = app::App::start();
-    cockpit_core::term::run(&mut app)
+    flightdeck_core::term::run(&mut app)
 }
 
-impl cockpit_core::term::App for app::App {
+impl flightdeck_core::term::App for app::App {
     fn draw(&mut self, frame: &mut Frame) {
         app::App::draw(self, frame);
     }
@@ -31,7 +31,7 @@ impl cockpit_core::term::App for app::App {
         app::App::event(self, event)
     }
 
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         (!self.palette.is_open).then(|| ("mail".to_string(), self.acts().into_iter().map(|(act, _)| act).collect()))
     }
     fn tick(&mut self) -> bool {

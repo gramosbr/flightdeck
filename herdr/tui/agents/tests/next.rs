@@ -4,7 +4,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
-use cockpit_agents::next;
+use flightdeck_agents::next;
 use serde_json::{Value, json};
 
 static TOUCHED: AtomicUsize = AtomicUsize::new(0);
@@ -51,8 +51,8 @@ fn a_finished_turn_asks_its_agent_once_and_the_chat_gets_what_it_answered() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_CLAUDE", &claude);
-        std::env::set_var("COCKPIT_PI", &pi);
+        std::env::set_var("FLIGHTDECK_CLAUDE", &claude);
+        std::env::set_var("FLIGHTDECK_PI", &pi);
         std::env::remove_var("ANTHROPIC_API_KEY");
     }
     let cwd = home.path().to_string_lossy().into_owned();
@@ -64,12 +64,12 @@ fn a_finished_turn_asks_its_agent_once_and_the_chat_gets_what_it_answered() {
     assert!(runs(&claude_log).is_empty());
 
     // An agent's tools reading `chat` never start a run billed to the person.
-    use cockpit_core::peer::{Sender, Who};
-    let read_by_agent = cockpit_core::peer::with(Sender::Placed(Who::Agent("w1:p9".into())), || next::of(&row("done"), &messages, &on, None, Some(touched)));
+    use flightdeck_core::peer::{Sender, Who};
+    let read_by_agent = flightdeck_core::peer::with(Sender::Placed(Who::Agent("w1:p9".into())), || next::of(&row("done"), &messages, &on, None, Some(touched)));
     assert_eq!(read_by_agent, Value::Null);
     assert!(runs(&claude_log).is_empty());
     // The person's own window looks.
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
 
     let before = TOUCHED.load(Ordering::SeqCst);
     let first = next::of(&row("done"), &messages, &on, Some("claude-haiku-4-5"), Some(touched));
@@ -101,7 +101,7 @@ fn a_finished_turn_asks_its_agent_once_and_the_chat_gets_what_it_answered() {
     assert!(!args.iter().any(|a| a.contains("<conversation>")), "a fork reads its own session");
 
     // The next turn asks again; what was kept is on disk, so a restart asks no turn twice.
-    let saved = cockpit_core::files::load(&home.path().join(".cache/cockpit/agents/next/s-copy.json")).unwrap();
+    let saved = flightdeck_core::files::load(&home.path().join(".cache/flightdeck/agents/next/s-copy.json")).unwrap();
     assert_eq!(saved["items"].as_array().map(Vec::len), Some(2));
 
     // A supported agent without a session reads the bounded conversation in a fresh run.
@@ -122,7 +122,7 @@ fn a_finished_turn_asks_its_agent_once_and_the_chat_gets_what_it_answered() {
     wait_for_touch(before);
     let asked = runs(&claude_log);
     let last = asked.last().unwrap();
-    assert!(last.join("\n").contains("<conversation>\nPerson: Write the copy for the quota settings page."), "Pi's conversation, as cockpit read it");
+    assert!(last.join("\n").contains("<conversation>\nPerson: Write the copy for the quota settings page."), "Pi's conversation, as flightdeck read it");
     assert!(!last.iter().any(|a| a == "--fork-session" || a == "pi-1" || a == "pi-model"), "nothing of Pi's session or model");
     assert!(last.iter().any(|a| a == "--safe-mode") && last[last.iter().position(|a| a == "--tools").unwrap() + 1].is_empty(), "still no tools");
     assert!(runs(&pi_log).is_empty(), "Pi itself never runs");

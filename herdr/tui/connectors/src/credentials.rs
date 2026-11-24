@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 
 use rmcp::transport::auth::{AuthError, CredentialStore, StoredCredentials};
 
-const SERVICE: &str = "cockpit-mcp";
+const SERVICE: &str = "flightdeck-mcp";
 
 /// The login of one server, by its URL.
 pub struct Store {
@@ -21,7 +21,7 @@ impl Store {
     fn file(&self) -> PathBuf {
         let name: String = self.server.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '_' }).collect();
         let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
-        home.join(".config/cockpit/credentials").join(format!("{name}.json"))
+        home.join(".config/flightdeck/credentials").join(format!("{name}.json"))
     }
 
     fn read(&self) -> Option<String> {

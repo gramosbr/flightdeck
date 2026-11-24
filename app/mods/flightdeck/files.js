@@ -1,5 +1,5 @@
 // The side panel's Files: the chat agent's folder as a tree, opened down to the repositories it works in, those marked
-// (one outside the folder listed above it), and every changed file coloured by its git status; a file opens in cockpit's
+// (one outside the folder listed above it), and every changed file coloured by its git status; a file opens in flightdeck's
 // editor.
 
 import { div } from "gpui-kit";
@@ -195,7 +195,7 @@ export default class Files {
     };
     const rows = this.rows();
     return v_flex()
-      .id("cockpit-files")
+      .id("flightdeck-files")
       .size_full()
       .min_h(0)
       .bg(k.canvas)
@@ -217,8 +217,8 @@ export default class Files {
           .flex_1()
           .min_h(0)
           .relative()
-          .child(v_flex().id("cockpit-files-list").absolute().inset_0().overflow_y_scroll().p(6).children(rows.map(row)))
-          .child(Scrollbar.vertical("cockpit-files-list").absolute().inset_0())
+          .child(v_flex().id("flightdeck-files-list").absolute().inset_0().overflow_y_scroll().p(6).children(rows.map(row)))
+          .child(Scrollbar.vertical("flightdeck-files-list").absolute().inset_0())
           .when(!rows.length, (el) => el.child(div().p(12).text_size(TEXT.sm).text_color(k.dim).child(this.error || (this.loading ? "Loading files…" : this.root ? "No files" : "No folder")))),
       );
   }

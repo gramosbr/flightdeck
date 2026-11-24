@@ -1,18 +1,18 @@
 #!/bin/sh
-# The Herdr app half's screenshots: each cockpit view in a sandbox window (scripts/sandbox.sh) on the acme demo world, in
+# The Herdr app half's screenshots: each flightdeck view in a sandbox window (scripts/sandbox.sh) on the acme demo world, in
 # dark and light, at a normal and a narrow width, as PNGs in docs/app/ (`<view>-<theme>.png`, `<view>-<theme>-<width>.png`).
 #
 #   sh docs/screenshots/app_shots.sh [view ...]   default: home work inbox runbook todo meetings monitor routines palette recap kit
 #   OUT=<dir> WIDTHS="1280 760" THEMES="dark light" SETTLE=1.2 MAXW=1600 sh docs/screenshots/app_shots.sh palette
 #
 # The window comes to the front for each shot (a window behind others does not repaint), so leave the machine alone
-# while it runs. COCKPIT_SANDBOX picks the sandbox; keep its path short, macOS caps a socket's path at 104 bytes.
+# while it runs. FLIGHTDECK_SANDBOX picks the sandbox; keep its path short, macOS caps a socket's path at 104 bytes.
 set -eu
 
 repo=$(cd "$(dirname "$0")/../.." && pwd)
 tmp=${TMPDIR:-/tmp}
-COCKPIT_SANDBOX=${COCKPIT_SANDBOX:-${tmp%/}/cockpit-gui}
-export COCKPIT_SANDBOX
+FLIGHTDECK_SANDBOX=${FLIGHTDECK_SANDBOX:-${tmp%/}/flightdeck-gui}
+export FLIGHTDECK_SANDBOX
 out=${OUT:-$repo/docs/app}
 widths=${WIDTHS:-1280 760}
 themes=${THEMES:-dark light}
@@ -21,7 +21,7 @@ views=${*:-home work inbox runbook todo meetings monitor routines palette recap 
 # Retina shots are twice the window's width: each is scaled down to this many pixels across.
 maxw=${MAXW:-1600}
 herdr_app=${HERDR_APP_BIN:-$HOME/.local/bin/herdr-app}
-app_home="$COCKPIT_SANDBOX/herdr-home"
+app_home="$FLIGHTDECK_SANDBOX/herdr-home"
 
 sandbox() { sh "$repo/scripts/sandbox.sh" "$@"; }
 app() { HERDR_APP_HOME="$app_home" "$herdr_app" "$@"; }
@@ -48,7 +48,7 @@ resize() {
   sandbox start >/dev/null
   # The mod answers its commands once it has loaded.
   i=0
-  until app "do" cockpit.go:work 2>/dev/null | grep -q '"ok"' || [ $i -gt 40 ]; do
+  until app "do" flightdeck.go:work 2>/dev/null | grep -q '"ok"' || [ $i -gt 40 ]; do
     i=$((i + 1))
     sleep 0.25
   done
@@ -71,8 +71,8 @@ for width in $widths; do
     for view in $views; do
       app "do" overlay.close >/dev/null 2>&1 || true
       case $view in
-        palette) sandbox show work >/dev/null; app "do" cockpit.palette >/dev/null ;;
-        recap) sandbox show home >/dev/null; app "do" cockpit.recap >/dev/null ;;
+        palette) sandbox show work >/dev/null; app "do" flightdeck.palette >/dev/null ;;
+        recap) sandbox show home >/dev/null; app "do" flightdeck.recap >/dev/null ;;
         kit) sandbox kit >/dev/null ;;
         *) sandbox show "$view" >/dev/null ;;
       esac
@@ -84,7 +84,7 @@ for width in $widths; do
       sips -Z "$maxw" "$out/$name.png" >/dev/null 2>&1 || true
       echo "$out/$name.png"
       # The kit is a window, which only a layout switch closes.
-      [ "$view" != kit ] || { app "do" layout.switch '{"name": "main"}' >/dev/null; app "do" layout.switch '{"name": "cockpit"}' >/dev/null; }
+      [ "$view" != kit ] || { app "do" layout.switch '{"name": "main"}' >/dev/null; app "do" layout.switch '{"name": "flightdeck"}' >/dev/null; }
     done
   done
 done

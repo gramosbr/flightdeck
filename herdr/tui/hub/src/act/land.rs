@@ -7,7 +7,7 @@
 use std::path::Path;
 use std::time::Duration;
 
-use cockpit_core::{files, frontend};
+use flightdeck_core::{files, frontend};
 use serde_json::{Value, json};
 
 use super::{Ctx, arg, inbox, opt};
@@ -26,7 +26,7 @@ fn gh(args: &[&str]) -> Res<String> {
 
 /// git in `dir` as every cleanup runs it: never asking for a password, a minute at most.
 pub(super) fn git(dir: &Path, args: &[&str]) -> proc::Out {
-    match cockpit_core::cleanup::git_out(dir, args, Duration::from_secs(60), true) {
+    match flightdeck_core::cleanup::git_out(dir, args, Duration::from_secs(60), true) {
         Some(out) => proc::Out { started: true, code: if out.ok { 0 } else { 1 }, stdout: out.stdout, stderr: out.stderr },
         None => proc::Out { started: false, code: 1, stdout: String::new(), stderr: format!("git {} ran out of time", args.first().unwrap_or(&"")) },
     }
@@ -73,7 +73,7 @@ pub fn coords(cfg: &Config, pr: &Value) -> Res<(String, String, String)> {
     }
     let org = cfg.0["github"]["org"].as_str().unwrap_or_default();
     if org.is_empty() {
-        return Err("set github.org in the cockpit config".into());
+        return Err("set github.org in the flightdeck config".into());
     }
     Ok((org.into(), repo.into(), number))
 }
@@ -317,7 +317,7 @@ fn mutate(query: &str, vars: &[(&str, &str)]) -> Res {
 fn by_code_server(ctx: &mut Ctx, verb: &str, pr: &Value, done: &str) -> Option<Res> {
     let raw = files::load(&files::config_dir().join("config.json")).unwrap_or(Value::Null);
     let server = crate::feed::mcp::server(&raw, &ctx.cfg.0, "code")?;
-    use cockpit_connectors::{code, tools::Mapped};
+    use flightdeck_connectors::{code, tools::Mapped};
     let mapping = code::mapping(&raw["code"]);
     let outcome = crate::feed::mcp::with(&server, async |c| code::act(&Mapped { connection: c, section: &mapping }, verb, pr).await);
     let repo = pr["repo"].as_str().unwrap_or_default().to_string();
@@ -461,7 +461,7 @@ pub fn start(ctx: &mut Ctx, args: &[Value]) -> Res {
 /// `remove_worktree [path]`: refused with what keeps it, the merge fetched only when it is the last question; else
 /// removed as git allows, then its space closed and its branch deleted, never forced.
 pub fn remove_worktree(ctx: &mut Ctx, args: &[Value]) -> Res {
-    use cockpit_core::cleanup;
+    use flightdeck_core::cleanup;
     let path = text(arg(args, 0)?);
     if !ctx.confirmed(&format!("remove-{path}")) {
         return Ok(());
@@ -499,8 +499,8 @@ pub fn remove_worktree(ctx: &mut Ctx, args: &[Value]) -> Res {
         return Err(format!("git did not remove {path}: {}", removed.stderr.trim()));
     }
     // The Chromium side browser closes the tabs it kept for this worktree, when it is running.
-    if cockpit_core::browser::connect().is_some() {
-        let _ = cockpit_core::browser::request(&json!({"op": "worktree.forget", "worktree": named}), std::time::Duration::from_secs(5));
+    if flightdeck_core::browser::connect().is_some() {
+        let _ = flightdeck_core::browser::request(&json!({"op": "worktree.forget", "worktree": named}), std::time::Duration::from_secs(5));
     }
     // Its space closes once the folder is gone, not before git agreed.
     if let Some(open) = inbox::space_on(&path) {

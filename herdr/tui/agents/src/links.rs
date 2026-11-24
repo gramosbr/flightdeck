@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex};
 use std::time::SystemTime;
 
-use cockpit_core::sites::{self, Link};
-use cockpit_core::{files, transcripts};
+use flightdeck_core::sites::{self, Link};
+use flightdeck_core::{files, transcripts};
 use serde_json::{Value, json};
 
 /// How much of a transcript's end is read for the pages it cites.
@@ -149,7 +149,7 @@ pub fn shown() -> Vec<Value> {
 /// The views of `shown` a terminal's session showed this week, newest first: name and title. A view names its terminal
 /// by any of `ids` (the Herdr app's address or the row's handle).
 pub fn documents(shown: &[Value], ids: &[&str]) -> Vec<Value> {
-    let now = cockpit_core::seen::now_ms() as f64;
+    let now = flightdeck_core::seen::now_ms() as f64;
     let mut mine: Vec<&Value> = shown
         .iter()
         .filter(|s| s["terminal"].as_str().is_some_and(|t| ids.contains(&t)) && s["placement"] != "browser" && now - s["at"].as_f64().unwrap_or(0.0) <= KEEP_MS)
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn a_terminals_documents_are_its_own_of_the_week_newest_first_never_a_browser_page() {
-        let now = cockpit_core::seen::now_ms() as f64;
+        let now = flightdeck_core::seen::now_ms() as f64;
         let shown = [
             json!({"name": "quota-chart", "terminal": "app:t1", "title": "Quota use", "at": now - 60_000.0, "placement": "right"}),
             json!({"name": "plan", "terminal": "w1:p1", "title": "Plan", "at": now - 1_000.0, "placement": "right"}),

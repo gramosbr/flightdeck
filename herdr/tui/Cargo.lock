@@ -441,312 +441,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cockpit-agents"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "libc",
- "regex",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "cockpit-cli"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-agents",
- "cockpit-connectors",
- "cockpit-core",
- "cockpit-hub",
- "cockpit-inbox",
- "cockpit-mail",
- "cockpit-meetings",
- "cockpit-monitor",
- "cockpit-palette",
- "cockpit-review",
- "cockpit-routines",
- "cockpit-runbook",
- "cockpit-show",
- "cockpit-todo",
- "cockpit-update",
- "libc",
- "mimalloc",
- "notify",
- "regex",
- "serde",
- "serde_json",
- "signal-hook",
- "tempfile",
- "toml_edit",
-]
-
-[[package]]
-name = "cockpit-connectors"
-version = "1.5.2"
-dependencies = [
- "async-trait",
- "chrono",
- "reqwest",
- "rmcp",
- "rustls",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "cockpit-core"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "chrono-tz",
- "crossterm",
- "libc",
- "notify",
- "nucleo-matcher",
- "ratatui",
- "regex",
- "serde",
- "serde_json",
- "tachyonfx",
- "tempfile",
- "unicode-width",
-]
-
-[[package]]
-name = "cockpit-hub"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "chrono-tz",
- "cockpit-agents",
- "cockpit-connectors",
- "cockpit-core",
- "cockpit-update",
- "libc",
- "lz4_flex",
- "notify",
- "nucleo-matcher",
- "redb",
- "regex",
- "rrule",
- "safetensors",
- "serde",
- "serde_json",
- "sha2",
- "signal-hook",
- "tantivy",
- "tempfile",
- "tokenizers",
- "ureq",
-]
-
-[[package]]
-name = "cockpit-inbox"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-agents",
- "cockpit-core",
- "cockpit-show",
- "crossterm",
- "insta",
- "notify",
- "nucleo-matcher",
- "proptest",
- "ratatui",
- "regex",
- "serde_json",
-]
-
-[[package]]
-name = "cockpit-mail"
-version = "1.5.2"
-dependencies = [
- "ammonia",
- "chrono",
- "cockpit-connectors",
- "cockpit-core",
- "crossterm",
- "html2text",
- "ratatui",
- "regex",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "cockpit-meetings"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "cockpit-show",
- "crossterm",
- "image",
- "insta",
- "ratatui",
- "ratatui-image",
- "resvg",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "cockpit-monitor"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "crossterm",
- "insta",
- "ratatui",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "cockpit-palette"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-agents",
- "cockpit-core",
- "crossterm",
- "insta",
- "ratatui",
- "serde_json",
- "tempfile",
- "textwrap",
- "unicode-width",
-]
-
-[[package]]
-name = "cockpit-review"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "cockpit-show",
- "crossterm",
- "insta",
- "ratatui",
- "serde_json",
-]
-
-[[package]]
-name = "cockpit-routines"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "crossterm",
- "insta",
- "ratatui",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "cockpit-runbook"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "crossterm",
- "insta",
- "notify",
- "nucleo-matcher",
- "proptest",
- "ratatui",
- "regex",
- "serde_json",
- "tachyonfx",
- "tempfile",
-]
-
-[[package]]
-name = "cockpit-show"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "comrak",
- "crossterm",
- "image",
- "insta",
- "libmimalloc-sys",
- "notify",
- "proptest",
- "ratatui",
- "ratatui-image",
- "regex",
- "resvg",
- "serde",
- "serde_json",
- "signal-hook",
- "similar 3.2.1",
- "tachyonfx",
- "tempfile",
- "textwrap",
- "tree-sitter",
- "tree-sitter-bash",
- "tree-sitter-c",
- "tree-sitter-cpp",
- "tree-sitter-css",
- "tree-sitter-elixir",
- "tree-sitter-go",
- "tree-sitter-highlight",
- "tree-sitter-html",
- "tree-sitter-java",
- "tree-sitter-javascript",
- "tree-sitter-json",
- "tree-sitter-kotlin-sg",
- "tree-sitter-md",
- "tree-sitter-python",
- "tree-sitter-ruby",
- "tree-sitter-rust",
- "tree-sitter-sequel",
- "tree-sitter-swift",
- "tree-sitter-toml-ng",
- "tree-sitter-typescript",
- "tree-sitter-yaml",
- "unicode-width",
-]
-
-[[package]]
-name = "cockpit-todo"
-version = "1.5.2"
-dependencies = [
- "chrono",
- "cockpit-core",
- "crossterm",
- "insta",
- "notify",
- "proptest",
- "ratatui",
- "regex",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "cockpit-update"
-version = "1.5.2"
-dependencies = [
- "cockpit-core",
- "flate2",
- "libc",
- "sha2",
- "tar",
- "tempfile",
- "ureq",
-]
-
-[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1362,6 +1056,312 @@ dependencies = [
  "crc32fast",
  "miniz_oxide 0.9.1",
  "zlib-rs",
+]
+
+[[package]]
+name = "flightdeck-agents"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "flightdeck-core",
+ "libc",
+ "regex",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "flightdeck-cli"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "flightdeck-agents",
+ "flightdeck-connectors",
+ "flightdeck-core",
+ "flightdeck-hub",
+ "flightdeck-inbox",
+ "flightdeck-mail",
+ "flightdeck-meetings",
+ "flightdeck-monitor",
+ "flightdeck-palette",
+ "flightdeck-review",
+ "flightdeck-routines",
+ "flightdeck-runbook",
+ "flightdeck-show",
+ "flightdeck-todo",
+ "flightdeck-update",
+ "libc",
+ "mimalloc",
+ "notify",
+ "regex",
+ "serde",
+ "serde_json",
+ "signal-hook",
+ "tempfile",
+ "toml_edit",
+]
+
+[[package]]
+name = "flightdeck-connectors"
+version = "1.5.2"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "reqwest",
+ "rmcp",
+ "rustls",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "flightdeck-core"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "crossterm",
+ "libc",
+ "notify",
+ "nucleo-matcher",
+ "ratatui",
+ "regex",
+ "serde",
+ "serde_json",
+ "tachyonfx",
+ "tempfile",
+ "unicode-width",
+]
+
+[[package]]
+name = "flightdeck-hub"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "flightdeck-agents",
+ "flightdeck-connectors",
+ "flightdeck-core",
+ "flightdeck-update",
+ "libc",
+ "lz4_flex",
+ "notify",
+ "nucleo-matcher",
+ "redb",
+ "regex",
+ "rrule",
+ "safetensors",
+ "serde",
+ "serde_json",
+ "sha2",
+ "signal-hook",
+ "tantivy",
+ "tempfile",
+ "tokenizers",
+ "ureq",
+]
+
+[[package]]
+name = "flightdeck-inbox"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-agents",
+ "flightdeck-core",
+ "flightdeck-show",
+ "insta",
+ "notify",
+ "nucleo-matcher",
+ "proptest",
+ "ratatui",
+ "regex",
+ "serde_json",
+]
+
+[[package]]
+name = "flightdeck-mail"
+version = "1.5.2"
+dependencies = [
+ "ammonia",
+ "chrono",
+ "crossterm",
+ "flightdeck-connectors",
+ "flightdeck-core",
+ "html2text",
+ "ratatui",
+ "regex",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "flightdeck-meetings"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "flightdeck-show",
+ "image",
+ "insta",
+ "ratatui",
+ "ratatui-image",
+ "resvg",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "flightdeck-monitor"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "insta",
+ "ratatui",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "flightdeck-palette"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-agents",
+ "flightdeck-core",
+ "insta",
+ "ratatui",
+ "serde_json",
+ "tempfile",
+ "textwrap",
+ "unicode-width",
+]
+
+[[package]]
+name = "flightdeck-review"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "flightdeck-show",
+ "insta",
+ "ratatui",
+ "serde_json",
+]
+
+[[package]]
+name = "flightdeck-routines"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "insta",
+ "ratatui",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "flightdeck-runbook"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "insta",
+ "notify",
+ "nucleo-matcher",
+ "proptest",
+ "ratatui",
+ "regex",
+ "serde_json",
+ "tachyonfx",
+ "tempfile",
+]
+
+[[package]]
+name = "flightdeck-show"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "comrak",
+ "crossterm",
+ "flightdeck-core",
+ "image",
+ "insta",
+ "libmimalloc-sys",
+ "notify",
+ "proptest",
+ "ratatui",
+ "ratatui-image",
+ "regex",
+ "resvg",
+ "serde",
+ "serde_json",
+ "signal-hook",
+ "similar 3.2.1",
+ "tachyonfx",
+ "tempfile",
+ "textwrap",
+ "tree-sitter",
+ "tree-sitter-bash",
+ "tree-sitter-c",
+ "tree-sitter-cpp",
+ "tree-sitter-css",
+ "tree-sitter-elixir",
+ "tree-sitter-go",
+ "tree-sitter-highlight",
+ "tree-sitter-html",
+ "tree-sitter-java",
+ "tree-sitter-javascript",
+ "tree-sitter-json",
+ "tree-sitter-kotlin-sg",
+ "tree-sitter-md",
+ "tree-sitter-python",
+ "tree-sitter-ruby",
+ "tree-sitter-rust",
+ "tree-sitter-sequel",
+ "tree-sitter-swift",
+ "tree-sitter-toml-ng",
+ "tree-sitter-typescript",
+ "tree-sitter-yaml",
+ "unicode-width",
+]
+
+[[package]]
+name = "flightdeck-todo"
+version = "1.5.2"
+dependencies = [
+ "chrono",
+ "crossterm",
+ "flightdeck-core",
+ "insta",
+ "notify",
+ "proptest",
+ "ratatui",
+ "regex",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
+name = "flightdeck-update"
+version = "1.5.2"
+dependencies = [
+ "flate2",
+ "flightdeck-core",
+ "libc",
+ "sha2",
+ "tar",
+ "tempfile",
+ "ureq",
 ]
 
 [[package]]

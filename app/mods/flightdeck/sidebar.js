@@ -1,4 +1,4 @@
-// The cockpit sidebar, in place of Herdr's Spaces and Agents lists: the work area and the pinned apps (the config's
+// The flightdeck sidebar, in place of Herdr's Spaces and Agents lists: the work area and the pinned apps (the config's
 // `spaces`) with their counts, then the spaces with their tabs' agents. It also posts the hub's notifications, as Herdr
 // toasts while the window is in front and system ones otherwise; the window's commands run in commands.js.
 
@@ -66,7 +66,7 @@ export { show } from "./screens.js";
 /** The screens whose own view runs the agents menu's commands while it is in front. */
 const AGENT_SCREENS = ["needs"];
 
-/** Whether the sidebar runs `cockpit.agents|…`: only when no screen in front runs them itself, so each runs once. */
+/** Whether the sidebar runs `flightdeck.agents|…`: only when no screen in front runs them itself, so each runs once. */
 export const takesAgentCommands = () => !AGENT_SCREENS.some((screen) => inFront(screen));
 
 /** Brings up a space's work: its chat when an agent runs there, else its panes as they are. */
@@ -103,13 +103,13 @@ export default class Sidebar {
       try {
         this.install = await hub.install();
         const { cache, home } = this.install;
-        const text = (await readTextFile(`${cache}/config.json`)) ?? (await readTextFile(`${home}/.config/cockpit/config.json`));
+        const text = (await readTextFile(`${cache}/config.json`)) ?? (await readTextFile(`${home}/.config/flightdeck/config.json`));
         const pinned = text ? JSON.parse(text).spaces : null;
         if (Array.isArray(pinned)) this.spaces = pinned.map((s) => (typeof s === "string" ? s : s.name));
       } catch {}
       cx.notify();
     });
-    // The hub writes update.json every six hours; a window left open picks a newer cockpit up on its own.
+    // The hub writes update.json every six hours; a window left open picks a newer flightdeck up on its own.
     cx.spawn(async (cx) => {
       for (;;) {
         try {
@@ -145,7 +145,7 @@ export default class Sidebar {
     deliver(n, this.install, cx);
   }
 
-  /** The agents menu's `cockpit.agents|…`, unless a screen in front runs them; the window's are the runner's. */
+  /** The agents menu's `flightdeck.agents|…`, unless a screen in front runs them; the window's are the runner's. */
   command(c, cx, key = null) {
     if (c.startsWith("agents|") && !takesAgentCommands()) return;
     if (this.agents.command(c, cx, key)) return;
@@ -186,7 +186,7 @@ export default class Sidebar {
 
   render(cx) {
     const k = tokens();
-    const active = shared("cockpit.app") ?? "work";
+    const active = shared("flightdeck.app") ?? "work";
     // A space or tab picked anywhere brings the work area back (Home keeps its own focused agent).
     const f = focused();
     const place = f ? `${f.space}/${f.tab}` : null;
@@ -246,24 +246,24 @@ export default class Sidebar {
         .when(Boolean(count) && rail, (e) => e.child(div().absolute().top(4).right(6).size(7).rounded(4).bg(tone ?? k.ring)));
     };
     const apps = [
-      ...this.spaces.filter((s) => APPS[s]).map((s) => ({ ...APPS[s], child: APPS[s].child ?? s, command: `cockpit.go:${APPS[s].child ?? s}` })),
+      ...this.spaces.filter((s) => APPS[s]).map((s) => ({ ...APPS[s], child: APPS[s].child ?? s, command: `flightdeck.go:${APPS[s].child ?? s}` })),
       // The screens the shown layout adds, after the pinned apps.
       ...screens().list.filter((s) => s.added),
     ];
     const badge = (child) => this.counts[child] ?? shared(`badge.${child}`) ?? null;
     const tone = (child) => { const t = badge(child)?.tone; return t ? k[t] ?? t : null; };
     const counts = countsOf(model.value);
-    // Cockpit Chat has a Needs screen of its own: the waiting count is its, and its keys stay in the tooltips.
-    const chat = layoutName() === "cockpit-chat";
+    // Flightdeck Chat has a Needs screen of its own: the waiting count is its, and its keys stay in the tooltips.
+    const chat = layoutName() === "flightdeck-chat";
     const home = screens().list.find((x) => x.child === "home");
     const lead = [
       { child: "home", label: "Home", icon: "layout-dashboard", command: home.command, count: chat ? null : counts.unread || null, tone: counts.needs_you ? k.blocked : null },
-      ...(chat ? [{ child: "needs", label: "Needs you", icon: "hand", command: "cockpit.go:needs", count: needing(model.rows ?? []).length || null, tone: k.blocked }] : []),
+      ...(chat ? [{ child: "needs", label: "Needs you", icon: "hand", command: "flightdeck.go:needs", count: needing(model.rows ?? []).length || null, tone: k.blocked }] : []),
     ];
-    const paletteKey = keyFor("cockpit.palette");
+    const paletteKey = keyFor("flightdeck.palette");
 
     return v_flex()
-      .id("cockpit-sidebar")
+      .id("flightdeck-sidebar")
       .size_full()
       .on_size_change((size, cx) => {
         if (Math.abs(size.width - this.width) > 1) {
@@ -295,7 +295,7 @@ export default class Sidebar {
             .cursor_pointer()
             .hover((s) => s.border_color(k.ring))
             .on_click(() => openPalette())
-            .when(chat, (e) => e.tooltip(hint("Search or run a command", "cockpit.palette")))
+            .when(chat, (e) => e.tooltip(hint("Search or run a command", "flightdeck.palette")))
             .child(Icon("search", { size: 14, color: k.mutedFg }))
             .child(div().flex_1().text_size(TEXT.sm).text_color(k.mutedFg).child("Search or run…"))
             .when(!chat && Boolean(paletteKey), (e) => e.child(Kbd(keyText(paletteKey ?? "")))),
@@ -325,7 +325,7 @@ export default class Sidebar {
           .when(rail, (e) => e.children(this.railRows(k, rows)))
           .when(!rail, (e) => e.children([UndoRow("band-undo", model), ...this.bandRows(k, band), ...this.agentRows(k, rows, band, cx), ...this.spaceRows(k, cx)].filter(Boolean))),
       )
-      .when(Boolean(this.update), (e) => e.child(UpdateTag("update-tag", this.update, { rail, mono: layoutName() === "cockpit-chat" })))
+      .when(Boolean(this.update), (e) => e.child(UpdateTag("update-tag", this.update, { rail, mono: layoutName() === "flightdeck-chat" })))
       .child(div().mt(4).child(SettingsLink("sidebar-settings", { rail })));
   }
 
@@ -435,10 +435,10 @@ export default class Sidebar {
             .text_color(k.mutedFg)
             .hover((s) => s.bg(k.accent))
             .on_click(() => openRecap())
-            .tooltip(hint("Recap of every agent", "cockpit.recap"))
+            .tooltip(hint("Recap of every agent", "flightdeck.recap"))
             .child(`${band.length - shown.length} more waiting · open the recap`)
-            // Cockpit shows its keys on what they act on; Cockpit Chat keeps them in the tooltip.
-            .when(layoutName() !== "cockpit-chat" && Boolean(keyFor("cockpit.recap")), (e) => e.gap(6).child(Kbd(keyText(keyFor("cockpit.recap") ?? ""))))
+            // Flightdeck shows its keys on what they act on; Flightdeck Chat keeps them in the tooltip.
+            .when(layoutName() !== "flightdeck-chat" && Boolean(keyFor("flightdeck.recap")), (e) => e.gap(6).child(Kbd(keyText(keyFor("flightdeck.recap") ?? ""))))
         : null,
       div().h(6),
     ].filter(Boolean);
@@ -456,8 +456,8 @@ export default class Sidebar {
     if (r.pr) parts.push(div().child(`#${r.pr.number}${r.pr.review === "APPROVED" ? " approved" : r.pr.review === "CHANGES_REQUESTED" ? " changes asked" : ""}`));
     if (r.changes?.files) parts.push(h_flex().gap(3).child(div().text_color(k.success).child(`+${r.changes.add}`)).child(div().text_color(k.destructive).child(`−${r.changes.del}`)));
     if (!parts.length && r.said) parts.push(div().min_w(0).truncate().italic().child(r.said));
-    // A session cockpit drives has no terminal: the Cockpit layout says a click reads it in Cockpit Chat.
-    const reads = r.paused ? "Paused · picks up when you write" : layoutName() === "cockpit" ? "Reads in Cockpit Chat" : null;
+    // A session flightdeck drives has no terminal: the Flightdeck layout says a click reads it in Flightdeck Chat.
+    const reads = r.paused ? "Paused · picks up when you write" : layoutName() === "flightdeck" ? "Reads in Flightdeck Chat" : null;
     if (r.driven && reads) parts.unshift(h_flex().min_w(0).gap(4).items_center().child(Icon("message-square", { size: 11 })).child(div().min_w(0).truncate().child(reads)));
     const flash = this.flashes.of(r.terminal);
     const row = h_flex()
@@ -511,7 +511,7 @@ export default class Sidebar {
       .child(h_flex().gap(8).items_center().child(StageMark(`${id}-hc`, r.stage, { status: r.status })).child(AgentLogo(r, { size: 14 })).child(div().flex_1().font_semibold().child(r.title || r.address)).child(div().text_size(TEXT.xs).text_color(stageColor(r.stage)).child(stageAge(r, now))))
       .child(div().text_size(TEXT.sm).text_color(recap ? k.foreground : k.mutedFg).child(recap || (r.recap?.running ? "Recapping…" : r.said || "No recap yet: right-click › Recap.")))
       .child(h_flex().flex_wrap().gap(4).children(Chips(r, { id: `${id}-hc` })))
-      .child(div().text_size(TEXT.xs).text_color(k.dim).child(`${r.agent_name ? `${r.agent_name} · ` : ""}${r.driven ? `A session cockpit drives · ${String(r.cwd ?? "").split("/").pop()}` : `${r.space?.name ?? ""} · ${r.tab?.name ?? ""}`}${r.cost ? ` · ~$${r.cost.toFixed(2)} estimated` : ""}${r.context ? ` · context ${Math.round(r.context)}%` : ""}`));
+      .child(div().text_size(TEXT.xs).text_color(k.dim).child(`${r.agent_name ? `${r.agent_name} · ` : ""}${r.driven ? `A session flightdeck drives · ${String(r.cwd ?? "").split("/").pop()}` : `${r.space?.name ?? ""} · ${r.tab?.name ?? ""}`}${r.cost ? ` · ~$${r.cost.toFixed(2)} estimated` : ""}${r.context ? ` · context ${Math.round(r.context)}%` : ""}`));
     return HoverCard(`${id}-hover`, tracked, card, { width: 340, openDelay: 650 });
   }
 
@@ -541,15 +541,15 @@ export default class Sidebar {
   agentRows(k, rows, band, cx) {
     const now = Date.now();
     const rest = rows.filter((r) => !band.includes(r));
-    const mode = shared("cockpit.agents.group") ?? "ticket";
+    const mode = shared("flightdeck.agents.group") ?? "ticket";
     const MODES = { ticket: ["ticket", "By ticket"], space: ["layers", "By space"], stage: ["list-ordered", "By whose move"] };
     const next = { ticket: "space", space: "stage", stage: "ticket" }[mode] ?? "ticket";
     const head = SectionHeader("Agents", {
       count: rows.length || undefined,
       action: h_flex()
         .gap(2)
-        .child(Button("agents-recap", { icon: "sparkles", variant: "ghost", size: "icon-sm", tooltip: hint("Recap of every agent", "cockpit.recap"), onClick: () => openRecap() }))
-        .child(Button("agents-group", { icon: MODES[mode][0], variant: "ghost", size: "icon-sm", tooltip: `${MODES[mode][1]} · click for ${MODES[next][1].toLowerCase()}`, onClick: () => setShared("cockpit.agents.group", next) })),
+        .child(Button("agents-recap", { icon: "sparkles", variant: "ghost", size: "icon-sm", tooltip: hint("Recap of every agent", "flightdeck.recap"), onClick: () => openRecap() }))
+        .child(Button("agents-group", { icon: MODES[mode][0], variant: "ghost", size: "icon-sm", tooltip: `${MODES[mode][1]} · click for ${MODES[next][1].toLowerCase()}`, onClick: () => setShared("flightdeck.agents.group", next) })),
     });
     if (!rows.length) {
       const state = this.agents.state;
@@ -558,7 +558,7 @@ export default class Sidebar {
       if (this.agents.down && !hub.isNotInstalled(why) && !hub.remoteMachine()) return [head, div().px(8).pb(8).child(HubDown("sidebar-hub-down", this, why.replace(/^error: /, ""), k))];
       const hint = state === "live" || hub.isNotInstalled(state)
         ? "No agent yet. Agents show here once they report their status."
-        : state === "connecting" ? "Connecting to the cockpit hub…" : "The runner's cockpit hub is not answering.";
+        : state === "connecting" ? "Connecting to the flightdeck hub…" : "The runner's flightdeck hub is not answering.";
       return [head, div().px(8).pb(8).text_size(TEXT.xs).text_color(k.dim).child(hint)];
     }
     const pinned = rest.filter((r) => this.agents.pins.includes(r.terminal));
@@ -599,7 +599,7 @@ export default class Sidebar {
             folded ? this.folded.delete(g.id) : this.folded.add(g.id);
             cx.notify();
           })
-          .on_mouse_down("right", () => g.url && run("cockpit.target:" + g.url))
+          .on_mouse_down("right", () => g.url && run("flightdeck.target:" + g.url))
           .when(Boolean(g.stage), (e) => e.child(StageMark(`grp-${g.id}`, g.stage, { size: 6 })))
           .when(Boolean(g.ticket), (e) => e.child(Icon("ticket", { size: 12, color: k.info })))
           .child(div().flex_none().font_semibold().text_color(g.stage ? stageColor(g.stage) : k.mutedFg).child(g.label))
@@ -641,7 +641,7 @@ export default class Sidebar {
     }
     const machineNames = [...new Set([...sp.map(s => s.machine).filter(Boolean), ...machines().map(m => m.name).filter(Boolean), ...this.machineList.map(m => m.name)])].sort();
     const row = ({ s, i, tree }) => {
-      const on = s.active && (shared("cockpit.app") ?? "work") === "work";
+      const on = s.active && (shared("flightdeck.app") ?? "work") === "work";
       const fill = colors[s.id] ?? k.ring;
       const dragging = this.drag && this.drag.from === i;
       const over = this.drag && this.drag.over === i && this.drag.from !== i;
@@ -697,7 +697,7 @@ export default class Sidebar {
     };
     // Each space's terminal lines fold away, one space with its chevron or all of them from the header.
     const byAddress = new Map(this.agents.rows.map((r) => [r.address, r]));
-    const folded = new Set(shared("cockpit.spaces.folded") ?? []);
+    const folded = new Set(shared("flightdeck.spaces.folded") ?? []);
     const hasTerms = (s) => this.termRows(k, s, ps, byAddress, false).length > 0;
     const withLines = ordered.filter((r) => hasTerms(r.s));
     const allFolded = withLines.length > 0 && withLines.every((r) => folded.has(r.s.id));
@@ -711,7 +711,7 @@ export default class Sidebar {
               variant: "ghost",
               size: "icon-sm",
               tooltip: allFolded ? "Show what runs in each space" : "Hide what runs in each space",
-              onClick: () => setShared("cockpit.spaces.folded", allFolded ? [] : withLines.map((r) => r.s.id)),
+              onClick: () => setShared("flightdeck.spaces.folded", allFolded ? [] : withLines.map((r) => r.s.id)),
             }),
           ),
         )
@@ -757,7 +757,7 @@ export default class Sidebar {
     const toggle = () => {
       const next = new Set(folded);
       isFolded ? next.delete(s.id) : next.add(s.id);
-      setShared("cockpit.spaces.folded", [...next]);
+      setShared("flightdeck.spaces.folded", [...next]);
     };
     return h_flex()
       .id(`space-fold-${s.id}`)

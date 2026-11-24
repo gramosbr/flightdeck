@@ -1,10 +1,10 @@
-//! The to-do list for the Herdr app's cockpit mod: the view model the hub pushes, and the edits it runs on the file
+//! The to-do list for the Herdr app's flightdeck mod: the view model the hub pushes, and the edits it runs on the file
 //! (the same `Doc` edits the TUI makes, each read fresh from disk, undoable while nobody else wrote the file).
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::app::todo_path;

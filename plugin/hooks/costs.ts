@@ -5,7 +5,7 @@ import { cacheDir, writeAtomic } from './config'
 type $ = EngineInterface
 
 // How a session's spend splits over tickets: each stretch goes to the ticket it works on then, or to NO_TICKET, in
-// ~/.cache/cockpit/costs/<session>.json, which only that session writes; the hub prices the session and splits it so.
+// ~/.cache/flightdeck/costs/<session>.json, which only that session writes; the hub prices the session and splits it so.
 
 /** The key spend made on no ticket goes under: it weighs in the split, and is never shown as a ticket. */
 export const NO_TICKET = '(no ticket)'

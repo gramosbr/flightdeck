@@ -1,7 +1,7 @@
 // The shell end to end, in a real Electron: its control socket, tabs per session, profiles, cookie import, sleeping
 // tabs, design mode and what survives a restart. It needs Node 22 or later and the Electron binary to run:
 //
-//   COCKPIT_BROWSER_ELECTRON=/path/to/Electron node --test browser/tests/smoke.electron.mjs
+//   FLIGHTDECK_BROWSER_ELECTRON=/path/to/Electron node --test browser/tests/smoke.electron.mjs
 //
 // It runs on a home folder of its own under the temp folder, with Chromium's mock keychain, so no profile, tab or
 // keychain of the person's is touched.
@@ -16,7 +16,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const electron = process.env.COCKPIT_BROWSER_ELECTRON;
+const electron = process.env.FLIGHTDECK_BROWSER_ELECTRON;
 const here = path.dirname(fileURLToPath(import.meta.url));
 const shellDir = path.join(here, "..");
 const TOKEN = "smoke-token";
@@ -108,7 +108,7 @@ async function debug(port, match) {
   return { send, evaluate, click, close: () => ws.close(), id: target.id };
 }
 
-test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_ELECTRON to run it", timeout: 300_000 }, async (t) => {
+test("the shell, end to end", { skip: electron ? false : "set FLIGHTDECK_BROWSER_ELECTRON to run it", timeout: 300_000 }, async (t) => {
   const home = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "ckb-"));
   const socket = path.join(home, "b.sock");
   // Two sessions, each with a browser of its own, working in two worktrees.
@@ -129,7 +129,7 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
   const site = `http://localhost:${server.address().port}`;
   let child = null;
   const start = async () => {
-    const env = { ...process.env, HOME: home, COCKPIT_BROWSER_SOCKET: socket, COCKPIT_BROWSER_TOKEN: TOKEN, COCKPIT_BROWSER_OPTIONS: JSON.stringify({ dock: false, idleMinutes: 0 }), COCKPIT_BROWSER_MOCK_KEYCHAIN: "1" };
+    const env = { ...process.env, HOME: home, FLIGHTDECK_BROWSER_SOCKET: socket, FLIGHTDECK_BROWSER_TOKEN: TOKEN, FLIGHTDECK_BROWSER_OPTIONS: JSON.stringify({ dock: false, idleMinutes: 0 }), FLIGHTDECK_BROWSER_MOCK_KEYCHAIN: "1" };
     delete env.ELECTRON_RUN_AS_NODE;
     child = spawn(electron, [shellDir], { env, stdio: "ignore" });
     return until(() => ask(socket, { op: "status" }), "the shell to start", 30_000);
@@ -141,8 +141,8 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
   t.after(async () => {
     child?.kill("SIGKILL");
     server.close();
-    // What the shell said, for a failure that needs it: COCKPIT_BROWSER_SMOKE_LOG=1.
-    if (process.env.COCKPIT_BROWSER_SMOKE_LOG) console.error(fs.readFileSync(path.join(home, ".cache", "cockpit", "browser", "browser.log"), "utf8"));
+    // What the shell said, for a failure that needs it: FLIGHTDECK_BROWSER_SMOKE_LOG=1.
+    if (process.env.FLIGHTDECK_BROWSER_SMOKE_LOG) console.error(fs.readFileSync(path.join(home, ".cache", "flightdeck", "browser", "browser.log"), "utf8"));
     fs.rmSync(home, { recursive: true, force: true });
   });
   const tabs = async (owner) => (await ask(socket, { op: "tabs.list", owner })).tabs;
@@ -233,7 +233,7 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
     const orders = await page(status, api);
     await orders.evaluate("scrollTo(0, 0); true");
     await ask(socket, { op: "grab.start", owner: api, mode: "annotate" });
-    await until(() => orders.evaluate("Boolean(window.__cockpitGrab)"), "the picker");
+    await until(() => orders.evaluate("Boolean(window.__flightdeckGrab)"), "the picker");
     const toolbar = await debug(status.port, (target) => target.url.endsWith("/ui/toolbar.html"));
     await pick(orders, "#find", () => toolbar.evaluate("!document.getElementById('draft').hidden"));
     await toolbar.evaluate("document.getElementById('draft-comment').value = 'Use the primary colour'; document.getElementById('draft-intent').value = 'fix'; document.getElementById('draft').requestSubmit(); true");
@@ -265,7 +265,7 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
     // Two notes, then the list the notes button opens: each with its number, and one removed from it.
     for (const [selector, comment] of [["#find", "Use the primary colour"], ["#title", "Shorter title"]]) {
       await ask(socket, { op: "grab.start", owner: api, mode: "annotate" });
-      await until(() => orders.evaluate("Boolean(window.__cockpitGrab)"), "the picker");
+      await until(() => orders.evaluate("Boolean(window.__flightdeckGrab)"), "the picker");
       await pick(orders, selector, card);
       await toolbar.evaluate(`document.getElementById('draft-comment').value = ${JSON.stringify(comment)}; document.getElementById('draft').requestSubmit(); true`);
       await until(async () => !(await card()), "the card to close");
@@ -275,19 +275,19 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
     await toolbar.evaluate("document.getElementById('annotate').click(); true");
     await until(() => toolbar.evaluate("!document.getElementById('recap').hidden && document.querySelectorAll('#recap-list li').length === 2"), "the list of notes");
     assert.match(await toolbar.evaluate("document.getElementById('recap-list').textContent"), /1Use the primary colour.*2Shorter title/s);
-    assert.equal(await orders.evaluate("document.querySelectorAll('[data-cockpit-annotation-overlay]').length"), 1, "the page badges its noted elements");
+    assert.equal(await orders.evaluate("document.querySelectorAll('[data-flightdeck-annotation-overlay]').length"), 1, "the page badges its noted elements");
     await toolbar.evaluate("document.querySelector('#recap-list li .x').click(); true");
     await until(async () => (await ask(socket, { op: "notes.list", owner: api })).notes.length === 1, "a note to go");
     await ask(socket, { op: "notes.clear", owner: api });
     // A card left open when the picker stops goes with it.
     await ask(socket, { op: "grab.start", owner: api, mode: "copy" });
-    await until(() => orders.evaluate("Boolean(window.__cockpitGrab)"), "the picker");
+    await until(() => orders.evaluate("Boolean(window.__flightdeckGrab)"), "the picker");
     await pick(orders, "#find", card);
     await ask(socket, { op: "grab.stop" });
     await until(async () => !(await card()), "the card to go with the picker");
     // A pick: one element, one line, sent at once to the session the browser belongs to.
     await ask(socket, { op: "grab.start", owner: api, mode: "copy" });
-    await until(() => orders.evaluate("Boolean(window.__cockpitGrab)"), "the picker");
+    await until(() => orders.evaluate("Boolean(window.__flightdeckGrab)"), "the picker");
     await pick(orders, "#find", card);
     assert.equal(await toolbar.evaluate("document.getElementById('draft-save').textContent"), "Send");
     // Enter sends it; with Shift it stays a new line in the note.
@@ -317,7 +317,7 @@ test("the shell, end to end", { skip: electron ? false : "set COCKPIT_BROWSER_EL
   });
 
   await t.test("a session that ended, or a worktree that is removed, leaves nothing behind", async () => {
-    const kept = () => fs.readdirSync(path.join(home, ".config", "cockpit", "browser", "browsers")).length;
+    const kept = () => fs.readdirSync(path.join(home, ".config", "flightdeck", "browser", "browsers")).length;
     assert.equal(kept(), 2);
     await ask(socket, { op: "owner.forget", owner: api });
     assert.deepEqual(await tabs(api), []);

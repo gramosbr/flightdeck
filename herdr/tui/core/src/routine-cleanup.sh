@@ -1,6 +1,6 @@
 # shellcheck shell=sh
 # Removes the worktrees of your repos whose branch merged: commits of its own reached the default branch, or GitHub says
-# its pull request merged at the commit it has. Kept, said as cockpit's cleanup says it: work not committed or pushed,
+# its pull request merged at the commit it has. Kept, said as flightdeck's cleanup says it: work not committed or pushed,
 # ignored files other than builds, a program still in it, a lock, submodules, or a change in the last 3 days.
 failed=0
 unsaved=0
@@ -25,14 +25,14 @@ else
 fi
 # The agents the hub knows of, from its agents document, one row a line: the folder and the agent's id of each row
 # refreshed in the last quarter of an hour, whatever order its fields come in.
-agents=$(tr -d '\n' < "$HOME/.cache/cockpit/agents.json" 2>/dev/null | tr '}' '\n' | awk -v now="$(date +%s)" '
+agents=$(tr -d '\n' < "$HOME/.cache/flightdeck/agents.json" 2>/dev/null | tr '}' '\n' | awk -v now="$(date +%s)" '
   function field(name, number,    at) {
     if (!match($0, "\"" name "\":" (number ? "[0-9]+" : "\"[^\"]*\""))) return ""
     at = length(name) + 3 + (number ? 0 : 1)
     return substr($0, RSTART + at, RLENGTH - at - (number ? 0 : 1))
   }
   { c = field("cwd", 0); t = field("at", 1); if (c != "" && t != "" && now * 1000 - t < 900000) print c "\t" field("agent", 0) }')
-# A program as cockpit names it: an agent by the agent table's name, anything else by its own.
+# A program as flightdeck names it: an agent by the agent table's name, anything else by its own.
 name_of() {
   case $1 in
     claude|claude-code) echo "Claude Code" ;;
@@ -106,7 +106,7 @@ for repo in */; do
     elif [ "$cwds" = unknown ]; then add "cannot tell what runs in it"
     else
       who=$(printf '%s\n' "$cwds" | awk -v p="$real" '/^c/ { c = substr($0, 2) }
-        /^n/ { d = substr($0, 2); if ((d == p || index(d, p "/") == 1) && c !~ /^-?(sh|bash|zsh|fish|dash|lsof|cockpit|git|herdr|herdr-core|herdr-app|hc)$/) { print c; exit } }')
+        /^n/ { d = substr($0, 2); if ((d == p || index(d, p "/") == 1) && c !~ /^-?(sh|bash|zsh|fish|dash|lsof|flightdeck|git|herdr|herdr-core|herdr-app|hc)$/) { print c; exit } }')
       [ -n "$who" ] && add "$(name_of "$who") still runs in it"
     fi
     lock=$(git -C "$repo" worktree list --porcelain | awk -v p="$path" -v r="$real" '/^worktree /{w=substr($0, 10)}

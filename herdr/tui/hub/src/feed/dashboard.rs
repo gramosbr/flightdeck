@@ -35,19 +35,19 @@ pub fn tokens(inbox: &Value, muted: &[String], now_secs: i64) -> Vec<(&'static s
 
 /// Reports the counts on the inbox and mail spaces' rows when they changed, unless Claude Code's plugin does it.
 pub fn report(config: &Config) {
-    if cockpit_core::agent::get("claude").is_some_and(|a| a.installed()) || config.0["frontend"] == "app" {
+    if flightdeck_core::agent::get("claude").is_some_and(|a| a.installed()) || config.0["frontend"] == "app" {
         return;
     }
     static INBOX: Mutex<String> = Mutex::new(String::new());
     static MAIL: Mutex<String> = Mutex::new(String::new());
     let store = crate::store::global();
-    let muted: Vec<String> = cockpit_core::files::load(&cockpit_core::files::config_dir().join("muted.json"))
+    let muted: Vec<String> = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("muted.json"))
         .map(|m| list(&m).iter().filter_map(Value::as_str).map(str::to_string).collect())
         .unwrap_or_default();
     let now = chrono::Utc::now().timestamp();
     let spaces = crate::herdr::spaces();
     send(&spaces, "inbox", &tokens(&store.get("inbox"), &muted, now), &INBOX);
-    send(&spaces, "mail", &[("mail", cockpit_connectors::mail::row_text(&store.get("mail")))], &MAIL);
+    send(&spaces, "mail", &[("mail", flightdeck_connectors::mail::row_text(&store.get("mail")))], &MAIL);
 }
 
 /// The tokens on the row of the pinned space with that name, unless they are what was sent last.
@@ -59,7 +59,7 @@ fn send(spaces: &[Value], name: &str, tokens: &[(&str, Option<String>)], last: &
     if last.lock().is_ok_and(|last| *last == key) {
         return;
     }
-    let mut args: Vec<String> = ["workspace", "report-metadata", &id, "--source", "cockpit"].iter().map(|s| s.to_string()).collect();
+    let mut args: Vec<String> = ["workspace", "report-metadata", &id, "--source", "flightdeck"].iter().map(|s| s.to_string()).collect();
     for (name, value) in tokens {
         match value {
             Some(text) => args.extend(["--token".into(), format!("{name}={text}")]),

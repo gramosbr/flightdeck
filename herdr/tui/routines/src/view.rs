@@ -2,12 +2,12 @@
 //! the selected row's panel (its settings, prompt and last output) or, compact, its buttons on the row itself, the
 //! footer, and the form, dialog, toasts and palette over them.
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::files::Density;
-use cockpit_core::seen;
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{DIM, FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
-use cockpit_core::widgets;
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::files::Density;
+use flightdeck_core::seen;
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{DIM, FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
+use flightdeck_core::widgets;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style};
@@ -94,7 +94,7 @@ impl App {
         }
         spans.push(Span::styled(format!("   {}", facts.join(" · ")), dim()));
         // The shared header: no source of its own, so no chip.
-        let mut lines = cockpit_core::header::lines(Line::from(spans), &[], cells);
+        let mut lines = flightdeck_core::header::lines(Line::from(spans), &[], cells);
         lines.extend(self.looked.head(cells, |ms| self.clock.when(ms)));
         lines
     }
@@ -415,7 +415,7 @@ impl App {
 
 /// "Claude Code · sonnet · acceptEdits · in ~/work · Read, Grep · ≤ $0.50", "shell · in ~/notes".
 pub(crate) fn settings(r: &Routine) -> String {
-    let home = cockpit_core::files::home().to_string_lossy().into_owned();
+    let home = flightdeck_core::files::home().to_string_lossy().into_owned();
     let cwd = match (r.cwd.is_empty(), r.run == "shell") {
         (false, _) => format!("in {}", r.cwd.replacen(&home, "~", 1)),
         (true, true) => "in the repos folder".to_string(),

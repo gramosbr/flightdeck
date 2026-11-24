@@ -1,10 +1,10 @@
-//! What the other parts of cockpit say about a step: the session a step was handed to, and the inbox's view of its PR.
+//! What the other parts of flightdeck say about a step: the session a step was handed to, and the inbox's view of its PR.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use cockpit_core::theme::{GREEN, ORANGE, RED, bold, fg};
+use flightdeck_core::theme::{GREEN, ORANGE, RED, bold, fg};
 use ratatui::style::{Modifier, Style};
 use serde_json::Value;
 
@@ -14,11 +14,11 @@ const DONE_SHOWN: f64 = 1800.0;
 pub const MERGED: &str = "\u{f419}";
 
 pub fn dir() -> PathBuf {
-    cockpit_core::files::cache().join("handoffs")
+    flightdeck_core::files::cache().join("handoffs")
 }
 
 pub fn inbox_path() -> PathBuf {
-    cockpit_core::files::cache().join("inbox.json")
+    flightdeck_core::files::cache().join("inbox.json")
 }
 
 fn now() -> f64 {
@@ -34,7 +34,7 @@ pub fn read(dir: &Path) -> HashMap<String, Value> {
     entries
         .flatten()
         .filter(|e| e.path().extension().is_some_and(|x| x == "json"))
-        .filter_map(|e| cockpit_core::files::load(&e.path()))
+        .filter_map(|e| flightdeck_core::files::load(&e.path()))
         .filter_map(|h| Some((h.get("id")?.as_str()?.to_string(), h)))
         .collect()
 }
@@ -57,7 +57,7 @@ pub fn close(dir: &Path, handoff: &Value) {
     closed.insert("state".into(), "done".into());
     closed.insert("message".into(), "marked done by hand".into());
     closed.insert("reportedAt".into(), ((now() * 1000.0) as u64).into());
-    let _ = cockpit_core::files::write(&dir.join(format!("{id}.json")), &Value::Object(closed));
+    let _ = flightdeck_core::files::write(&dir.join(format!("{id}.json")), &Value::Object(closed));
 }
 
 /// Whether the step's session is at it now, for its row to pulse.
@@ -74,7 +74,7 @@ pub fn has_failed(handoff: &Value) -> bool {
 pub fn line(handoff: &Value) -> Option<(String, Style)> {
     let message = handoff["message"].as_str().unwrap_or_default();
     Some(match handoff["state"].as_str().unwrap_or_default() {
-        "sent" if now() - ms(handoff, "sentAt") > SENT_WAIT => ("↳ no agent session took it: is the cockpit plugin loaded there?".into(), fg(RED)),
+        "sent" if now() - ms(handoff, "sentAt") > SENT_WAIT => ("↳ no agent session took it: is the flightdeck plugin loaded there?".into(), fg(RED)),
         "sent" => ("↳ sent to its session…".into(), fg(ORANGE)),
         "running" => ("↳ running in its session…".into(), fg(ORANGE)),
         "waiting" => (format!("↳ ⏸ waits for your go · {message}"), bold(ORANGE)),

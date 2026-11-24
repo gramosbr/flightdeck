@@ -5,13 +5,13 @@ use std::path::PathBuf;
 use std::time::{Instant, SystemTime};
 
 use chrono::Utc;
-use cockpit_core::acts::Act;
-use cockpit_core::bridge::Bridge;
-use cockpit_core::files;
-use cockpit_core::hub::{self, Docs};
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::acts::Act;
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::files;
+use flightdeck_core::hub::{self, Docs};
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
 use ratatui::layout::Rect;
 use ratatui::text::Line;
 use serde_json::Value;
@@ -207,7 +207,8 @@ impl App {
         if self.docs.as_ref().is_some_and(|d| d.get("mail").is_none()) {
             return;
         }
-        let text = cockpit_connectors::mail::row_text(&serde_json::json!({"messages": self.mail.messages.iter().map(|m| m.raw.clone()).collect::<Vec<_>>()}));
+        let text =
+            flightdeck_connectors::mail::row_text(&serde_json::json!({"messages": self.mail.messages.iter().map(|m| m.raw.clone()).collect::<Vec<_>>()}));
         let Some(text) = text else { return };
         if self.pinned && self.reported.as_ref() != Some(&text) {
             pinned::report(text.clone());
@@ -217,7 +218,7 @@ impl App {
 
     /// A notification click or a palette jump: that message selected and read whole.
     fn take_focus(&mut self) -> bool {
-        let Some(id) = cockpit_core::focus::take("mail", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string)) else { return false };
+        let Some(id) = flightdeck_core::focus::take("mail", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string)) else { return false };
         self.focus(&id);
         true
     }
@@ -351,7 +352,7 @@ impl App {
         }
     }
 
-    /// The thread as a page in ~/.cache/cockpit/mail/<id>.html, opened in terminal-browser beside this pane.
+    /// The thread as a page in ~/.cache/flightdeck/mail/<id>.html, opened in terminal-browser beside this pane.
     fn open_page(&mut self, id: &str) {
         let (Thread::Ready(messages), Some(m)) = (&self.thread, self.mail.message(id)) else { return };
         let path = thread::page_path(id);

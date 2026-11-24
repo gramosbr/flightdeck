@@ -6,14 +6,14 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::time::SystemTime;
 
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::files::{self, Density};
-use cockpit_core::hub::{self, Docs};
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::seen::Seen;
-use cockpit_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::hub::{self, Docs};
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::seen::Seen;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
 use ratatui::layout::Rect;
 use serde_json::Value;
 
@@ -199,7 +199,7 @@ impl App {
 
     /// A palette jump or a notification click: that routine (or run) selected and in view.
     fn take_focus(&mut self) -> bool {
-        let Some(target) = cockpit_core::focus::take("routines", &mut self.focus_seen) else { return false };
+        let Some(target) = flightdeck_core::focus::take("routines", &mut self.focus_seen) else { return false };
         let Some(key) = target["key"].as_str() else { return false };
         self.focus(key);
         true
@@ -312,7 +312,7 @@ impl App {
     }
 
     /// The form for a new routine, blank or filled from the template picked as the default agent takes it.
-    pub fn open_form(&mut self, template: Option<&cockpit_core::routines::Template>) {
+    pub fn open_form(&mut self, template: Option<&flightdeck_core::routines::Template>) {
         self.picker = None;
         let id = self.doc.as_ref().map(|d| d.agents.default.clone()).filter(|id| !id.is_empty()).unwrap_or_else(|| "claude".into());
         let fitted = template.map(|t| t.for_agent(&id));

@@ -1,6 +1,6 @@
 //! The hub's own feed: GitHub, tickets, CI, deploys, the calendar, mail and the monitor read on their intervals (at once
 //! on a refresh request, later after errors, a rate limit waited out), each source's freshness written beside its data.
-//! COCKPIT_HUB_FEED=off keeps it still, and COCKPIT_GITHUB_API, COCKPIT_LINEAR_API and COCKPIT_CIRCLECI_API point it
+//! FLIGHTDECK_HUB_FEED=off keeps it still, and FLIGHTDECK_GITHUB_API, FLIGHTDECK_LINEAR_API and FLIGHTDECK_CIRCLECI_API point it
 //! at other hosts.
 
 mod calendar;
@@ -24,7 +24,7 @@ use std::path::Path;
 use std::sync::Once;
 use std::time::Duration;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use crate::config::{self, Config};
@@ -45,7 +45,7 @@ pub fn now_secs() -> u64 {
 /// Starts the feed once, on the hub's first request.
 pub fn start() {
     static STARTED: Once = Once::new();
-    if std::env::var("COCKPIT_HUB_FEED").is_ok_and(|v| v == "off") {
+    if std::env::var("FLIGHTDECK_HUB_FEED").is_ok_and(|v| v == "off") {
         return;
     }
     STARTED.call_once(|| {
@@ -63,15 +63,15 @@ struct Plan {
     github_ci: bool,
     linear: Option<String>,
     /// The MCP server the hub calls for my tickets, when the config's `servers` block names one.
-    tickets_server: Option<cockpit_connectors::Server>,
+    tickets_server: Option<flightdeck_connectors::Server>,
     /// The code host's server, when the PRs are not GitHub's.
-    code_server: Option<cockpit_connectors::Server>,
+    code_server: Option<flightdeck_connectors::Server>,
     /// The MCP servers the hub calls for CI runs and meetings.
-    ci_server: Option<cockpit_connectors::Server>,
-    calendar_server: Option<cockpit_connectors::Server>,
+    ci_server: Option<flightdeck_connectors::Server>,
+    calendar_server: Option<flightdeck_connectors::Server>,
     /// The platform's server, and the observability one (with its section) for the monitor space when it is pinned.
-    platform_server: Option<cockpit_connectors::Server>,
-    signals: Option<(cockpit_connectors::Server, Value)>,
+    platform_server: Option<flightdeck_connectors::Server>,
+    signals: Option<(flightdeck_connectors::Server, Value)>,
     circleci: Option<String>,
     /// The calendar's secret iCal address.
     calendar: Option<String>,
@@ -378,7 +378,7 @@ impl Feed {
                 let doc = fresh::stamp(&doc, record);
                 crate::store::global().update("monitor", |_| doc.clone());
                 let notify = plan.config.0["monitor"]["notify"].as_str().unwrap_or("mine");
-                for n in cockpit_connectors::monitor::changes(&before, &doc, notify) {
+                for n in flightdeck_connectors::monitor::changes(&before, &doc, notify) {
                     news::notify(&plan.config, &n.title, &n.body, &n.action, &[]);
                 }
             }
@@ -421,7 +421,7 @@ impl Feed {
     }
 
     fn circleci_runs(&mut self, token: &str, config: &Config) -> Fetched<Vec<Value>> {
-        let api = http::base("COCKPIT_CIRCLECI_API", "https://circleci.com");
+        let api = http::base("FLIGHTDECK_CIRCLECI_API", "https://circleci.com");
         let mut get = |path: &str| http::get(&format!("{api}{path}"), &[("Circle-Token", token), ("Accept", "application/json")]);
         let ci = &config.0["ci"];
         let name = ci["name"].as_str().unwrap_or("CircleCI").to_string();
@@ -446,7 +446,7 @@ fn note_source(name: &str) -> &'static str {
 
 /// Warns once of each meeting starting within five minutes, where no Claude session's plugin does (no Claude Code).
 fn warn_meetings(config: &Config, now: u64) {
-    if config.0["calendar"]["enabled"] != true || cockpit_core::agent::get("claude").is_some_and(|a| a.installed()) {
+    if config.0["calendar"]["enabled"] != true || flightdeck_core::agent::get("claude").is_some_and(|a| a.installed()) {
         return;
     }
     let doc = crate::store::global().get("meetings");

@@ -1,16 +1,16 @@
-//! `cockpit actions`: the pinned actions space's tabs, and its sidebar row listing the agent sessions running there.
+//! `flightdeck actions`: the pinned actions space's tabs, and its sidebar row listing the agent sessions running there.
 
-use cockpit_core::actions::{herdr, open_tab, pinned, space};
-use cockpit_core::frontend::{sidebar_width, status_mark as mark};
-use cockpit_core::text::fit;
+use flightdeck_core::actions::{herdr, open_tab, pinned, space};
+use flightdeck_core::frontend::{sidebar_width, status_mark as mark};
+use flightdeck_core::text::fit;
 use serde_json::Value;
 
 use crate::proc::fail;
 
 const USAGE: &str = "The pinned actions space: a tab per one-off agent session the inbox or the runbook starts.
 
-    cockpit actions tab <cwd> <label> [key]   a new tab there, in view, its pane id printed; nothing without the space
-    cockpit actions sidebar                    the space's sidebar row lists its sessions again";
+    flightdeck actions tab <cwd> <label> [key]   a new tab there, in view, its pane id printed; nothing without the space
+    flightdeck actions sidebar                    the space's sidebar row lists its sessions again";
 
 /// The sessions the sidebar lists under the actions space, the last line saying how many more there are.
 const SLOTS: usize = 6;
@@ -30,7 +30,7 @@ pub fn main(args: &[String]) {
 /// The herdr arguments that list the sessions under the space's row: one token per slot, a waiting one under its own
 /// name so it stands out, the others cleared.
 pub fn tokens(ws: &str, tabs: &[Value], room: usize) -> Vec<String> {
-    let mut args: Vec<String> = ["workspace", "report-metadata", ws, "--source", "cockpit-actions"].map(String::from).to_vec();
+    let mut args: Vec<String> = ["workspace", "report-metadata", ws, "--source", "flightdeck-actions"].map(String::from).to_vec();
     for i in 0..SLOTS {
         let mut tab = tabs.get(i);
         let mut text = tab.map(|t| {
@@ -83,7 +83,7 @@ mod tests {
     fn one_token_per_session_a_waiting_one_apart() {
         let args = tokens("w3", &[tab("review api#4", "working"), tab("plan eng-4", "blocked")], 30);
         let line = args.join(" | ");
-        assert!(line.starts_with("workspace | report-metadata | w3 | --source | cockpit-actions"));
+        assert!(line.starts_with("workspace | report-metadata | w3 | --source | flightdeck-actions"));
         assert!(line.contains("--token | act_1=◐ review api#4 | --clear-token | act_1_wait"));
         assert!(line.contains("--clear-token | act_2 | --token | act_2_wait=⏸ plan eng-4"));
         assert!(line.ends_with("--clear-token | act_6 | --clear-token | act_6_wait"));

@@ -10,7 +10,7 @@ use ratatui::style::Style;
 use regex::Regex;
 use similar::{Algorithm, ChangeTag};
 
-use cockpit_core::theme::{BLUE, dim, fg};
+use flightdeck_core::theme::{BLUE, dim, fg};
 
 use crate::highlight::{Grammars, token_for_path};
 
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn a_new_file_reads_like_git_shows_it() {
-        let dir = std::env::temp_dir().join(format!("cockpit-show-new-file-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("flightdeck-show-new-file-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let repo = dir.to_string_lossy().into_owned();
         assert!(Command::new("git").args(["init", "-q", &repo]).status().unwrap().success());

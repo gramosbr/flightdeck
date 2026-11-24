@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard, Once};
 use std::time::{Duration, Instant};
 
-use cockpit_core::agent::{self, Agent};
-use cockpit_core::{files, frontend};
+use flightdeck_core::agent::{self, Agent};
+use flightdeck_core::{files, frontend};
 use serde_json::{Map, Value, json};
 
 use super::{Ctx, arg, inbox, land, tickets};
@@ -27,7 +27,7 @@ const SETUP_LIMIT: Duration = Duration::from_secs(60 * 60);
 /// How long a fetch or a `git worktree add` may take: hooks and LFS can be slow.
 const GIT_LIMIT: Duration = Duration::from_secs(10 * 60);
 /// The text the agent's argv holds where its prompt goes, read from a file when the line runs.
-const PROMPT_MARK: &str = "COCKPIT_START_PROMPT";
+const PROMPT_MARK: &str = "FLIGHTDECK_START_PROMPT";
 
 // ---------------------------------------------------------------------------------------------------------------------
 // What is asked, and the world it is asked of
@@ -57,7 +57,7 @@ pub struct Request {
     /// Fast mode on or off; None leaves it to the agent.
     pub fast: Option<bool>,
     pub mode: String,
-    /// A session cockpit drives itself rather than an agent in a terminal.
+    /// A session flightdeck drives itself rather than an agent in a terminal.
     pub driven: bool,
     /// Full access confirmed.
     pub confirm: bool,
@@ -111,9 +111,9 @@ pub(crate) trait Desk {
     fn space_named(&self, label: &str) -> Option<(String, String)>;
     /// The id of the space open on a checkout.
     fn space_on(&self, path: &str) -> Option<String>;
-    /// The key of a live session cockpit drives in a checkout.
+    /// The key of a live session flightdeck drives in a checkout.
     fn session_on(&self, path: &str) -> Option<String>;
-    /// Brings a space, or a session cockpit drives (`session_on`'s key), into view.
+    /// Brings a space, or a session flightdeck drives (`session_on`'s key), into view.
     fn focus_id(&self, space: &str);
     /// A new space in `cwd`, as its creation answered: its id ("" when unknown) and the handle of its terminal.
     fn open(&self, cwd: &str, label: &str) -> Res<(String, String)>;
@@ -174,7 +174,7 @@ impl Desk for RealDesk {
         }
         // The window opens its chat; the TUI lists no session it drives, so there is nothing to bring up there.
         if frontend::current() == frontend::Frontend::App {
-            frontend::app_do(&format!("cockpit.via:chat|chat:open:{space}"), &json!({}));
+            frontend::app_do(&format!("flightdeck.via:chat|chat:open:{space}"), &json!({}));
         }
     }
 
@@ -205,7 +205,7 @@ impl Desk for RealDesk {
     }
 }
 
-/// The live sessions cockpit drives, as the `session` view lists them (`{key, cwd, …}`).
+/// The live sessions flightdeck drives, as the `session` view lists them (`{key, cwd, …}`).
 fn driven_sessions() -> Vec<Value> {
     list(&crate::views::build("session", &json!({"limit": 1}))["sessions"]).to_vec()
 }
@@ -573,7 +573,7 @@ pub(crate) struct Plan {
     pub issue: Option<Value>,
     /// The space to bring into view, when place is `space` or `focus`.
     pub space: String,
-    /// That space is a session cockpit drives, opened rather than focused.
+    /// That space is a session flightdeck drives, opened rather than focused.
     pub session: bool,
     pub steps: Vec<(&'static str, String)>,
     pub blockers: Vec<Blocker>,
@@ -639,7 +639,7 @@ fn choices(world: &World) -> Value {
     let last = files::load(&world.cache.join("start.json")).unwrap_or(Value::Null);
     json!({
         "repos": checkouts(&world.cfg),
-        // `drives`: cockpit can run it as a session of its own (a form starts it so), else it runs in a terminal.
+        // `drives`: flightdeck can run it as a session of its own (a form starts it so), else it runs in a terminal.
         "agents": agents
             .iter()
             .map(|a| json!({"id": a.id, "name": a.name, "icon": agent::icon_in(&world.agents, &a.id), "installed": a.installed(), "models": !a.model.is_empty(), "modes": modes_of(a), "drives": a.stream.is_some(), "picks": a.catalog_picks(|| {})}))
@@ -876,7 +876,7 @@ pub(crate) fn plan_in(world: &World, req: &Request) -> Plan {
     let with = [p.model.clone(), effort, fast, mode_word].into_iter().filter(|w| !w.is_empty() && w != "asks first").collect::<Vec<_>>();
     let how = if with.is_empty() { String::new() } else { format!(" ({})", with.join(", ")) };
     if p.driven {
-        p.steps.push(("agent", format!("start {agent_name}{how} as a session cockpit drives, on {}", p.what())));
+        p.steps.push(("agent", format!("start {agent_name}{how} as a session flightdeck drives, on {}", p.what())));
     } else {
         let named = if p.label.is_empty() { String::new() } else { format!(" \u{201c}{}\u{201d}", p.label) };
         p.steps.push(("space", format!("open a space{named} there")));
@@ -916,14 +916,14 @@ fn focus_plan(mut p: Plan, space: String) -> Plan {
 fn agent_checks(world: &World, req: &Request, p: &mut Plan) -> Option<Agent> {
     let id = if req.agent.is_empty() { world.default_agent.as_str() } else { req.agent.as_str() };
     let Some(found) = world.agents.iter().find(|a| a.id == id || a.aliases.iter().any(|x| x == id)).cloned() else {
-        p.block("agent", format!("No agent {id:?} in cockpit's table"), vec![]);
+        p.block("agent", format!("No agent {id:?} in flightdeck's table"), vec![]);
         return None;
     };
     if !found.installed() {
         p.block("agent", format!("{} is not installed: {} is not found", found.name, found.bin), vec![]);
     }
     if req.driven && found.stream.is_none() {
-        p.block("agent", format!("cockpit drives {} only in a terminal", found.name), vec![("Start it in a terminal", json!({"driven": false}))]);
+        p.block("agent", format!("flightdeck drives {} only in a terminal", found.name), vec![("Start it in a terminal", json!({"driven": false}))]);
     }
     if !req.model.is_empty() && (found.model.is_empty() || !agent::model_id(&req.model) || !found.takes_model(&req.model)) {
         p.notes.push(format!("{} does not take the model {}: it starts on its own", found.name, req.model));
@@ -1038,7 +1038,7 @@ fn worktree_plan(world: &World, req: &Request, p: &mut Plan, target: &Target, fi
         } else if let Some(key) = world.desk.session_on(&found) {
             *p = focus_plan(std::mem::take(p), key);
             (p.place, p.session) = ("space", true);
-            p.steps = vec![("space", format!("a session cockpit drives works on {branch} already: bring it up"))];
+            p.steps = vec![("space", format!("a session flightdeck drives works on {branch} already: bring it up"))];
         } else {
             p.place = "checkout";
             p.notes.push(format!("{branch} is checked out in {found} already: the agent starts there"));
@@ -1458,7 +1458,7 @@ fn stop(world: &World, id: &str) -> Res<String> {
 }
 
 /// The script a start's terminal runs, written beside its runs: the setup command first when there is one, under
-/// `cockpit setup-run` so the hub takes nothing it asks for the person's, its exit status kept where the hub reads it,
+/// `flightdeck setup-run` so the hub takes nothing it asks for the person's, its exit status kept where the hub reads it,
 /// then the agent with its prompt read from a file, so nothing from a title or a prompt is ever typed into a shell.
 fn script_for(plan: &Plan, marker: &Path, prompt_file: &Path) -> String {
     let agent = plan.agent.clone().unwrap_or_else(agent::default);
@@ -1475,7 +1475,7 @@ fn script_for(plan: &Plan, marker: &Path, prompt_file: &Path) -> String {
         .collect();
     let mut lines = vec!["# Start work: the setup, then the agent.".to_string(), format!("P={}", quote(&prompt_file.to_string_lossy()))];
     if let Some((command, _)) = &plan.setup {
-        lines.push(format!("{} setup-run /bin/sh -c {}", quote(&cockpit_bin()), quote(command)));
+        lines.push(format!("{} setup-run /bin/sh -c {}", quote(&flightdeck_bin()), quote(command)));
         lines.push("s=$?".into());
         lines.push(format!("printf %s \"$s\" > {}", quote(&marker.to_string_lossy())));
         lines.push("[ \"$s\" = 0 ] || exit \"$s\"".into());
@@ -1484,9 +1484,9 @@ fn script_for(plan: &Plan, marker: &Path, prompt_file: &Path) -> String {
     lines.join("\n") + "\n"
 }
 
-/// The `cockpit` binary the hub runs as, which runs a start's setup as its own work.
-fn cockpit_bin() -> String {
-    std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "cockpit".into())
+/// The `flightdeck` binary the hub runs as, which runs a start's setup as its own work.
+fn flightdeck_bin() -> String {
+    std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "flightdeck".into())
 }
 
 /// The record of a new run, its steps all to do; refused while a run of that id is live. Finished runs past the last
@@ -1792,7 +1792,7 @@ fn setup_ended(id: &str, code: &str) {
     }
 }
 
-/// A session cockpit drives: setup and the session start in the background, since setup may take minutes; setup runs
+/// A session flightdeck drives: setup and the session start in the background, since setup may take minutes; setup runs
 /// in a login shell like a terminal's, its output kept beside the run.
 fn drive(world: &World, id: &str, plan: &Plan) -> Res<String> {
     let (id, plan) = (id.to_string(), plan.clone());
@@ -1801,9 +1801,9 @@ fn drive(world: &World, id: &str, plan: &Plan) -> Res<String> {
     let label = plan.label.clone();
     // The session starts on behalf of whoever asked: its mode is checked against where they stood when they asked, not
     // against this thread or a pid that may be gone by then.
-    let sender = cockpit_core::peer::carry();
+    let sender = flightdeck_core::peer::carry();
     std::thread::spawn(move || {
-        cockpit_core::peer::adopt(sender);
+        flightdeck_core::peer::adopt(sender);
         drive_steps(&id, &plan, &cache)
     });
     Ok(format!("\u{201c}{label}\u{201d}: the session starts once its worktree is ready"))

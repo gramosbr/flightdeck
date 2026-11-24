@@ -1,9 +1,9 @@
-//! The week as the mod caches it in ~/.cache/cockpit/meetings.json, its meetings' times in words, and their briefs.
+//! The week as the mod caches it in ~/.cache/flightdeck/meetings.json, its meetings' times in words, and their briefs.
 
 use std::path::PathBuf;
 
 use chrono::{DateTime, Datelike, FixedOffset, Local, NaiveDate, NaiveDateTime, TimeDelta, Utc};
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 /// The time now and the zone it is shown in: the machine's, or a fixed one for tests.
@@ -112,7 +112,7 @@ pub struct Week {
     pub error: Option<String>,
     pub meetings: Vec<Meeting>,
     /// How fresh the calendar is, when the hub reads it.
-    pub sources: Vec<cockpit_core::header::Source>,
+    pub sources: Vec<flightdeck_core::header::Source>,
 }
 
 impl Week {
@@ -123,7 +123,7 @@ impl Week {
             at: data["at"].as_i64().or_else(|| data["at"].as_f64().map(|f| f as i64)),
             error: data["error"].as_str().filter(|e| !e.is_empty()).map(str::to_string),
             meetings,
-            sources: cockpit_core::header::sources(&[data]),
+            sources: flightdeck_core::header::sources(&[data]),
         }
     }
 
