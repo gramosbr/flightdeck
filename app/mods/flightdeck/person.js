@@ -20,7 +20,7 @@ export function oneTimeKey() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-const bare = (command) => (command.startsWith("flightdeck.") ? command.slice(8) : command);
+const bare = (command) => (command.startsWith("flightdeck.") ? command.slice("flightdeck.".length) : command);
 
 /** A new key, good once for any of these commands (one opening of a menu); old keys are forgotten. */
 function mint(commands) {
