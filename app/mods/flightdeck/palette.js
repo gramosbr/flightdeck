@@ -297,7 +297,7 @@ export default class Palette {
       add({ id: `app:${s.child}`, group: "Flightdeck", icon: s.icon, title: s.label, name: s.command, words: "flightdeck app go screen", act: () => (show(s.child), null) });
     }
     for (const e of CATALOGUE) {
-      if (e.command === "flightdeck.palette" || !available(layout, e.command.slice(8), { driven: this.driven })) continue;
+      if (e.command === "flightdeck.palette" || !available(layout, e.command.slice("flightdeck.".length),{ driven: this.driven })) continue;
       const base = { id: e.command, group: "Flightdeck", icon: e.icon, title: e.title, name: e.command, words: e.words };
       if (e.command === "flightdeck.keys") add({ ...base, sheet: true });
       else add({ ...base, act: () => (run(keyed(paletteAction(e))), null) });
