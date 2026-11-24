@@ -1,12 +1,12 @@
-//! `cockpit setup`: /cockpit:setup in the terminal, for any agent: the frontends, default agent, features and the options
-//! not asked about yet written to ~/.config/cockpit/config.json, then herdr, the Herdr app and the other agents wired,
+//! `flightdeck setup`: /flightdeck:setup in the terminal, for any agent: the frontends, default agent, features and the options
+//! not asked about yet written to ~/.config/flightdeck/config.json, then herdr, the Herdr app and the other agents wired,
 //! each step asked first.
 
 use std::io::Write;
 use std::path::Path;
 use std::time::Duration;
 
-use cockpit_core::{agent, files, jsonedit, options};
+use flightdeck_core::{agent, files, jsonedit, options};
 use serde_json::{Value, json};
 
 use crate::connect;
@@ -126,7 +126,7 @@ pub fn main(_: &[String]) {
 
 fn setup(io: &mut Io) {
     let home = files::home();
-    println!("cockpit setup: the frontends, your default agent, the features and options, then ~/.config/cockpit/config.json.\n");
+    println!("flightdeck setup: the frontends, your default agent, the features and options, then ~/.config/flightdeck/config.json.\n");
 
     // 1. Prerequisites
     let herdr = said(&["herdr", "--version"]);
@@ -138,7 +138,7 @@ fn setup(io: &mut Io) {
     println!("gh: {}", if gh { "signed in" } else { "missing or signed out → brew install gh && gh auth login" });
     println!("jq: {}", if jq { "installed" } else { "missing → brew install jq" });
     if herdr.is_empty() && app.is_none() {
-        println!("\ncockpit runs in herdr or in the Herdr app: install one, then run cockpit setup again.");
+        println!("\nflightdeck runs in herdr or in the Herdr app: install one, then run flightdeck setup again.");
         std::process::exit(1);
     }
 
@@ -167,29 +167,29 @@ fn setup(io: &mut Io) {
     let installed: Vec<agent::Agent> = agent::all().into_iter().filter(agent::Agent::installed).collect();
     let current = files::config()["agents"]["default"].as_str().map(str::to_string);
     let agent_id = if installed.is_empty() {
-        println!("\nNo coding agent cockpit knows is installed; `agents.default` stays unset.");
+        println!("\nNo coding agent flightdeck knows is installed; `agents.default` stays unset.");
         None
     } else {
         let listed: Vec<String> = installed.iter().enumerate().map(|(i, a)| format!("{} {}", i + 1, a.name)).collect();
         let at = current.as_ref().and_then(|c| installed.iter().position(|a| &a.id == c)).unwrap_or(0);
-        let picked = io.ask(&format!("\nYour default agent, the one cockpit starts? {}", listed.join(", ")), &(at + 1).to_string());
+        let picked = io.ask(&format!("\nYour default agent, the one flightdeck starts? {}", listed.join(", ")), &(at + 1).to_string());
         let n = picked.parse::<usize>().ok().filter(|n| (1..=installed.len()).contains(n)).unwrap_or(at + 1);
         Some(installed[n - 1].id.clone())
     };
 
     // 4. Features. Connecting a source means mapping its MCP tools, which takes a while, so the quick way out is
     // offered first: GitHub through gh needs nothing mapped and is enough to work from.
-    println!("\nWhat cockpit shows you:");
+    println!("\nWhat flightdeck shows you:");
     println!("  1 just my pull requests, to-do and runbooks — nothing to connect, ready in a minute");
     println!("  2 pick what I want, including tickets, CI, meetings, mail, deploys and the release monitor");
     let quick = io.ask("Which?", "1").trim() != "2";
     let picked = if quick {
-        println!("\nStarting with pull requests (through gh). Run cockpit setup again any time to add the rest.");
+        println!("\nStarting with pull requests (through gh). Run flightdeck setup again any time to add the rest.");
         "1 6".to_string()
     } else {
         println!("\nFeatures: 1 PRs inbox (GitHub, GitLab…), 2 tickets, 3 CI runs (GitHub checks otherwise), 4 meetings, 5 E2E tests in terminal-browser");
         println!("beside the agent, 6 routines space, 7 deploys and previews, 8 release monitor (Datadog, Grafana, Sentry…), 9 mail");
-        println!("Tickets, CI, meetings, deploys and the monitor come from MCP servers: cockpit calls them itself, with any agent.");
+        println!("Tickets, CI, meetings, deploys and the monitor come from MCP servers: flightdeck calls them itself, with any agent.");
         io.ask("Which ones, by number (e.g. 1 2 5)?", "1")
     };
     let chosen = numbers(&picked, 9);
@@ -276,13 +276,16 @@ fn setup(io: &mut Io) {
         spaces.push("review");
     }
     values.push(("e2eBrowser", if on('5') { "terminal-browser" } else { "chrome" }.into()));
-    // cockpit's own Chromium window is for the Herdr app on a Mac; herdr's panes keep terminal-browser either way.
+    // flightdeck's own Chromium window is for the Herdr app on a Mac; herdr's panes keep terminal-browser either way.
     let chromium = on('5')
-        && cockpit_core::options::CHROMIUM_HERE
+        && flightdeck_core::options::CHROMIUM_HERE
         && app.is_some()
-        && io.yes("\nIn the Herdr app, show pages in cockpit's own Chromium window, docked in the side panel (downloads Electron once, about 130 MB)?", false);
+        && io.yes(
+            "\nIn the Herdr app, show pages in flightdeck's own Chromium window, docked in the side panel (downloads Electron once, about 130 MB)?",
+            false,
+        );
     if chromium {
-        values.push(("sideBrowser", cockpit_core::options::CHROMIUM.into()));
+        values.push(("sideBrowser", flightdeck_core::options::CHROMIUM.into()));
     }
     match files::load(&files::config_dir().join("config.json")).map(|c| c["spaces"].clone()).filter(|s| !s.is_null()) {
         None => values.push(("spaces", json!(spaces))),
@@ -309,7 +312,7 @@ fn setup(io: &mut Io) {
     let path = files::config_dir().join("config.json");
     let text = std::fs::read_to_string(&path).unwrap_or_default();
     let mut next = merged(&text, &values, agent_id.as_deref(), frontend)
-        .unwrap_or_else(|e| proc::fail(&format!("~/.config/cockpit/config.json does not read as JSON ({e}): fix it, then run cockpit setup again")));
+        .unwrap_or_else(|e| proc::fail(&format!("~/.config/flightdeck/config.json does not read as JSON ({e}): fix it, then run flightdeck setup again")));
     for (key, on) in picked.iter().filter(|(key, on)| options::get(key).is_some_and(|s| options::is_on(&before, s) != *on)) {
         match options::set_in(&next, key, &Value::Bool(*on)) {
             Ok(done) => next = done,
@@ -322,7 +325,7 @@ fn setup(io: &mut Io) {
             let _ = write_private(&path.with_file_name("config.json.bak"), &text);
         }
         write_private(&path, &next).unwrap_or_else(|e| proc::fail(&format!("config.json not written: {e}")));
-        println!("Wrote ~/.config/cockpit/config.json{}", if text.is_empty() { "" } else { " (the old one is config.json.bak)" });
+        println!("Wrote ~/.config/flightdeck/config.json{}", if text.is_empty() { "" } else { " (the old one is config.json.bak)" });
     }
     if !picked.is_empty() {
         let _ = options::mark(&picked.iter().map(|(key, _)| *key).collect::<Vec<_>>(), None);
@@ -333,7 +336,7 @@ fn setup(io: &mut Io) {
     if chromium {
         match crate::browser::install::pins().and_then(|pins| crate::browser::install::install(&pins, &mut |line| println!("{line}"))) {
             Ok(()) => println!("The Chromium side browser is installed."),
-            Err(why) => println!("The Chromium side browser is not installed yet ({why}) → cockpit browser install"),
+            Err(why) => println!("The Chromium side browser is not installed yet ({why}) → flightdeck browser install"),
         }
     }
 
@@ -343,37 +346,37 @@ fn setup(io: &mut Io) {
     if tui && !herdr.is_empty() {
         let plugins = files::load(&home.join(".config/herdr/plugins.json")).unwrap_or(Value::Null);
         let registered =
-            plugins.as_array().into_iter().flatten().find(|p| p["plugin_id"] == "cockpit").and_then(|p| p["plugin_root"].as_str()).map(str::to_string);
+            plugins.as_array().into_iter().flatten().find(|p| p["plugin_id"] == "flightdeck").and_then(|p| p["plugin_root"].as_str()).map(str::to_string);
         let root = match registered {
             Some(root) => Some(root),
-            None if io.yes("\nInstall cockpit's herdr plugin (herdr plugin install quaresc/cockpit/herdr)?", true) => {
-                run(&["herdr", "plugin", "install", "quaresc/cockpit/herdr", "--yes"]);
+            None if io.yes("\nInstall flightdeck's herdr plugin (herdr plugin install gramosbr/flightdeck/herdr)?", true) => {
+                run(&["herdr", "plugin", "install", "gramosbr/flightdeck/herdr", "--yes"]);
                 let plugins = files::load(&home.join(".config/herdr/plugins.json")).unwrap_or(Value::Null);
-                plugins.as_array().into_iter().flatten().find(|p| p["plugin_id"] == "cockpit").and_then(|p| p["plugin_root"].as_str()).map(str::to_string)
+                plugins.as_array().into_iter().flatten().find(|p| p["plugin_id"] == "flightdeck").and_then(|p| p["plugin_root"].as_str()).map(str::to_string)
             }
             None => None,
         };
         if let Some(root) = root {
             for script in ["fetch-apps.sh", "ensure-spaces.sh", "pin-spaces.sh"] {
                 let ok = run(&["sh", &format!("{root}/{script}")]).is_some_and(|o| o.ok());
-                println!("{script}: {}", if ok { "done" } else { "failed; cockpit doctor says why" });
+                println!("{script}: {}", if ok { "done" } else { "failed; flightdeck doctor says why" });
             }
             herdr_keys(io, &home, &root);
         }
     }
 
-    // 7. The Herdr app: the cockpit layout, mod and keys
-    if gui && app.is_some() && io.yes("\nInstall the cockpit layout, mod and keys in the Herdr app?", true) {
+    // 7. The Herdr app: the flightdeck layout, mod and keys
+    if gui && app.is_some() && io.yes("\nInstall the flightdeck layout, mod and keys in the Herdr app?", true) {
         let out = run(&[&exe, "app", "install"]);
         println!("{}", out.map(|o| format!("{}{}", o.stdout, o.stderr)).unwrap_or_default().trim());
     }
 
-    // 8. cockpit's tools in the other agents
+    // 8. flightdeck's tools in the other agents
     let bin = connect::binary();
     let open: Vec<&connect::Target> = connect::TARGETS.iter().filter(|t| t.installed() && !t.is_connected(&bin)).collect();
     if !open.is_empty() {
         let names: Vec<&str> = open.iter().map(|t| t.name).collect();
-        if io.yes(&format!("\nGive {} cockpit's tools (show, search, changes) through their MCP config?", names.join(", ")), true) {
+        if io.yes(&format!("\nGive {} flightdeck's tools (show, search, changes) through their MCP config?", names.join(", ")), true) {
             for t in open {
                 match t.connect(&bin) {
                     Ok(line) => println!("{line}"),
@@ -383,12 +386,14 @@ fn setup(io: &mut Io) {
         }
     }
     if installed.iter().any(|a| a.id == "claude") {
-        println!("\nClaude Code: /plugin install cockpit --marketplace quaresc/cockpit, then /cockpit:setup maps your connectors (tickets, CI, calendar).");
+        println!(
+            "\nClaude Code: /plugin install flightdeck --marketplace gramosbr/flightdeck, then /flightdeck:setup maps your connectors (tickets, CI, calendar)."
+        );
     }
-    println!("\nDone. cockpit doctor checks the whole setup at any time.");
+    println!("\nDone. flightdeck doctor checks the whole setup at any time.");
 }
 
-/// What each source is called and its server named, for Claude Code's connectors (/cockpit:setup corrects them).
+/// What each source is called and its server named, for Claude Code's connectors (/flightdeck:setup corrects them).
 const CLAUDE_NAMES: [(&str, &str); 7] = [
     ("Linear", "claude.ai Linear"),
     ("CircleCI", "circleci"),
@@ -405,10 +410,10 @@ fn section_at(section: &str) -> usize {
 
 /// Where a source's data comes from.
 enum Source {
-    /// Claude Code's connectors, through cockpit's plugin.
+    /// Claude Code's connectors, through flightdeck's plugin.
     Claude,
-    /// An MCP server cockpit calls itself: its `servers` key and entry, its name, the section's mapping, and whether it
-    /// is mapped (an unmapped one stays off until `cockpit connector map`).
+    /// An MCP server flightdeck calls itself: its `servers` key and entry, its name, the section's mapping, and whether it
+    /// is mapped (an unmapped one stays off until `flightdeck connector map`).
     Server {
         key: String,
         entry: Value,
@@ -432,7 +437,7 @@ struct Choice {
 /// The servers that can feed a section: the ones the agents' configs hold (known ones first, then any whose name tells
 /// the section), and the known ones' public addresses.
 fn choices(section: &str) -> Vec<Choice> {
-    use cockpit_connectors::{Server, presets};
+    use flightdeck_connectors::{Server, presets};
     let mut known = Vec::new();
     let mut other = Vec::new();
     for target in connect::TARGETS.iter().filter(|t| t.installed()) {
@@ -478,16 +483,16 @@ fn choices(section: &str) -> Vec<Choice> {
     known
 }
 
-/// Asks where a source comes from, logs cockpit in to the server picked and maps it when no mapping is known.
+/// Asks where a source comes from, logs flightdeck in to the server picked and maps it when no mapping is known.
 fn source(io: &mut Io, section: &str, claude: bool, mapper: Option<&agent::Agent>) -> Source {
-    use cockpit_connectors::Server;
+    use flightdeck_connectors::Server;
     let title =
         ["Tickets", "CI runs", "Meetings", "Deploys and previews", "The release monitor's metrics and errors", "Pull requests", "Mail"][section_at(section)];
     let options = choices(section);
     let mut listed: Vec<String> = Vec::new();
     let claude = claude && section != "code";
     if claude {
-        listed.push("Claude Code's connector (/cockpit:setup in Claude Code maps it)".into());
+        listed.push("Claude Code's connector (/flightdeck:setup in Claude Code maps it)".into());
     }
     listed.extend(options.iter().map(|c| c.label.clone()));
     if section == "calendar" {
@@ -513,7 +518,7 @@ fn source(io: &mut Io, section: &str, claude: bool, mapper: Option<&agent::Agent
     };
     // Google's servers only know apps registered with them: the person's own OAuth client (Desktop app) from Google Cloud.
     let mut choice = choice;
-    if let Some(preset) = cockpit_connectors::presets::PRESETS.iter().find(|p| p.needs_app() && choice.entry["url"] == p.url)
+    if let Some(preset) = flightdeck_connectors::presets::PRESETS.iter().find(|p| p.needs_app() && choice.entry["url"] == p.url)
         && choice.entry["clientId"].is_null()
     {
         println!(
@@ -532,19 +537,19 @@ fn source(io: &mut Io, section: &str, claude: bool, mapper: Option<&agent::Agent
     if let Some(url) = server.login_url().map(str::to_string)
         && !server.is_ready()
     {
-        if !io.yes(&format!("Log cockpit in to {} now (it opens your browser)?", choice.name), true) {
-            println!("Later: cockpit connector login {url}");
+        if !io.yes(&format!("Log flightdeck in to {} now (it opens your browser)?", choice.name), true) {
+            println!("Later: flightdeck connector login {url}");
             let mapped = choice.mapping.is_some();
             return Source::Server { key: choice.key, entry: choice.entry, name: choice.name, mapping: choice.mapping, mapped };
         }
-        let done = cockpit_connectors::block_on(cockpit_connectors::login_server(&server, |link| {
+        let done = flightdeck_connectors::block_on(flightdeck_connectors::login_server(&server, |link| {
             println!("If the browser does not open: {link}");
             let _ = std::process::Command::new(if cfg!(target_os = "macos") { "open" } else { "xdg-open" }).arg(link).status();
         }));
         match done {
             Ok(()) => println!("Logged in to {}.", choice.name),
             Err(e) => {
-                println!("Not logged in ({e}). cockpit connector login {url} tries again; until then the hub leaves it.");
+                println!("Not logged in ({e}). flightdeck connector login {url} tries again; until then the hub leaves it.");
                 let mapped = choice.mapping.is_some();
                 return Source::Server { key: choice.key, entry: choice.entry, name: choice.name, mapping: choice.mapping, mapped };
             }
@@ -556,20 +561,20 @@ fn source(io: &mut Io, section: &str, claude: bool, mapper: Option<&agent::Agent
         (None, "observability") if choice.key == "datadog" || choice.name == "Datadog" => (Some(json!({})), true),
         (None, _) => match mapper {
             Some(agent) => {
-                println!("{} maps {}'s tools for cockpit (a minute or two)…", agent.name, choice.name);
+                println!("{} maps {}'s tools for flightdeck (a minute or two)…", agent.name, choice.name);
                 match crate::mapper::map(section, &server, &choice.name, agent) {
                     Ok((mapping, sample)) => {
                         println!("Mapped: {sample}");
                         (Some(mapping), true)
                     }
                     Err(e) => {
-                        println!("Not mapped ({e}): cockpit connector map {section} {} tries again.", choice.key);
+                        println!("Not mapped ({e}): flightdeck connector map {section} {} tries again.", choice.key);
                         (None, false)
                     }
                 }
             }
             None => {
-                println!("No agent to map {}: cockpit connector map {section} {} once one is installed.", choice.name, choice.key);
+                println!("No agent to map {}: flightdeck connector map {section} {} once one is installed.", choice.name, choice.key);
                 (None, false)
             }
         },
@@ -577,7 +582,7 @@ fn source(io: &mut Io, section: &str, claude: bool, mapper: Option<&agent::Agent
     Source::Server { key: choice.key, entry: choice.entry, name: choice.name, mapping, mapped }
 }
 
-/// cockpit's keys (prefix+i/t/a/d/u/m) and sidebar in herdr's config.toml, merged once the person agrees, then reloaded.
+/// flightdeck's keys (prefix+i/t/a/d/u/m) and sidebar in herdr's config.toml, merged once the person agrees, then reloaded.
 fn herdr_keys(io: &mut Io, home: &Path, root: &str) {
     let path = home.join(".config/herdr/config.toml");
     let theirs = std::fs::read_to_string(&path).unwrap_or_default();
@@ -592,14 +597,14 @@ fn herdr_keys(io: &mut Io, home: &Path, root: &str) {
         Ok(m)
     });
     let merged = match merged {
-        Ok(m) if m.text == theirs => return println!("~/.config/herdr/config.toml already has cockpit's keys and sidebar."),
+        Ok(m) if m.text == theirs => return println!("~/.config/herdr/config.toml already has flightdeck's keys and sidebar."),
         Ok(m) => m,
         Err(e) => return println!("{e}: merge {root}/config.example.toml into it yourself."),
     };
     let delivery = if merged.delivery { "; herdr's toasts stay in herdr so notifications arrive once" } else { "" };
-    let question = format!("\nAdd cockpit's keys and sidebar to ~/.config/herdr/config.toml ({} settings and keys, your own stay{delivery})?", merged.added);
+    let question = format!("\nAdd flightdeck's keys and sidebar to ~/.config/herdr/config.toml ({} settings and keys, your own stay{delivery})?", merged.added);
     if !io.yes(&question, true) {
-        return println!("Left as it is: merge {root}/config.example.toml into it when you want cockpit's keys.");
+        return println!("Left as it is: merge {root}/config.example.toml into it when you want flightdeck's keys.");
     }
     if !theirs.is_empty() {
         let backup = path.with_file_name(format!("config.toml.bak-{}", chrono::Local::now().format("%Y%m%d-%H%M%S")));
@@ -641,7 +646,7 @@ fn asked_options(io: &mut Io, config: &Value, state: &Value) -> Vec<(&'static st
     if unseen.is_empty() {
         return Vec::new();
     }
-    println!("\nOptions you were not asked about yet (cockpit options lists every one):");
+    println!("\nOptions you were not asked about yet (flightdeck options lists every one):");
     unseen.into_iter().map(|s| (s.key, io.yes(&format!("{}: {}", s.title, s.description), options::is_on(config, s)))).collect()
 }
 

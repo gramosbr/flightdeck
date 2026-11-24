@@ -18,7 +18,7 @@ const following = sharing(hub.subscribe);
 
 // Pinned agents, one list for the sidebar and the Home board: kept in the app's shared state so a pin made in one
 // redraws the other at once; shared() is persisted, so pins survive a restart. Each is an agent's `app:<address>`.
-const PINS_KEY = "cockpit.pins";
+const PINS_KEY = "flightdeck.pins";
 export function pinsNow() {
   const live = shared(PINS_KEY);
   return Array.isArray(live) ? live : [];
@@ -112,11 +112,11 @@ export function Chips(row, { few = false, id = row.terminal } = {}) {
         icon: row.pr.state === "merged" ? "git-merge" : row.pr.draft ? "git-pull-request-draft" : "git-pull-request",
         color: row.pr.review === "CHANGES_REQUESTED" ? k.destructive : row.pr.review === "APPROVED" ? k.success : undefined,
         tooltip: row.pr.title,
-        onClick: () => run("cockpit.target:" + row.pr.url),
+        onClick: () => run("flightdeck.target:" + row.pr.url),
       }),
     );
   }
-  if (!few && row.ticket) out.push(Chip(row.ticket.status ? `${row.ticket.key} ${row.ticket.status}` : row.ticket.key, { id: `${id}-ticket`, icon: "ticket", color: k.info, tooltip: row.ticket.title ?? row.ticket.key, onClick: row.ticket.url ? () => run("cockpit.target:" + row.ticket.url) : undefined }));
+  if (!few && row.ticket) out.push(Chip(row.ticket.status ? `${row.ticket.key} ${row.ticket.status}` : row.ticket.key, { id: `${id}-ticket`, icon: "ticket", color: k.info, tooltip: row.ticket.title ?? row.ticket.key, onClick: row.ticket.url ? () => run("flightdeck.target:" + row.ticket.url) : undefined }));
   if (!few && row.branch) out.push(Chip(row.branch, { id: `${id}-branch`, mono: true, icon: "git-branch" }));
   if (c && (c.files || c.ahead)) {
     out.push(
@@ -257,7 +257,7 @@ export class AgentsModel {
         else if (r.note && action !== "focus" && action !== "seen") notify({ title: r.note, level: "info", timeout: 2500 });
       } catch (e) {
         unconfirmed = hub.isUnconfirmed(e);
-        if (!unconfirmed) notify({ title: "The cockpit hub did not answer", body: String(e?.message ?? e), level: "warning" });
+        if (!unconfirmed) notify({ title: "The flightdeck hub did not answer", body: String(e?.message ?? e), level: "warning" });
       }
       this.busy.delete(arg.terminal);
       taken({ ok, unconfirmed });
@@ -285,7 +285,7 @@ export class AgentsModel {
         else if (!back) this.offerUndo(cx, row.terminal, title);
         else if (this.undo?.terminal === row.terminal) this.undo = null;
       } catch (e) {
-        if (!hub.isUnconfirmed(e)) notify({ title: "The cockpit hub did not answer", body: String(e?.message ?? e), level: "warning" });
+        if (!hub.isUnconfirmed(e)) notify({ title: "The flightdeck hub did not answer", body: String(e?.message ?? e), level: "warning" });
       }
       this.busy.delete(row.terminal);
       cx.notify();
@@ -312,7 +312,7 @@ export class AgentsModel {
     const q = this.shown(row);
     const picked = q?.choices.find((c) => c.n === choice);
     if (!picked) return;
-    // A permission cockpit cannot show in full is answered in the agent's terminal: the hub says so in its own words.
+    // A permission flightdeck cannot show in full is answered in the agent's terminal: the hub says so in its own words.
     if (q.terminal_only) return notify({ title: q.terminal_only, level: "info", timeout: 4000 });
     if (picked.free) return this.startReply(cx, row, choice);
     // A choice that runs every tool unasked asks in a step of its own, Cancel first: a second click is not a yes.
@@ -363,7 +363,7 @@ export class AgentsModel {
 
   /** Brings the agent into view; `person` false (a window command) marks nothing seen. */
   go(cx, row, person = true) {
-    // A session cockpit drives has no terminal: it is read in Cockpit Chat.
+    // A session flightdeck drives has no terminal: it is read in Flightdeck Chat.
     if (row.driven) return readInChat(row.terminal, null, person);
     // An agent picked on purpose, the one in front too: the chat follows it again.
     pinChat(null);
@@ -373,19 +373,19 @@ export class AgentsModel {
     if (person && !row.herdr && !row.remote) this.act(cx, "seen", { terminal: row.terminal });
   }
 
-  /** The right-click menu of an agent; its items come back as `cockpit.agents|<what>|<terminal>|<arg>`. */
+  /** The right-click menu of an agent; its items come back as `flightdeck.agents|<what>|<terminal>|<arg>`. */
   menu(row) {
     // Every item is a hub action.
     if (row.herdr) return;
     const t = row.terminal;
     const c = (what, arg = "") => `agents|${what}|${t}|${arg}`;
     const pinned = this.pins.includes(t);
-    // The Cockpit layout's menus say their keys; Cockpit Chat keeps keys to tooltips and the keys sheet.
-    const kbd = (k) => (layoutName() === "cockpit" ? k : undefined);
+    // The Flightdeck layout's menus say their keys; Flightdeck Chat keeps keys to tooltips and the keys sheet.
+    const kbd = (k) => (layoutName() === "flightdeck" ? k : undefined);
     if (row.driven) {
       return openMenu(
         [
-          { label: "Read in Cockpit Chat", icon: "message-square", kbd: kbd("⏎"), command: c("read") },
+          { label: "Read in Flightdeck Chat", icon: "message-square", kbd: kbd("⏎"), command: c("read") },
           !row.remote && { label: "Open in a terminal", icon: "terminal", command: c("handover") },
           { label: row.recap?.text ? "Recap again" : "Recap", icon: "sparkles", kbd: kbd("r"), command: c("recap") },
           "separator",
@@ -419,7 +419,7 @@ export class AgentsModel {
   }
 
   /**
-   * `cockpit.agents|…` from a menu, run by the sidebar's copy alone (every shown copy hears it); true when it was one.
+   * `flightdeck.agents|…` from a menu, run by the sidebar's copy alone (every shown copy hears it); true when it was one.
    * Without the menu's key (`key`) it only brings the agent into view: a window command acts on no agent.
    */
   command(c, cx, key = null) {
@@ -552,7 +552,7 @@ export function openPlan(row, view) {
     run("agent.focus", { terminal: row.address });
     showWork();
   }
-  run(`cockpit.doc:${view}`);
+  run(`flightdeck.doc:${view}`);
 }
 
 /** Tells the side panel to open on `view` once it follows `row`'s session. */
@@ -634,7 +634,7 @@ export function takeConfirm(key) {
 export const waitsText = (row) => (row?.question ? null : row?.waits?.text ?? null);
 
 /**
- * A waiting agent that asks nothing cockpit can read: what it waits on (its terminal, or the limit it reached) and the
+ * A waiting agent that asks nothing flightdeck can read: what it waits on (its terminal, or the limit it reached) and the
  * way to it. It takes no reply: its screen shows no question to answer.
  */
 export function WaitsCard(id, row, model, { wide = false, header, footer, focus, dismiss = true } = {}) {
@@ -677,7 +677,7 @@ export function WaitsCard(id, row, model, { wide = false, header, footer, focus,
  * a menu naming the agent: the window's own key goes with the pick made there.
  */
 export function undoToast(terminal, title) {
-  notify({ title: `Dismissed ${title}`, body: "Back when it asks something new. Click to bring it back.", level: "success", timeout: 8000, action: { name: `cockpit.dismiss:undo:${terminal}` } });
+  notify({ title: `Dismissed ${title}`, body: "Back when it asks something new. Click to bring it back.", level: "success", timeout: 8000, action: { name: `flightdeck.dismiss:undo:${terminal}` } });
 }
 
 /** How long a dismissal's Undo shows. */
@@ -824,7 +824,7 @@ export function QuestionCard(id, row, model, { wide = false, header, footer, foc
     .when(Boolean(q.permission) && Boolean(q.view), (e) => e.child(PlanRow(`${id}-${named}`, q, () => openPlan(row, q.view))))
     .when(Boolean(q.permission) && !q.view, (e) => e.child(AllowsBlock(`${id}-${named}`, q.preview, { open: opened, onToggle: toggle, cut: q.cut === true, note: q.terminal_only, markdown: q.markdown === true })))
     .when(Boolean(q.preview) && !q.permission && wide, (e) => e.child(div().p(8).rounded(RADIUS.md).border_1().border_color(k.border).bg(k.background).child(Mono(q.preview, { color: k.foreground }))))
-    // One cockpit cannot show in full offers no choice here: it is answered in the agent's terminal (Go to the agent).
+    // One flightdeck cannot show in full offers no choice here: it is answered in the agent's terminal (Go to the agent).
     .when(q.choices.length > 0 && !q.terminal_only, (e) => e.child(v_flex().gap(1).children(q.choices.map(choice))))
     .when(replying, (e) =>
       e.child(

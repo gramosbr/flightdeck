@@ -1,24 +1,24 @@
 #!/bin/sh
 # shellcheck disable=SC2034  # the scripts sourcing this file use its settings
-# Settings shared by the scripts, from the cockpit config that /cockpit:setup writes.
+# Settings shared by the scripts, from the flightdeck config that /flightdeck:setup writes.
 H="${HERDR_BIN_PATH:-herdr}"
 ROOT=$(cd "$(dirname "$0")" && pwd -P)
 OS=$(uname)
 # herdr installs each update in a new folder: keys and space apps go through this link, kept on the current one.
 # Only the folder herdr's registry names moves it, so a script left in an older folder cannot pull it back.
-LINK="$HOME/.config/cockpit/herdr"
-REGISTERED=$(jq -r '.[] | select(.plugin_id == "cockpit") | .plugin_root' "$HOME/.config/herdr/plugins.json" 2>/dev/null)
+LINK="$HOME/.config/flightdeck/herdr"
+REGISTERED=$(jq -r '.[] | select(.plugin_id == "flightdeck") | .plugin_root' "$HOME/.config/herdr/plugins.json" 2>/dev/null)
 if [ "$REGISTERED" = "$ROOT" ] && [ "$(readlink "$LINK")" != "$ROOT" ]; then
   mkdir -p "$(dirname "$LINK")" && ln -sfn "$ROOT" "$LINK"
 fi
 
-# The `cockpit` a shell runs, when it points nowhere: an update installs in a new folder and prunes the one a link
+# The `flightdeck` a shell runs, when it points nowhere: an update installs in a new folder and prunes the one a link
 # named. It goes back on the link, which stays on the current install; one that still resolves is left alone.
 link_bin() {
-  bin="$HOME/.local/bin/cockpit"
+  bin="$HOME/.local/bin/flightdeck"
   [ -L "$bin" ] && [ ! -e "$bin" ] || return 0
-  [ -x "$LINK/bin/cockpit" ] || return 0
-  ln -sfn "$LINK/bin/cockpit" "$bin"
+  [ -x "$LINK/bin/flightdeck" ] || return 0
+  ln -sfn "$LINK/bin/flightdeck" "$bin"
 }
 
 # herdr keeps every installed version of a GitHub plugin: all but the registered one go.
@@ -35,9 +35,9 @@ prune_installs() {
 open_url() {
   if [ "$OS" = Darwin ]; then open "$1"; else xdg-open "$1" >/dev/null 2>&1; fi
 }
-CONFIG="$HOME/.config/cockpit/config.json"
+CONFIG="$HOME/.config/flightdeck/config.json"
 # What the scripts read: the config as the mod resolved it, or the raw file before any session has run.
-SETTINGS="$HOME/.cache/cockpit/config.json"
+SETTINGS="$HOME/.cache/flightdeck/config.json"
 [ -f "$SETTINGS" ] || SETTINGS=$CONFIG
 REPOS=$(jq -r '.reposDir // empty' "$SETTINGS" 2>/dev/null | sed "s|^~|$HOME|")
 [ -d "$REPOS" ] || REPOS=$HOME

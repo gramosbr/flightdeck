@@ -262,7 +262,7 @@ export default class Changes {
             .child(div().flex_1().min_w(0).truncate().child(text));
     const empty = this.note || (this.loading && !this.files.length ? "Loading changes…" : this.repo ? "No uncommitted changes" : "Not in a git repository");
     return v_flex()
-      .id("cockpit-changes")
+      .id("flightdeck-changes")
       .size_full()
       .min_h(0)
       .bg(k.canvas)
@@ -289,8 +289,8 @@ export default class Changes {
           .relative()
           .border_b_1()
           .border_color(k.border)
-          .child(v_flex().id("cockpit-changes-list").absolute().inset_0().overflow_y_scroll().p(6).children(this.files.map(fileRow)))
-          .child(Scrollbar.vertical("cockpit-changes-list").absolute().inset_0())
+          .child(v_flex().id("flightdeck-changes-list").absolute().inset_0().overflow_y_scroll().p(6).children(this.files.map(fileRow)))
+          .child(Scrollbar.vertical("flightdeck-changes-list").absolute().inset_0())
           .when(!this.files.length, (e) => e.child(div().p(8).text_size(TEXT.sm).text_color(k.dim).child(empty))),
       )
       .when(this.limited, (e) => e.child(div().px(12).py(4).text_size(TEXT.xs).text_color(k.dim).child("Showing the first 1,000 changed files")))
@@ -303,12 +303,12 @@ export default class Changes {
           .text_size(TEXT.xs)
           .child(
             div()
-              .id("cockpit-changes-x")
+              .id("flightdeck-changes-x")
               .size_full()
               .overflow_x_scrollbar()
-              .child(div().w_full().min_w(this.width ?? 300).h_full().child(v_virtual_list("cockpit-changes-diff", this.rows.length, 20, (i) => String(i), (range) => this.rows.slice(range.start, range.end).map(diffRow)).size_full())),
+              .child(div().w_full().min_w(this.width ?? 300).h_full().child(v_virtual_list("flightdeck-changes-diff", this.rows.length, 20, (i) => String(i), (range) => this.rows.slice(range.start, range.end).map(diffRow)).size_full())),
           )
-          .child(Scrollbar.vertical("cockpit-changes-diff").absolute().inset_0())
+          .child(Scrollbar.vertical("flightdeck-changes-diff").absolute().inset_0())
           .when(!this.open && this.files.length > 0, (e) => e.child(div().absolute().top(6).px(12).text_color(k.dim).child("Pick a file to see its changes"))),
       )
       .when(Boolean(this.note) && this.files.length > 0, (e) => e.child(div().px(12).pb(6).text_size(TEXT.xs).text_color(k.destructive).child(this.note)))
@@ -322,7 +322,7 @@ export default class Changes {
           .child(div().flex_1().min_w(0).h(32).px(10).flex().items_center().rounded(RADIUS.lg).border_1().border_color(k.border).child(Input.new(this.input).h_full().text_size(TEXT.sm)))
           .child(
             div()
-              .id("cockpit-commit")
+              .id("flightdeck-commit")
               .h(32)
               .px(14)
               .flex()

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
 #[derive(Default)]
 pub struct Outbox {
@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn the_next_answer_waits_for_the_last_to_be_taken() {
-        let dir = std::env::temp_dir().join(format!("cockpit-show-outbox-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("flightdeck-show-outbox-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("v.0.answer");
         let mut outbox = Outbox::default();

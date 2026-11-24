@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::{Datelike, Duration, Local, NaiveTime, TimeZone};
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 const CHECKPOINT_MS: u64 = 60_000;

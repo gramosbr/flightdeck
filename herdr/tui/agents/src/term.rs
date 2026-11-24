@@ -1,5 +1,5 @@
 //! The agent terminals of both frontends, and what is done to one: its screen read, keys pressed, text pasted; a handle
-//! is `app:t3` for a Herdr app terminal, a herdr pane id (`w9:p1`) for the TUI. With COCKPIT_AGENTS_DEMO naming a JSON
+//! is `app:t3` for a Herdr app terminal, a herdr pane id (`w9:p1`) for the TUI. With FLIGHTDECK_AGENTS_DEMO naming a JSON
 //! file, the terminals are that file's made-up ones (the sandbox, the screenshots), answered in memory.
 
 use std::collections::HashMap;
@@ -9,10 +9,10 @@ use std::sync::mpsc::channel;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
-use cockpit_core::agent::{self, Agent};
-use cockpit_core::files;
-use cockpit_core::frontend::{self, APP};
-use cockpit_core::transcripts::{self, Transcripts, Turn};
+use flightdeck_core::agent::{self, Agent};
+use flightdeck_core::files;
+use flightdeck_core::frontend::{self, APP};
+use flightdeck_core::transcripts::{self, Transcripts, Turn};
 use serde_json::{Value, json};
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -26,7 +26,7 @@ pub struct Live {
     pub tab_name: String,
     pub title: String,
     pub program: String,
-    /// Its agent's id in `cockpit_core::agent` (`claude`, `codex`), empty for a program cockpit does not know.
+    /// Its agent's id in `flightdeck_core::agent` (`claude`, `codex`), empty for a program flightdeck does not know.
     pub agent: String,
     /// working | blocked | done | idle
     pub status: String,
@@ -85,7 +85,7 @@ fn json_of(text: Option<String>) -> Value {
 // Demo
 
 pub fn demo_path() -> Option<PathBuf> {
-    std::env::var_os("COCKPIT_AGENTS_DEMO").filter(|p| !p.is_empty()).map(PathBuf::from)
+    std::env::var_os("FLIGHTDECK_AGENTS_DEMO").filter(|p| !p.is_empty()).map(PathBuf::from)
 }
 
 /// The demo's made-up world, read once and changed in memory by the actions.
@@ -96,7 +96,7 @@ pub fn demo() -> Option<MutexGuard<'static, Value>> {
     if world.is_null() {
         *world = files::load(&path).unwrap_or(json!({"agents": []}));
         // Ages are written in minutes before now, so the world looks the same whenever it starts.
-        let now = cockpit_core::seen::now_ms();
+        let now = flightdeck_core::seen::now_ms();
         for a in world["agents"].as_array_mut().into_iter().flatten() {
             let mins = a["since_min"].as_f64().unwrap_or(1.0);
             a["since"] = json!(now.saturating_sub((mins * 60_000.0) as u64));
@@ -581,16 +581,16 @@ pub fn paste(handle: &str, text: &str, into_menu: bool) -> Result<(), String> {
         demo_answered(&mut world, handle, true);
         return Ok(());
     }
-    // Words never go into a menu cockpit could not read, on either frontend: Enter would pick what its cursor is on.
+    // Words never go into a menu flightdeck could not read, on either frontend: Enter would pick what its cursor is on.
     if !into_menu && screen(handle, 0).is_some_and(|s| crate::prompt::menu_shown(&s)) {
-        return Err("it shows a menu cockpit cannot read: answer it in its terminal".into());
+        return Err("it shows a menu flightdeck cannot read: answer it in its terminal".into());
     }
     let ok = match handle.strip_prefix(APP) {
-        // hc types into a waiting agent only when forced; cockpit has just looked at what its screen asks. Its switches end
+        // hc types into a waiting agent only when forced; flightdeck has just looked at what its screen asks. Its switches end
         // at `--`, so words that start with a dash stay words.
         Some(t) => hc(&["send", "--force", "--", t, text]).is_some(),
         // herdr's CLI takes no `--`.
-        None if cockpit_core::frontend::switch_like(text) => {
+        None if flightdeck_core::frontend::switch_like(text) => {
             return Err("herdr would read words that start with a dash as one of its options: start with another word".into());
         }
         None => herdr(&["pane", "send-text", handle, text]).is_some() && herdr(&["pane", "send-keys", handle, "enter"]).is_some(),
@@ -600,7 +600,7 @@ pub fn paste(handle: &str, text: &str, into_menu: bool) -> Result<(), String> {
 
 /// A demo agent that got its answer goes back to work.
 fn demo_answered(world: &mut Value, handle: &str, done: bool) {
-    let now = cockpit_core::seen::now_ms();
+    let now = flightdeck_core::seen::now_ms();
     for a in world["agents"].as_array_mut().into_iter().flatten() {
         if a["terminal"] == handle && done {
             a["status"] = json!("working");
@@ -670,7 +670,7 @@ mod tests {
             {"address": "t1", "agent": "claude-code", "cwd": "/home/maya/acme/api", "state": "live", "status": "done", "where": "acme/api / 1"},
             {"address": "t2", "agent": "codex", "cwd": "/home/maya/acme/web", "state": "live", "status": "working", "where": "acme/web"},
             {"address": "t3", "agent": "", "cwd": "/home/maya", "state": "live", "where": "acme/api / 2"},
-            {"address": "t4", "agent": "claude", "cwd": "/home/maya", "name": "cockpit-fetch", "state": "live"},
+            {"address": "t4", "agent": "claude", "cwd": "/home/maya", "name": "flightdeck-fetch", "state": "live"},
         ]});
         let got = |t: &str, space: &str, tab: &str, program: &str| {
             json!({"address": t, "pid": 4242, "created_ms": 0, "foreground": {"name": program, "argv": [program], "pid": 4_000_000_001_u64},
@@ -725,9 +725,9 @@ mod tests {
         let tabs: Vec<(&str, &str, &str)> = lives.iter().map(|l| (l.handle.as_str(), l.tab_name.as_str(), l.title.as_str())).collect();
         assert_eq!(tabs, [("w1:p1", "2", "✳ Amp"), ("w1:p2", "", "✳ Amp")], "an unlisted tab has no label: the title stays the title");
         let amp = agent::builtin().into_iter().find(|a| a.id == "amp");
-        let known = cockpit_core::names::agent_names("amp", amp.as_ref());
+        let known = flightdeck_core::names::agent_names("amp", amp.as_ref());
         let known: Vec<&str> = known.iter().map(String::as_str).collect();
-        assert!(lives.iter().all(|l| cockpit_core::names::default_label(&l.tab_name, &known)));
+        assert!(lives.iter().all(|l| flightdeck_core::names::default_label(&l.tab_name, &known)));
     }
 
     #[test]

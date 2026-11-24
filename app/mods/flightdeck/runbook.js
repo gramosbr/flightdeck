@@ -257,7 +257,7 @@ export default class Runbook {
     if (ok) this.toasts.push(cx, `${book.name} refreshed`, { kind: "success", description: book.done > old.done ? `${book.done - old.done} more done · ${book.todo} to do` : `${book.todo} to do` });
     else this.toasts.push(cx, `${book.name}: refresh failed`, { kind: "error", description: book.refresh.log, ms: 8000 });
     // Away from the runbooks, the hub's notification says so (the TUI's runbook space does the same).
-    if (!this.panel && ok && shared("cockpit.app") !== "runbook") {
+    if (!this.panel && ok && shared("flightdeck.app") !== "runbook") {
       const newly = book.steps.filter((s) => !s.open && old.steps.find((o) => o.key === s.key)?.open).map((s) => s.n);
       hub.act("runbook", "announce", [book.slug, newly, ""]).catch(() => {});
     }

@@ -4,7 +4,7 @@
 use ratatui::style::Style;
 use serde_json::{Value, json};
 
-use cockpit_core::theme::{FG, SERIES, bold, dim, fg};
+use flightdeck_core::theme::{FG, SERIES, bold, dim, fg};
 
 use crate::row::Row;
 use crate::value::{Unit, at, axes, cell, number, rows};

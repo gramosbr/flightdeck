@@ -1,9 +1,9 @@
 ---
-description: A routine the cockpit hub runs on its own, on a schedule or when something happens, shown in the routines space
+description: A routine the flightdeck hub runs on its own, on a schedule or when something happens, shown in the routines space
 argument-hint: "<when and what, in your words>"
 ---
 
-Write the routine $ARGUMENTS describes (when empty: ask me what it should do and when) as a file in `~/.config/cockpit/routines/<slug>.md`, slug being a few lowercase words of its name joined by dashes, not already taken. To change an existing routine, read its file first and edit it in place.
+Write the routine $ARGUMENTS describes (when empty: ask me what it should do and when) as a file in `~/.config/flightdeck/routines/<slug>.md`, slug being a few lowercase words of its name joined by dashes, not already taken. To change an existing routine, read its file first and edit it in place.
 
 The file is a front matter of `key: value` lines between two `---` lines, then the prompt Claude runs (or the script, with `run: shell`):
 
@@ -21,7 +21,7 @@ Sum up my open PRs: which wait for review, which fail CI, which can merge.
 ```
 
 - `when`: `manual`, `every 30m` (or `2h`, `1d`; a minute at least), `hourly`, `daily 09:00`, `weekdays 9:00,17:30`, `weekends 10:00`, `mon,thu 14:00`, `tue-fri 08:15`, `cron <minute hour day month weekday>`, or `on <trigger> [words]`, which runs on each event of that kind whose line holds every word. Triggers: `review`, `approved`, `changes`, `opened`, `merged`, `ci-failed`, `ci-passed`, `ticket`, `assigned`, `live`, `release`, `release-ok`, `release-moved`, `release-failed`, `alert`, `error`, `any`. Times are local; `tz: Europe/Paris` (an IANA name) reads them in that time zone instead.
-- `cwd`: where it runs. Left out, a Claude routine runs in a folder of its own, where no project's CLAUDE.md or memory is read, which keeps each run small; set it only when the routine works in a repo. A script runs in the configured reposDir. `run: shell` runs the body with `sh -c` instead of Claude; it gets `$COCKPIT_EVENT`, `$COCKPIT_EVENT_KEY` and `$COCKPIT_EVENT_KIND` when an event set it off.
+- `cwd`: where it runs. Left out, a Claude routine runs in a folder of its own, where no project's CLAUDE.md or memory is read, which keeps each run small; set it only when the routine works in a repo. A script runs in the configured reposDir. `run: shell` runs the body with `sh -c` instead of Claude; it gets `$FLIGHTDECK_EVENT`, `$FLIGHTDECK_EVENT_KEY` and `$FLIGHTDECK_EVENT_KIND` when an event set it off.
 - For Claude: `model`: `lightest` for a routine that only calls a tool or two (haiku at low effort on a one-line system prompt, nothing loaded but the tools it lists, every other MCP server left unconnected: the cheapest run, so keep its prompt self-contained), else `haiku`, `sonnet` or `opus`, or left out for my default model; `tools` (comma-separated allow rules, MCP tools by their full `mcp__…` name; a routine that lists them gets those built-in tools alone and no skills unless it lists `Skill`, which keeps each run small; without any it may only read), `mode` (a permission mode such as `acceptEdits`). Nobody answers its questions: give it the tools it needs and nothing more, and write the prompt so it finishes on its own, its reply's first line a summary.
 - `budget`: only when I ask for one, dollars a week (`budget: 2`), as Claude estimates its runs; on a Claude plan runs draw on the plan, not dollars. Runs wait once the week's runs reach it, and a run stops at what is left.
 - `precheck`: a shell command run first, in the routine's folder, with a minute to finish. Exit 0 runs the routine; exits 1–125 skip the run quietly, costing nothing (what it printed shows in the routines space). Other exits, errors saying it could not check at all (a command not found, nobody signed in), and taking over a minute are failures that notify. Give one to a routine that often has nothing to do, such as `precheck: gh search prs --review-requested=@me --state=open --json number --jq length | grep -qv '^0$'`.
@@ -35,6 +35,6 @@ A `lightest` routine knows nothing but its file: no CLAUDE.md, memory, skills or
 - the exact call: which tool, which arguments, in which order, and what to reply.
 If a step needs judgement or tools you cannot name upfront, pick `haiku` or `sonnet` instead.
 
-Then try it: `sh ~/.config/cockpit/herdr/app.sh routine run <slug>` runs it through the hub and prints whether it worked, the tools it called and its output. Run it right away when its tools only read; when they send, post or change something, show me the exact call it makes and run it only once I agree. A lightest run that calls none of its tools fails: fix the file and try again.
+Then try it: `sh ~/.config/flightdeck/herdr/app.sh routine run <slug>` runs it through the hub and prints whether it worked, the tools it called and its output. Run it right away when its tools only read; when they send, post or change something, show me the exact call it makes and run it only once I agree. A lightest run that calls none of its tools fails: fix the file and try again.
 
 Reply with the file's path, when it runs next in words, the tools it may use, and how the trial went.

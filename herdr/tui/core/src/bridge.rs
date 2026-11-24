@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn an_unreachable_hub_is_an_error() {
-        let reply = reply("t".into(), Err("the cockpit hub did not start".into()), unknown());
-        assert_eq!((reply.note.as_str(), reply.error.as_deref()), ("", Some("the cockpit hub did not start")));
+        let reply = reply("t".into(), Err("the flightdeck hub did not start".into()), unknown());
+        assert_eq!((reply.note.as_str(), reply.error.as_deref()), ("", Some("the flightdeck hub did not start")));
     }
 }

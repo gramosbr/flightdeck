@@ -35,7 +35,7 @@ async function fixture(t, remote = true, globals = {}, host = "127.0.0.1") {
   await once(server, "listening");
   t.after(() => { for (const socket of clients) socket.destroy(); server.close(); });
   const info = { host: remote ? "10.99.99.99" : host, port: server.address().port, token: "test-token" };
-  const install = { bin: "/runner/cockpit", home: "/runner", cache: "/runner/cache", ...(remote ? { machine: "runner", host: "127.0.0.1" } : {}) };
+  const install = { bin: "/runner/flightdeck", home: "/runner", cache: "/runner/cache", ...(remote ? { machine: "runner", host: "127.0.0.1" } : {}) };
   const context = createContext({ console, ...globals });
   const imports = {
     herdr: {
@@ -44,7 +44,7 @@ async function fixture(t, remote = true, globals = {}, host = "127.0.0.1") {
       run: (...args) => calls.push(["run", ...args]),
       readTextFile: async (path, options) => {
         calls.push(["read", path, options]);
-        if (path === "C:/Herdr/cockpit.json") return JSON.stringify(install);
+        if (path === "C:/Herdr/flightdeck.json") return JSON.stringify(install);
         if (path.endsWith("/hub.stopped")) return behavior.stopped ? "" : null;
         if (behavior.noInfo) return null;
         assert.equal(options?.on, install.machine);
@@ -77,7 +77,7 @@ async function fixture(t, remote = true, globals = {}, host = "127.0.0.1") {
       };
     } } },
   };
-  const module = new SourceTextModule(await readFile(new URL("../mods/cockpit/hub.js", import.meta.url), "utf8"), { context });
+  const module = new SourceTextModule(await readFile(new URL("../mods/flightdeck/hub.js", import.meta.url), "utf8"), { context });
   await module.link(name => new SyntheticModule(Object.keys(imports[name]), function () {
     for (const [key, value] of Object.entries(imports[name])) this.setExport(key, value);
   }, { context }));
@@ -108,26 +108,26 @@ for (const [name, globals] of [["TextDecoder", { TextDecoder }], ["the percent f
 test("remote actions and commands cannot operate the runner's desktop", async t => {
   const f = await fixture(t);
   await assert.rejects(f.hub.act("inbox", "review", [{}]), /read-only/);
-  await assert.rejects(f.hub.cockpit(["resume", "all"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["resume", "all"]), /read-only/);
   await assert.rejects(f.hub.act("review", "open_reviewr", ["/runner/acme/api"]), /read-only/);
-  await assert.rejects(f.hub.cockpit(["hub", "act", "inbox", "review", "[]"]), /read-only/);
-  await assert.rejects(f.hub.cockpit(["hub", "act", "review", "send"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["hub", "act", "inbox", "review", "[]"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["hub", "act", "review", "send"]), /read-only/);
   await assert.rejects(f.hub.go({ app: "session", key: "past" }), /read-only/);
   assert.equal(f.messages.length, 0);
   assert.equal(f.calls.filter(call => call[0] === "exec").length, 0);
 });
 
-test("remote review actions run as a cockpit command on the runner, through its machine connection", async t => {
+test("remote review actions run as a flightdeck command on the runner, through its machine connection", async t => {
   const f = await fixture(t);
   const review = { scope: "branch", repo: "/runner/acme/api", comments: [{ path: "src/a.rs", line: 12, text: `say "hi"; $(rm -rf ~) 'x'\nnext` }] };
   await f.hub.act("review", "walkthrough", ["/runner/acme/api", "branch", "haiku"]);
   await f.hub.act("review", "stop_walkthrough", ["/runner/acme/api", "branch"]);
   await f.hub.act("review", "send", ["runner/t7", review]);
-  const runs = f.calls.filter(call => call[0] === "exec").map(([, , args, options]) => [JSON.parse(JSON.stringify(args.slice(args.indexOf("/runner/cockpit")))), options?.on]);
+  const runs = f.calls.filter(call => call[0] === "exec").map(([, , args, options]) => [JSON.parse(JSON.stringify(args.slice(args.indexOf("/runner/flightdeck")))), options?.on]);
   assert.deepEqual(runs, [
-    [["/runner/cockpit", "hub", "act", "review", "walkthrough", '["/runner/acme/api","branch","haiku"]'], "runner"],
-    [["/runner/cockpit", "hub", "act", "review", "stop_walkthrough", '["/runner/acme/api","branch"]'], "runner"],
-    [["/runner/cockpit", "hub", "act", "review", "send", JSON.stringify(["t7", review])], "runner"],
+    [["/runner/flightdeck", "hub", "act", "review", "walkthrough", '["/runner/acme/api","branch","haiku"]'], "runner"],
+    [["/runner/flightdeck", "hub", "act", "review", "stop_walkthrough", '["/runner/acme/api","branch"]'], "runner"],
+    [["/runner/flightdeck", "hub", "act", "review", "send", JSON.stringify(["t7", review])], "runner"],
   ]);
   assert.equal(f.messages.length, 0, "no write travels over TCP");
 });
@@ -140,7 +140,7 @@ test("remote runbook edits and runs go to the runner with their armed key, and n
   await f.hub.act("runbook", "add", ["eng-412", null, "Smoke", "prod", "make smoke"]);
   await f.hub.act("runbook", "undo", []);
   await f.hub.request("act", { app: "runbook", action: "run_step", args: [{ $book: "eng-412" }, step], armed: "run-eng-412-2" });
-  const runs = f.calls.filter(call => call[0] === "exec").map(([, , args]) => JSON.parse(JSON.stringify(args.slice(args.indexOf("/runner/cockpit") + 1))));
+  const runs = f.calls.filter(call => call[0] === "exec").map(([, , args]) => JSON.parse(JSON.stringify(args.slice(args.indexOf("/runner/flightdeck") + 1))));
   assert.deepEqual(runs, [
     ["hub", "act", "runbook", "done", '[[["eng-412","2"]]]'],
     ["hub", "act", "runbook", "set", '["eng-412","2","command","make ship"]'],
@@ -150,13 +150,13 @@ test("remote runbook edits and runs go to the runner with their armed key, and n
   ]);
   assert.equal(f.messages.length, 0, "no write travels over TCP");
   for (const action of ["delete", "update", "talk", "focus_session", "open_pr"]) await assert.rejects(f.hub.act("runbook", action, [{ $book: "eng-412" }]), /read-only/);
-  await assert.rejects(f.hub.cockpit(["hub", "act", "runbook", "delete", "[]"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["hub", "act", "runbook", "delete", "[]"]), /read-only/);
   assert.equal(f.calls.filter(call => call[0] === "exec").length, runs.length);
 });
 
 test("Copy on a remote desk writes the clipboard and never calls the hub", async t => {
   const f = await fixture(t);
-  const source = (await readFile(new URL("../mods/cockpit/runbook.js", import.meta.url), "utf8"));
+  const source = (await readFile(new URL("../mods/flightdeck/runbook.js", import.meta.url), "utf8"));
   const stubs = new Proxy({}, { get: () => () => new Proxy(function () {}, { get: () => () => ({}) }) });
   const toasts = [];
   const modules = {
@@ -204,20 +204,20 @@ test("links and navigation stay on the desktop", async t => {
   const command = f.calls.find(call => call[0] === "exec");
   assert.equal(command[1], "cmd");
   assert.equal(command[3]?.on, undefined);
-  assert.deepEqual(f.calls.find(call => call[0] === "run"), ["run", "cockpit.go:inbox"]);
+  assert.deepEqual(f.calls.find(call => call[0] === "run"), ["run", "flightdeck.go:inbox"]);
   assert.equal(f.messages.length, 0);
 });
 
 test("runner startup never receives the desktop's app home", async t => {
   const f = await fixture(t);
-  f.install.env = { HERDR_APP_HOME: "C:/wrong", COCKPIT_FRONTEND: "tui" };
-  await f.hub.cockpit(["hub", "start"]);
+  f.install.env = { HERDR_APP_HOME: "C:/wrong", FLIGHTDECK_FRONTEND: "tui" };
+  await f.hub.flightdeck(["hub", "start"]);
   const [, command, args, options] = f.calls.find(call => call[0] === "exec");
   assert.equal(command, "env");
   assert.equal(options.on, "runner");
-  assert.ok(args.includes("COCKPIT_HUB_LISTEN=127.0.0.1"));
+  assert.ok(args.includes("FLIGHTDECK_HUB_LISTEN=127.0.0.1"));
   assert.ok(!args.some(arg => arg.startsWith("HERDR_APP_HOME=")));
-  assert.ok(args.includes("COCKPIT_FRONTEND=app"));
+  assert.ok(args.includes("FLIGHTDECK_FRONTEND=app"));
 });
 
 test("local installations retain their actions and localhost connection", async t => {
@@ -381,7 +381,7 @@ test("runbook notification navigation keeps the slug and step list", async t => 
   const sub = f.hub.subscribe(r.cx, { views: ["runbook"], focus: "runbook" }, r.message);
   t.after(() => sub.stop());
   await until(() => r.received.length === 1);
-  await f.hub.cockpit(["focus", "herdr-app:runbook:release:1,2"]);
+  await f.hub.flightdeck(["focus", "herdr-app:runbook:release:1,2"]);
   assert.equal(r.received.at(-1).target.key, "release");
   assert.deepEqual(Array.from(r.received.at(-1).target.steps), ["1", "2"]);
   sub.stop();
@@ -392,7 +392,7 @@ test("Show navigation reveals the work panel rather than a missing center child"
   const f = await fixture(t);
   await f.hub.go({ app: "show", key: "release#summary" });
   assert.deepEqual(JSON.parse(JSON.stringify(f.calls.filter(c => c[0] === "run"))), [
-    ["run", "cockpit.go:work"],
+    ["run", "flightdeck.go:work"],
     ["run", "layout.select", { stack: "panel-body", child: "show" }],
     ["run", "layout.show", { id: "panel" }],
   ]);
@@ -411,15 +411,15 @@ test("remote agent models carry their machine through reads and subscriptions", 
 
 test("a notification that names a space opens it on the desktop", async t => {
   const f = await fixture(t);
-  await f.hub.cockpit(["focus", "herdr-app:space:inbox"]);
-  assert.deepEqual(f.calls.find(call => call[0] === "run"), ["run", "cockpit.go:inbox"]);
+  await f.hub.flightdeck(["focus", "herdr-app:space:inbox"]);
+  assert.deepEqual(f.calls.find(call => call[0] === "run"), ["run", "flightdeck.go:inbox"]);
   assert.equal(f.messages.length, 0);
 });
 
 test("a notification that needs the runner's own terminals says so", async t => {
   const f = await fixture(t);
-  await assert.rejects(f.hub.cockpit(["focus", "herdr-app:workspace:s1"]), /read-only/);
-  await assert.rejects(f.hub.cockpit(["focus", "herdr-app:resume"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["focus", "herdr-app:workspace:s1"]), /read-only/);
+  await assert.rejects(f.hub.flightdeck(["focus", "herdr-app:resume"]), /read-only/);
 });
 
 test("a task is given up when its own timer goes quiet or its steps outlast every bound, never while it waits to retry", async t => {
@@ -482,7 +482,7 @@ test("a hub stopped on purpose is started again only by Start it, and a runner's
   assert.ok(started(local.calls), "Start it starts it");
   const remote = await fixture(t, true);
   remote.behavior.exec = { code: 1, stdout: "", stderr: "" };
-  await assert.rejects(remote.hub.startHub(), /runner's cockpit hub is not running/);
+  await assert.rejects(remote.hub.startHub(), /runner's flightdeck hub is not running/);
   assert.ok(!started(remote.calls), "the desk only asked whether it runs");
 });
 
@@ -515,9 +515,9 @@ test("a machine that slept takes no copy for gone: all three keep their values a
 
 test("every surface words a hub that does not answer the same way: stopped on purpose, else not running", async t => {
   const { hub } = await fixture(t, false);
-  assert.equal(hub.downWords("error: the cockpit hub was stopped on purpose"), "The cockpit hub was stopped");
-  assert.equal(hub.downWords("error: connect ECONNREFUSED 127.0.0.1:7410"), "The cockpit hub isn't running");
-  assert.equal(hub.downWords("error: the cockpit hub was stopped on purpose", true), "Hub stopped");
+  assert.equal(hub.downWords("error: the flightdeck hub was stopped on purpose"), "The flightdeck hub was stopped");
+  assert.equal(hub.downWords("error: connect ECONNREFUSED 127.0.0.1:7410"), "The flightdeck hub isn't running");
+  assert.equal(hub.downWords("error: the flightdeck hub was stopped on purpose", true), "Hub stopped");
   assert.equal(hub.downWords("error: timed out", true), "Hub not running");
 });
 
@@ -527,22 +527,22 @@ test("the window keeps why it last failed to reach the hub, in the error's own w
   assert.equal(f.hub.downReason("connecting"), "", "nothing failed yet");
   // hub.json names a port nothing listens on, and starting a hub fails with what the binary said.
   f.info.port = 1;
-  f.behavior.exec = { code: 1, stdout: "", stderr: "cockpit hub: address already in use (port 7410)\n" };
+  f.behavior.exec = { code: 1, stdout: "", stderr: "flightdeck hub: address already in use (port 7410)\n" };
   const sub = f.hub.subscribe(r.cx, { views: ["inbox"] }, r.message, r.state);
   t.after(() => sub.stop());
   await until(() => r.states.some((s) => s.startsWith("error")));
   const state = r.states.find((s) => s.startsWith("error"));
-  assert.equal(state, "error: cockpit hub: address already in use (port 7410)");
-  assert.equal(f.hub.lastFailure().message, "cockpit hub: address already in use (port 7410)");
+  assert.equal(state, "error: flightdeck hub: address already in use (port 7410)");
+  assert.equal(f.hub.lastFailure().message, "flightdeck hub: address already in use (port 7410)");
   assert.ok(f.hub.lastFailure().at > 0);
-  assert.equal(f.hub.downReason(state), "cockpit hub: address already in use (port 7410)");
-  assert.equal(f.hub.downTip(state), "The cockpit hub isn't running: cockpit hub: address already in use (port 7410)");
+  assert.equal(f.hub.downReason(state), "flightdeck hub: address already in use (port 7410)");
+  assert.equal(f.hub.downTip(state), "The flightdeck hub isn't running: flightdeck hub: address already in use (port 7410)");
   // While it tries again, the reason of the try before is still the one to say.
-  assert.equal(f.hub.downReason("connecting"), "cockpit hub: address already in use (port 7410)");
-  assert.equal(f.hub.downTip("error: the cockpit hub was stopped on purpose"), "The cockpit hub was stopped on purpose, with cockpit hub stop");
+  assert.equal(f.hub.downReason("connecting"), "flightdeck hub: address already in use (port 7410)");
+  assert.equal(f.hub.downTip("error: the flightdeck hub was stopped on purpose"), "The flightdeck hub was stopped on purpose, with flightdeck hub stop");
   sub.stop();
   // A subscription its own copy stopped says nothing about the hub.
-  assert.equal(f.hub.lastFailure().message, "cockpit hub: address already in use (port 7410)");
+  assert.equal(f.hub.lastFailure().message, "flightdeck hub: address already in use (port 7410)");
   // An old failure is no reason any more.
   assert.equal(f.hub.lastFailure(Date.now() + 11 * 60_000), null);
   // Reaching the hub again clears it.
@@ -559,7 +559,7 @@ test("a window that came up before its hub goes live as soon as hub.json names o
   const sidebar = f.hub.subscribe(r.cx, { views: ["inbox"] }, r.message, r.state);
   t.after(() => sidebar.stop());
   await until(() => r.states.some((s) => f.hub.isStoppedOnPurpose(s)));
-  // Let go, the window's own `cockpit hub start` never comes back; a hub started another way writes hub.json.
+  // Let go, the window's own `flightdeck hub start` never comes back; a hub started another way writes hub.json.
   f.behavior.startHangs = true;
   f.behavior.stopped = false;
   await until(() => f.calls.some((c) => c[0] === "exec" && c[2].includes("start")));

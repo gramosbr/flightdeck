@@ -33,7 +33,7 @@ async function stop(a, cx) {
 }
 
 /**
- * Stop, naming the keys the agent's row says stop its turn in its terminal: a Kbd in Cockpit, the tooltip in Cockpit
+ * Stop, naming the keys the agent's row says stop its turn in its terminal: a Kbd in Flightdeck, the tooltip in Flightdeck
  * Chat (Button moves it there), nothing when none is measured.
  */
 export function stopButton(a, interrupt) {
@@ -83,7 +83,7 @@ export default class AgentHead {
     const a = this.named
       ? (list.find((x) => x.address === this.named) ?? null)
       : (list.find((x) => x.address === f?.agent) ?? list.find((x) => x.address === f?.terminal) ?? list[0] ?? null);
-    const tabKey = keyFor("cockpit.agent-view");
+    const tabKey = keyFor("flightdeck.agent-view");
     const back =
       this.place === "home"
         ? Button("head-close", { icon: "x", variant: "ghost", size: "icon-sm", tooltip: "Close  f", onClick: () => run("layout.hide", { id: "home-agent" }) })
@@ -99,10 +99,10 @@ export default class AgentHead {
               tooltip: "Back to the whole tab",
               onClick: () => {
                 run("layout.select", { stack: "view", child: "main" });
-                setShared("cockpit.view", "main");
+                setShared("flightdeck.view", "main");
               },
             });
-    // The queue drawer is the cockpit layout's; the reading layout queues from its own box.
+    // The queue drawer is the flightdeck layout's; the reading layout queues from its own box.
     const queue = available(layoutName(), "queue");
     if (!a)
       return h_flex().id("agent-head").size_full().px(10).gap(8).items_center().border_b_1().border_color(k.border).text_size(TEXT.sm).text_color(k.mutedFg).child("No agent").child(div().flex_1()).child(back);
@@ -134,7 +134,7 @@ export default class AgentHead {
       .children(
         (a.row?.links ?? [])
           .filter((l) => l.kind === "ticket" || l.kind === "pr")
-          .map((l) => Chip(l.label ?? l.name, { id: `head-${l.kind}`, icon: l.icon, tooltip: hint(l.detail ? `${l.name} · ${l.detail}` : l.name, l.kind === "pr" ? "cockpit.pr" : "cockpit.ticket"), onClick: (_e, cx) => cx.spawn(async () => hub.openUrl(l.url)) })),
+          .map((l) => Chip(l.label ?? l.name, { id: `head-${l.kind}`, icon: l.icon, tooltip: hint(l.detail ? `${l.name} · ${l.detail}` : l.name, l.kind === "pr" ? "flightdeck.pr" : "flightdeck.ticket"), onClick: (_e, cx) => cx.spawn(async () => hub.openUrl(l.url)) })),
       )
       .child(div().flex_1())
       .when(queue, (e) =>
@@ -143,10 +143,10 @@ export default class AgentHead {
             icon: "list-ordered",
             variant: "ghost",
             size: "icon-sm",
-            tooltip: hint("Queue a prompt for it", "cockpit.queue"),
+            tooltip: hint("Queue a prompt for it", "flightdeck.queue"),
             onClick: () => {
-              setShared("cockpit.queue.for", a.address);
-              run("cockpit.queue", {});
+              setShared("flightdeck.queue.for", a.address);
+              run("flightdeck.queue", {});
             },
           }),
         ),

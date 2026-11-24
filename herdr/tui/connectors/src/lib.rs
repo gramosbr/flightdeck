@@ -1,4 +1,4 @@
-//! The person's MCP servers called by cockpit itself, with the mappings setup writes: no agent in between.
+//! The person's MCP servers called by flightdeck itself, with the mappings setup writes: no agent in between.
 
 pub mod calendar;
 pub mod ci;

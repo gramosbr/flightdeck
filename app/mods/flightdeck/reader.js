@@ -1,5 +1,5 @@
 // A text a run or a session wrote, read as a page: its Markdown rendered (headings, lists, code, links), selectable,
-// copied in one click. Opened as a window over the cockpit with `openReader({ path | text, title, meta })`.
+// copied in one click. Opened as a window over the flightdeck with `openReader({ path | text, title, meta })`.
 
 import { div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
@@ -8,7 +8,7 @@ import { tokens, TEXT, RADIUS, Icon, Button, Toaster, Skeleton, Markdown } from 
 
 /** Opens the reader window on a file or a text. */
 export function openReader({ path, text, title, meta }) {
-  openOverlay({ mod: "cockpit", kind: "window", key: `reader:${path ?? title}`, width: 760, height: 0.8, props: { app: "reader", path, text, title, meta } });
+  openOverlay({ mod: "flightdeck", kind: "window", key: `reader:${path ?? title}`, width: 760, height: 0.8, props: { app: "reader", path, text, title, meta } });
 }
 
 export default class Reader {

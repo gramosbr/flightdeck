@@ -1,18 +1,18 @@
-//! The Fix and Fix all buttons of Cockpit settings' Health tab: a check of the last `cockpit doctor --json` run fixed by
+//! The Fix and Fix all buttons of Flightdeck settings' Health tab: a check of the last `flightdeck doctor --json` run fixed by
 //! its command, typed into a tab of the actions space, or by the hub action it names.
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use super::{Ctx, arg, sources};
 use crate::value::{Res, text};
 
-/// The kept report, when this cockpit wrote it and it is the one the person looked at (`at`).
+/// The kept report, when this flightdeck wrote it and it is the one the person looked at (`at`).
 fn report(at: u64) -> Res<Value> {
-    let report = files::load(&files::cache().join("doctor.json")).ok_or("no doctor report yet: run cockpit doctor --json")?;
+    let report = files::load(&files::cache().join("doctor.json")).ok_or("no doctor report yet: run flightdeck doctor --json")?;
     let ours = env!("CARGO_PKG_VERSION");
-    if report["cockpit"] != ours {
-        return Err(format!("the last report is from cockpit {}, this is {ours}: run the checks again", report["cockpit"].as_str().unwrap_or("?")));
+    if report["flightdeck"] != ours {
+        return Err(format!("the last report is from flightdeck {}, this is {ours}: run the checks again", report["flightdeck"].as_str().unwrap_or("?")));
     }
     if report["at"].as_u64() != Some(at) {
         return Err("the checks ran again since: look at what they say now".into());
@@ -36,7 +36,7 @@ pub fn shown(fix: &Value) -> String {
     }
 }
 
-/// What a fix's command does in a sandbox, whose terminals run on the real HOME (`COCKPIT_HC_BIN` names its hc): shown,
+/// What a fix's command does in a sandbox, whose terminals run on the real HOME (`FLIGHTDECK_HC_BIN` names its hc): shown,
 /// not run. None outside one.
 fn sandboxed(in_sandbox: bool, command: &str) -> Option<String> {
     in_sandbox.then(|| format!("In a sandbox a fix's command is shown, not run: {command}"))
@@ -79,14 +79,14 @@ fn run_one(ctx: &mut Ctx, id: &str, fix: &Value) -> Res<Done> {
         return Ok(Done::Ran(note.to_string()));
     }
     let Some(command) = fix["command"].as_str() else {
-        return Err(format!("{} has no fix to run: {}", id, fix["label"].as_str().unwrap_or("see cockpit doctor")));
+        return Err(format!("{} has no fix to run: {}", id, fix["label"].as_str().unwrap_or("see flightdeck doctor")));
     };
-    if let Some(shown) = sandboxed(std::env::var_os("COCKPIT_HC_BIN").is_some(), command) {
+    if let Some(shown) = sandboxed(std::env::var_os("FLIGHTDECK_HC_BIN").is_some(), command) {
         return Ok(Done::Shown(shown));
     }
-    // The report says `cockpit`; the tab runs this binary, the one the hub is.
-    let exe = std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "cockpit".into());
-    let line = match command.strip_prefix("cockpit ") {
+    // The report says `flightdeck`; the tab runs this binary, the one the hub is.
+    let exe = std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "flightdeck".into());
+    let line = match command.strip_prefix("flightdeck ") {
         Some(rest) => format!("{} {rest}", crate::value::quote(&exe)),
         None => command.to_string(),
     };
@@ -213,7 +213,7 @@ mod tests {
         serde_json::json!({"checks": [
             {"id": "tools.gh", "fix": {"command": "gh auth login"}},
             {"id": "sources.inbox", "fix": {"act": {"app": "sources", "action": "refresh", "args": []}}},
-            {"id": "claude.plugin", "fix": {"label": "/plugin install cockpit"}},
+            {"id": "claude.plugin", "fix": {"label": "/plugin install flightdeck"}},
         ]})
     }
 

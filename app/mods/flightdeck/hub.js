@@ -1,4 +1,4 @@
-// The cockpit hub over TCP: its address and token from hub.json, the hub started when none answers, one request per
+// The flightdeck hub over TCP: its address and token from hub.json, the hub started when none answers, one request per
 // connection, and subscriptions that come back by themselves when the hub restarts or a copy of the window goes.
 
 import net from "net";
@@ -23,10 +23,10 @@ const close = (socket) => {
  * This evaluation of hub.js. Herdr can evaluate the mod once per copy, or evaluate a build it never runs, so a newer
  * load says nothing about the older ones: a load counts as gone only once it stops showing signs of life.
  */
-export const LOAD = (globalThis.cockpitHubLoads = (globalThis.cockpitHubLoads ?? 0) + 1);
+export const LOAD = (globalThis.flightdeckHubLoads = (globalThis.flightdeckHubLoads ?? 0) + 1);
 
 /** When each load last showed it runs (a beat, a request, a subscription), on globalThis which every load shares. */
-const signs = () => (globalThis.cockpitHubSigns ??= new Map());
+const signs = () => (globalThis.flightdeckHubSigns ??= new Map());
 
 /** This load runs: a copy of it beats or asks the hub. */
 const sign = () => signs().set(LOAD, Date.now());
@@ -35,7 +35,7 @@ const sign = () => signs().set(LOAD, Date.now());
 export const liveLoad = (load, now = Date.now()) => load === LOAD || now - (signs().get(load) ?? 0) <= GONE_MS;
 
 /** Every socket open in the window, with the load that opened it and when. */
-const owned = () => (globalThis.cockpitHubOwned ??= new Map());
+const owned = () => (globalThis.flightdeckHubOwned ??= new Map());
 
 /** A socket this load opened, kept so that another load can close it once this one is gone. */
 function adopt(socket) {
@@ -56,7 +56,7 @@ export function sweep(now = Date.now()) {
     if (!liveLoad(load, now) && now - at > STRAY_MS) close(socket);
   }
   for (const [load, at] of signs()) if (now - at > FORGOTTEN_MS && load !== LOAD) signs().delete(load);
-  const focus = globalThis.cockpitRemoteFocus;
+  const focus = globalThis.flightdeckRemoteFocus;
   for (const listener of [...(focus?.listeners ?? [])]) if (!liveLoad(listener.load, now)) focus.listeners.delete(listener);
 }
 
@@ -83,39 +83,39 @@ const KEEPALIVE_SECS = 30;
 /** Waits `ms` on the context's timer (mods have no setTimeout). */
 export const sleep = (cx, ms) => new Promise((resolve) => cx.timer.after(ms, () => resolve()));
 
-const NOT_INSTALLED = "cockpit is not installed in this Herdr home";
-const READ_ONLY = "the remote cockpit client is read-only; this action needs a local cockpit installation";
+const NOT_INSTALLED = "flightdeck is not installed in this Herdr home";
+const READ_ONLY = "the remote flightdeck client is read-only; this action needs a local flightdeck installation";
 const REMOTE_READS = new Set(["ping", "view", "search", "fetch", "events", "history", "shown"]);
 const APPS = new Set(["inbox", "todo", "runbook", "meetings", "mail", "monitor", "routines", "show"]);
-/** The actions a remote desk runs on the runner with `cockpit hub act <app>`, the hub's TCP gate untouched. */
+/** The actions a remote desk runs on the runner with `flightdeck hub act <app>`, the hub's TCP gate untouched. */
 const RUNNER_ACTS = {
   review: new Set(["send", "walkthrough", "stop_walkthrough"]),
   runbook: new Set(["done", "set", "add", "undo", "run_step"]),
 };
-/** The app behind a pinned space's name, as `cockpit focus space:<name>` gives it. */
+/** The app behind a pinned space's name, as `flightdeck focus space:<name>` gives it. */
 const SPACES = { inbox: "inbox", runbook: "runbook", "to-do": "todo", todo: "todo", meetings: "meetings", monitor: "monitor", routines: "routines", mail: "mail" };
 
 /** Brings an app into view on this desktop, without a row to select. */
 function localShow(app) {
   if (!APPS.has(app)) throw new Error(READ_ONLY);
-  run(`cockpit.go:${app}`);
+  run(`flightdeck.go:${app}`);
   return { ok: true };
 }
 
 function localFocus(target) {
   if (!APPS.has(target?.app)) throw new Error(READ_ONLY);
-  const focus = (globalThis.cockpitRemoteFocus ??= { targets: new Map(), listeners: new Set() });
+  const focus = (globalThis.flightdeckRemoteFocus ??= { targets: new Map(), listeners: new Set() });
   focus.targets.set(target.app, target);
   if (target.app === "show") {
-    run("cockpit.go:work");
+    run("flightdeck.go:work");
     run("layout.select", { stack: "panel-body", child: "show" });
     run("layout.show", { id: "panel" });
-  } else run(`cockpit.go:${target.app}`);
+  } else run(`flightdeck.go:${target.app}`);
   for (const listener of focus.listeners) if (liveLoad(listener.load) && listener(target)) break;
   return { ok: true };
 }
 
-/** Whether an error (or a subscription's "error: …" state) says this Herdr home has no cockpit.json. */
+/** Whether an error (or a subscription's "error: …" state) says this Herdr home has no flightdeck.json. */
 export const isNotInstalled = (e) => String(e?.message ?? e ?? "").includes(NOT_INSTALLED);
 
 /** Opens a URL or file in the system's default app: `open` on macOS, `start` on Windows, `xdg-open` elsewhere. */
@@ -126,7 +126,7 @@ export function openUrl(url) {
   return exec("xdg-open", [url]);
 }
 
-/** Where cockpit lives, as `cockpit app install` wrote it: { bin, cache, home, version }. Read again every few seconds,
+/** Where flightdeck lives, as `flightdeck app install` wrote it: { bin, cache, home, version }. Read again every few seconds,
  *  so an install or update reaches a window that stays open. */
 let installed = null;
 
@@ -134,11 +134,11 @@ let installed = null;
 export const remoteMachine = () => installed?.value?.machine ?? null;
 export async function install() {
   if (installed && Date.now() - installed.at < 3000) return installed.value;
-  const text = await readTextFile(`${appHome()}/cockpit.json`);
-  if (!text) throw new Error(`${NOT_INSTALLED}: run \`cockpit app install\`, or install cockpit first: github.com/quaresc/cockpit#install`);
+  const text = await readTextFile(`${appHome()}/flightdeck.json`);
+  if (!text) throw new Error(`${NOT_INSTALLED}: run \`flightdeck app install\`, or install flightdeck first: github.com/gramosbr/flightdeck#install`);
   const value = installed?.text === text ? installed.value : JSON.parse(text);
   if (value.machine !== undefined && (typeof value.machine !== "string" || !value.machine.trim() || typeof value.host !== "string" || !value.host.trim())) {
-    throw new Error("a remote cockpit install needs a machine and host");
+    throw new Error("a remote flightdeck install needs a machine and host");
   }
   installed = { at: Date.now(), value, text };
   return installed.value;
@@ -151,12 +151,12 @@ async function readInfo(cx) {
   return text ? JSON.parse(text) : null;
 }
 
-// One `cockpit hub start` at a time for every view, and after a failure (the binary gone, a hub that won't start) the
+// One `flightdeck hub start` at a time for every view, and after a failure (the binary gone, a hub that won't start) the
 // next try waits 30 s: until then every caller gets the same error. Kept on globalThis, which every copy shares; a start
 // left behind by a copy that went (its promise never settles) is given up after 40 s.
-const HUB_STOPPED = "the cockpit hub was stopped on purpose";
+const HUB_STOPPED = "the flightdeck hub was stopped on purpose";
 
-/** Whether the hub was stopped with `cockpit hub stop`: no window starts it again by itself until Start it. */
+/** Whether the hub was stopped with `flightdeck hub stop`: no window starts it again by itself until Start it. */
 async function stoppedOnPurpose(cx) {
   const { cache, machine } = await install();
   if (machine) return false;
@@ -169,10 +169,10 @@ async function stoppedOnPurpose(cx) {
  */
 export async function startHub({ explicit = false, cx = null } = {}) {
   if (checking()) throw new Error(CHECKING);
-  const s = (globalThis.cockpitHubStart ??= { starting: null, failed: null, at: 0 });
+  const s = (globalThis.flightdeckHubStart ??= { starting: null, failed: null, at: 0 });
   if (!explicit) {
     // A runner's hub is found again (its port and token) but never started from a desk by itself.
-    if ((await install()).machine && (await cockpit(["hub", "ping"])).code !== 0) throw new Error("the runner's cockpit hub is not running: start it there, or with Start it");
+    if ((await install()).machine && (await flightdeck(["hub", "ping"])).code !== 0) throw new Error("the runner's flightdeck hub is not running: start it there, or with Start it");
     if (await stoppedOnPurpose(cx)) throw new Error(HUB_STOPPED);
     if (s.failed && Date.now() - s.failed.at < 30_000) throw s.failed.error;
   }
@@ -182,8 +182,8 @@ export async function startHub({ explicit = false, cx = null } = {}) {
   const starting = (async () => {
     try {
       // The hub runs on the install's HOME and drives this Herdr window, whatever the app's own environment says.
-      const r = await cockpit(["hub", "start"]);
-      if (r.code !== 0) throw new Error(r.stderr.trim() || "the cockpit hub did not start");
+      const r = await flightdeck(["hub", "start"]);
+      if (r.code !== 0) throw new Error(r.stderr.trim() || "the flightdeck hub did not start");
       s.failed = null;
       return JSON.parse(r.stdout);
     } catch (e) {
@@ -202,7 +202,7 @@ export async function startHub({ explicit = false, cx = null } = {}) {
 export const isStoppedOnPurpose = (e) => String(e?.message ?? e ?? "").includes(HUB_STOPPED);
 
 /** Why this window last failed to reach the hub, and when: kept on globalThis, which every copy shares. */
-const failure = () => (globalThis.cockpitHubFailure ??= { message: null, at: 0 });
+const failure = () => (globalThis.flightdeckHubFailure ??= { message: null, at: 0 });
 
 /** Keeps an error that stopped the window from reaching the hub; one of the window's own making says nothing of the hub. */
 function failed(e) {
@@ -231,10 +231,10 @@ export function downReason(e) {
   return text && text !== "connecting" && text !== "live" ? text : (lastFailure()?.message ?? "");
 }
 
-/** A hub that does not answer in one line with its reason: "The cockpit hub isn't running: connection refused". */
+/** A hub that does not answer in one line with its reason: "The flightdeck hub isn't running: connection refused". */
 export function downTip(e) {
   const words = downWords(e);
-  if (isStoppedOnPurpose(e)) return `${words} on purpose, with cockpit hub stop`;
+  if (isStoppedOnPurpose(e)) return `${words} on purpose, with flightdeck hub stop`;
   const why = downReason(e);
   return why ? `${words}: ${why}` : words;
 }
@@ -243,7 +243,7 @@ export function downTip(e) {
 export function downWords(e, short = false) {
   const stopped = isStoppedOnPurpose(e);
   if (short) return stopped ? "Hub stopped" : "Hub not running";
-  return stopped ? "The cockpit hub was stopped" : "The cockpit hub isn't running";
+  return stopped ? "The flightdeck hub was stopped" : "The flightdeck hub isn't running";
 }
 
 /** How often a connection waiting on a hub start reads hub.json again. */
@@ -253,7 +253,7 @@ const APPEAR_MS = 500;
 const sameHub = (a, b) => Boolean(a && b) && a.port === b.port && a.token === b.token && a.pid === b.pid;
 
 /**
- * hub.json's { port, token }: as written, else after `cockpit hub start` started a hub. While that start runs (one
+ * hub.json's { port, token }: as written, else after `flightdeck hub start` started a hub. While that start runs (one
  * shared start can take up to Herdr's 30 s bound on a command), a hub.json naming another hub than `seen` is taken at once.
  */
 async function address(fresh, state, cx, seen = null) {
@@ -343,7 +343,7 @@ async function open(fresh, state, cx, tried = {}) {
   const connecting = net.connect(machine ? host : (info.host ?? "127.0.0.1"), info.port).then(adopt);
   let socket;
   try {
-    socket = await within(cx, connecting, 10_000, "the cockpit hub");
+    socket = await within(cx, connecting, 10_000, "the flightdeck hub");
   } catch (error) {
     // Given up on, a connection that comes later is closed rather than left open for good.
     connecting.then(close, () => {});
@@ -356,8 +356,8 @@ async function open(fresh, state, cx, tried = {}) {
     // Still asking: stopping the subscription, or giving the task up, closes it.
     state?.opening.add(socket);
     await socket.write(JSON.stringify({ op: "ping", token: info.token }) + "\n");
-    const answer = JSON.parse(await within(cx, lines.next(), 10_000, "the cockpit hub"));
-    if (answer?.ok !== true) throw new Error(answer?.error ?? "the cockpit hub did not answer ping");
+    const answer = JSON.parse(await within(cx, lines.next(), 10_000, "the flightdeck hub"));
+    if (answer?.ok !== true) throw new Error(answer?.error ?? "the flightdeck hub did not answer ping");
     return { socket, token: info.token, lines, remote: machine ?? null, port: info.port };
   } catch (error) {
     close(socket);
@@ -383,8 +383,8 @@ async function connect(state, cx) {
   }
 }
 
-/** Runs the cockpit binary on the install's HOME, driving this Herdr window: { code, stdout, stderr }. */
-export async function cockpit(args) {
+/** Runs the flightdeck binary on the install's HOME, driving this Herdr window: { code, stdout, stderr }. */
+export async function flightdeck(args) {
   if (checking()) throw new Error(CHECKING);
   const { bin, home, env = {}, machine, host } = await install();
   const vars = Object.entries(env).filter(([k]) => !machine || k !== "HERDR_APP_HOME").map(([k, v]) => `${k}=${v}`);
@@ -407,9 +407,9 @@ export async function cockpit(args) {
     }
     const runner = args[1] === "act" && (args.length === 5 || args.length === 6) && RUNNER_ACTS[args[2]]?.has(args[3]);
     if (args[0] !== "hub" || !(["start", "ping", "shown"].includes(args[1]) || runner)) throw new Error(READ_ONLY);
-    return exec("env", [...vars, `HOME=${home}`, `COCKPIT_HUB_LISTEN=${host}`, "COCKPIT_FRONTEND=app", bin, ...args], { on: machine });
+    return exec("env", [...vars, `HOME=${home}`, `FLIGHTDECK_HUB_LISTEN=${host}`, "FLIGHTDECK_FRONTEND=app", bin, ...args], { on: machine });
   }
-  return exec("env", [`HOME=${home}`, `HERDR_APP_HOME=${appHome()}`, "COCKPIT_FRONTEND=app", ...vars, bin, ...args]);
+  return exec("env", [`HOME=${home}`, `HERDR_APP_HOME=${appHome()}`, "FLIGHTDECK_FRONTEND=app", ...vars, bin, ...args]);
 }
 
 /**
@@ -434,7 +434,7 @@ export async function request(op, fields = {}, cx = null) {
   const connecting = connect(null, cx);
   let connection;
   try {
-    connection = await within(cx, connecting, 20_000, "the cockpit hub");
+    connection = await within(cx, connecting, 20_000, "the flightdeck hub");
   } catch (error) {
     // Given up on, a connection that comes later is closed rather than left open for good.
     connecting.then((c) => close(c.socket), () => {});
@@ -446,8 +446,8 @@ export async function request(op, fields = {}, cx = null) {
   try {
     await socket.write(JSON.stringify({ op, token, frontend: "app", ...fields }) + "\n");
     sent = true;
-    const line = await within(cx, lines.next(), 60_000, "the cockpit hub");
-    if (line === null) throw new Error("the cockpit hub closed the connection");
+    const line = await within(cx, lines.next(), 60_000, "the flightdeck hub");
+    if (line === null) throw new Error("the flightdeck hub closed the connection");
     const answer = JSON.parse(line);
     if (answer.error && answer.note === undefined) throw Object.assign(new Error(answer.error), { answered: true });
     if (remote && op === "view" && fields.name === "agents") answer.value = { ...answer.value, remote };
@@ -464,7 +464,7 @@ export async function request(op, fields = {}, cx = null) {
 /** Whether a request went to the hub and no answer came back: done or not, nobody knows. */
 export const isUnconfirmed = (e) => Boolean(e?.unconfirmed);
 
-/** A review or runbook action run by the runner's own cockpit, which hands it to its hub on the unix socket. Review
+/** A review or runbook action run by the runner's own flightdeck, which hands it to its hub on the unix socket. Review
  *  comments go to a runner agent only: its address here is `<machine>/t7`, `t7` there. */
 async function runnerAct(machine, app, action, args, armed) {
   if (app === "review" && action === "send") {
@@ -473,7 +473,7 @@ async function runnerAct(machine, app, action, args, armed) {
     if (!/^[A-Za-z0-9]+$/.test(local)) throw new Error("focus one of the runner's agents to send it the review");
     args = [local, ...args.slice(1)];
   }
-  const r = await cockpit(["hub", "act", app, action, JSON.stringify(args), ...(armed ? [armed] : [])]);
+  const r = await flightdeck(["hub", "act", app, action, JSON.stringify(args), ...(armed ? [armed] : [])]);
   if (r.code !== 0) throw new Error(r.stderr.trim() || `${app} ${action} failed on ${machine}`);
   return JSON.parse(r.stdout);
 }
@@ -500,7 +500,7 @@ export const events = async (app, since) => (await request("events", { app, sinc
 export const history = async (kind, key) => (await request("history", { kind, key })).values ?? [];
 
 /** The window's live subscriptions, on globalThis which every copy shares: what the watchdog looks after. */
-const following = () => (globalThis.cockpitHubSubscriptions ??= new Set());
+const following = () => (globalThis.flightdeckHubSubscriptions ??= new Set());
 
 /** How often each copy beats. */
 const BEAT_MS = 1000;
@@ -511,7 +511,7 @@ const GONE_MS = 10_000;
 /** How long a parked subscription is kept for a copy that may still beat again. */
 const FORGOTTEN_MS = 5 * 60_000;
 
-/** Longer than any bounded step of a connection and the slowest `cockpit hub start` (two tries of 3 s and 15 s). */
+/** Longer than any bounded step of a connection and the slowest `flightdeck hub start` (two tries of 3 s and 15 s). */
 export const STUCK_MS = 40_000;
 
 /**
@@ -551,7 +551,7 @@ export function verdict(subs, port, { woke = false } = {}) {
  * subscription is on that hub, and its copy still beats. Two failed pings in a row start a hub, when a window may.
  */
 function watchdog(cx, slept = false) {
-  const w = (globalThis.cockpitHubWatchdog ??= { at: 0, busy: false, since: 0, failures: 0, woke: false });
+  const w = (globalThis.flightdeckHubWatchdog ??= { at: 0, busy: false, since: 0, failures: 0, woke: false });
   // A late beat (the machine slept, the window was throttled): the next check alone takes nobody for gone.
   if (slept) w.woke = true;
   const calm = w.failures === 0 && [...following()].every((s) => s.parked || !s.connecting);
@@ -592,7 +592,7 @@ function watchdog(cx, slept = false) {
 }
 
 /** The beats of each copy: one timer per view context, however many subscriptions it holds. */
-const beats = () => (globalThis.cockpitHubBeats ??= new WeakMap());
+const beats = () => (globalThis.flightdeckHubBeats ??= new WeakMap());
 
 /** Beats every second for the subscriptions made with this context, while any of them lives. */
 function beatFor(cx, state, tick) {
@@ -641,7 +641,7 @@ export function subscribe(cx, { views = [], docs = [], notify = false, focus = n
   sign();
   const state = { load: LOAD, stopped: false, parked: false, beat: Date.now(), alive: Date.now(), port: null, attempt: 0, moved: Date.now(), connecting: true, answered: false, opening: new Set(), stop: () => sub.stop(), park: () => park() };
   following().add(state);
-  const navigation = (globalThis.cockpitRemoteFocus ??= { targets: new Map(), listeners: new Set() });
+  const navigation = (globalThis.flightdeckRemoteFocus ??= { targets: new Map(), listeners: new Set() });
   const ready = new Set();
   const focused = target => {
     if (!state.stopped && focus === target.app && ready.has(target.app)) {
@@ -692,7 +692,7 @@ export function subscribe(cx, { views = [], docs = [], notify = false, focus = n
               line = await Promise.race([
                 next,
                 new Promise((_, reject) => {
-                  deadline = cx.timer.after(65_000, () => reject(new Error("the cockpit hub heartbeat timed out")));
+                  deadline = cx.timer.after(65_000, () => reject(new Error("the flightdeck hub heartbeat timed out")));
                 }),
               ]);
             } finally {

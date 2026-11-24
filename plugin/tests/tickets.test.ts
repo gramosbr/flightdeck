@@ -3,7 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { capture, fillArgs } from '../hooks/platform'
 import { composedId } from '../hooks/tickets'
 
-// The GitHub Issues connector: an issue is owner, repo and number, which the mapping carries through cockpit's one id.
+// The GitHub Issues connector: an issue is owner, repo and number, which the mapping carries through flightdeck's one id.
 const GITHUB = {
   enabled: true,
   name: 'GitHub Issues',

@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use chrono::{Datelike, Local, NaiveTime, TimeZone, Timelike};
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -335,7 +335,7 @@ mod tests {
         s.dismiss("t", "blocked", 5000, "limit", "claude:1", 6500);
         assert!(!s.runs("t", "claude:1") && s.agents["t"].dismissed.is_some());
         assert!(s.runs("t", "codex:7") && s.agents["t"].dismissed.is_none());
-        // A session cockpit drives is not in the state until it is dismissed.
+        // A session flightdeck drives is not in the state until it is dismissed.
         s.dismiss("claude:demo-421", "blocked", 7000, "toolu_demo_421", "claude:demo-421", 8000);
         assert!(s.agents["claude:demo-421"].dismissed(7000, "toolu_demo_421"));
         assert!(dismissable("blocked") && dismissable("failed") && !dismissable("done") && !dismissable("working"));

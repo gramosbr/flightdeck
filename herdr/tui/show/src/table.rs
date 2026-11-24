@@ -7,8 +7,8 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::{Color, Modifier, Style};
 use serde_json::Value;
 
-use cockpit_core::text::width;
-use cockpit_core::theme::{BG, DIM, FG, LINE, ORANGE, PANEL, SURFACE, fg};
+use flightdeck_core::text::width;
+use flightdeck_core::theme::{BG, DIM, FG, LINE, ORANGE, PANEL, SURFACE, fg};
 
 use crate::row::{Act, Row, Target, slice};
 use crate::value::{at, cell, csv, number, rows, text};

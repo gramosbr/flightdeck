@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use cockpit_core::keys::{VERBS, key_of};
+use flightdeck_core::keys::{VERBS, key_of};
 use regex::Regex;
 
 const APPS: [&str; 9] = ["inbox", "runbook", "todo", "meetings", "monitor", "routines", "review", "mail", "show"];

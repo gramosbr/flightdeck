@@ -1,6 +1,6 @@
 [package]
-name = "cockpit-cli"
-description = "The one `cockpit` binary: the space apps, the show view, the palette popup and the hub as its subcommands, what keeps them running in their spaces, and what the plugin's scripts call (the actions space, notifications and their clicks and buttons, the browser beside a pane, screenshots, updates, the doctor)."
+name = "flightdeck-cli"
+description = "The one `flightdeck` binary: the space apps, the show view, the palette popup and the hub as its subcommands, what keeps them running in their spaces, and what the plugin's scripts call (the actions space, notifications and their clicks and buttons, the browser beside a pane, screenshots, updates, the doctor)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,25 +9,25 @@ repository.workspace = true
 publish.workspace = true
 
 [[bin]]
-name = "cockpit"
+name = "flightdeck"
 path = "src/main.rs"
 
 [dependencies]
-cockpit-core.workspace = true
-cockpit-update.workspace = true
-cockpit-hub = { path = "../hub" }
-cockpit-agents = { path = "../agents" }
-cockpit-inbox = { path = "../inbox" }
-cockpit-meetings = { path = "../meetings" }
-cockpit-mail = { path = "../mail" }
-cockpit-monitor = { path = "../monitor" }
-cockpit-palette = { path = "../palette" }
-cockpit-routines = { path = "../routines" }
-cockpit-review = { path = "../review" }
-cockpit-runbook = { path = "../runbook" }
-cockpit-show = { path = "../show" }
-cockpit-todo = { path = "../todo" }
-cockpit-connectors = { path = "../connectors" }
+flightdeck-core.workspace = true
+flightdeck-update.workspace = true
+flightdeck-hub = { path = "../hub" }
+flightdeck-agents = { path = "../agents" }
+flightdeck-inbox = { path = "../inbox" }
+flightdeck-meetings = { path = "../meetings" }
+flightdeck-mail = { path = "../mail" }
+flightdeck-monitor = { path = "../monitor" }
+flightdeck-palette = { path = "../palette" }
+flightdeck-routines = { path = "../routines" }
+flightdeck-review = { path = "../review" }
+flightdeck-runbook = { path = "../runbook" }
+flightdeck-show = { path = "../show" }
+flightdeck-todo = { path = "../todo" }
+flightdeck-connectors = { path = "../connectors" }
 chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true

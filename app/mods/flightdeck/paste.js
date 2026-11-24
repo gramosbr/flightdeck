@@ -11,8 +11,8 @@ export const MAX_IMAGE = 20 * 1024 * 1024;
  * pastes older than a day. Exits 2 when the clipboard holds no image, 3 when no tool reads one, 4 past MAX_IMAGE.
  */
 export const PASTE_IMAGE = `umask 077
-find "\${TMPDIR:-/tmp}/" -maxdepth 1 -type d -name 'cockpit-paste.*' -user "$(id -u)" -mtime +0 -exec rm -rf {} + 2>/dev/null
-d=$(mktemp -d "\${TMPDIR:-/tmp}/cockpit-paste.XXXXXX") || exit 1
+find "\${TMPDIR:-/tmp}/" -maxdepth 1 -type d -name 'flightdeck-paste.*' -user "$(id -u)" -mtime +0 -exec rm -rf {} + 2>/dev/null
+d=$(mktemp -d "\${TMPDIR:-/tmp}/flightdeck-paste.XXXXXX") || exit 1
 f="$d/pasted-\${d##*.}.png"
 gone() { rm -rf "$d"; exit "$1"; }
 if command -v osascript >/dev/null 2>&1; then
@@ -69,7 +69,7 @@ if command -v sips >/dev/null 2>&1; then sips -g pixelWidth -g pixelHeight "$1";
 export function thumbPath(path) {
   let h = 5381;
   for (const c of String(path)) h = ((h << 5) + h + c.charCodeAt(0)) | 0;
-  return `data/cockpit/thumbs/${(h >>> 0).toString(36)}.${String(path).split(".").pop().toLowerCase()}`;
+  return `data/flightdeck/thumbs/${(h >>> 0).toString(36)}.${String(path).split(".").pop().toLowerCase()}`;
 }
 
 /** What a run of THUMB says: `{rel, w, h}` of the copy, or null when the image could not be read. */

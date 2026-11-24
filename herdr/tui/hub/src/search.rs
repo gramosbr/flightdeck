@@ -12,7 +12,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher, Utf32Str};
 use serde_json::{Value, json};
@@ -126,13 +126,13 @@ pub fn best<'a>(entries: &'a [Entry], query: &str) -> Vec<&'a Entry> {
 
 /// Every searchable item under this home.
 pub fn build(home: &Path) -> Vec<Entry> {
-    let cache = home.join(".cache/cockpit");
+    let cache = home.join(".cache/flightdeck");
     let mut out = Vec::new();
     inbox(&files::load(&cache.join("inbox.json")).unwrap_or(Value::Null), &mut out);
-    let runbooks = if std::env::var("COCKPIT_RUNBOOKS_DIR").is_ok() { runbooks_dir() } else { home.join(".config/cockpit/runbooks") };
+    let runbooks = if std::env::var("FLIGHTDECK_RUNBOOKS_DIR").is_ok() { runbooks_dir() } else { home.join(".config/flightdeck/runbooks") };
     runbook(&read_books(&runbooks), &mut out);
     show(&cache.join("show"), &mut out);
-    todo(&std::fs::read_to_string(home.join(".config/cockpit/todo.md")).unwrap_or_default(), &mut out);
+    todo(&std::fs::read_to_string(home.join(".config/flightdeck/todo.md")).unwrap_or_default(), &mut out);
     meetings(&files::load(&cache.join("meetings.json")).unwrap_or(Value::Null), &mut out);
     monitor(&files::load(&cache.join("monitor.json")).unwrap_or(Value::Null), &mut out);
     routines(&files::load(&cache.join("routines.json")).unwrap_or(Value::Null), &mut out);
@@ -271,9 +271,9 @@ mod tests {
 
     fn home() -> tempfile::TempDir {
         let home = tempfile::tempdir().unwrap();
-        let cache = home.path().join(".cache/cockpit");
+        let cache = home.path().join(".cache/flightdeck");
         std::fs::create_dir_all(cache.join("show")).unwrap();
-        std::fs::create_dir_all(home.path().join(".config/cockpit/runbooks")).unwrap();
+        std::fs::create_dir_all(home.path().join(".config/flightdeck/runbooks")).unwrap();
         let inbox = json!({"mine": [{"repo": "api", "number": 4, "title": "Login page", "url": "https://x/api/pull/4", "branch": "me/eng-401-login", "ci": "FAILURE", "review": "CHANGES_REQUESTED"}],
                            "direct": [{"repo": "web", "number": 9, "title": "Dark mode", "url": "https://x/web/pull/9", "author": "maya", "authorName": "Maya Haddad"}],
                            "team": [], "tickets": [{"id": "ENG-401", "title": "Sign in with Google", "status": "In Progress", "project": "Auth"}]});
@@ -284,8 +284,8 @@ mod tests {
         )
         .unwrap();
         files::write(&cache.join("meetings.json"), &json!({"meetings": [{"id": "m1", "title": "Team daily", "start": "2026-10-28T09:45:00+01:00"}]})).unwrap();
-        std::fs::write(home.path().join(".config/cockpit/todo.md"), "# To-do\n\n- [ ] call the bank\n- [x] ship ENG-401\n").unwrap();
-        std::fs::write(home.path().join(".config/cockpit/runbooks/eng-401.md"), "# ENG-401 · Google sign-in\nupdated: today\n\n| # | Step | Where | Status | Command |\n|---|---|---|---|---|\n| 1 | Run the migration | api | ⬜ to do | mix ecto.migrate |\n").unwrap();
+        std::fs::write(home.path().join(".config/flightdeck/todo.md"), "# To-do\n\n- [ ] call the bank\n- [x] ship ENG-401\n").unwrap();
+        std::fs::write(home.path().join(".config/flightdeck/runbooks/eng-401.md"), "# ENG-401 · Google sign-in\nupdated: today\n\n| # | Step | Where | Status | Command |\n|---|---|---|---|---|\n| 1 | Run the migration | api | ⬜ to do | mix ecto.migrate |\n").unwrap();
         home
     }
 

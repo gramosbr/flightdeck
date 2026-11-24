@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/chromium/prepare-import.ts,
 // chromium/scan-source-rows.ts, chromium/finalize-import.ts and sources/chromium-cookie-time.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { existsSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";

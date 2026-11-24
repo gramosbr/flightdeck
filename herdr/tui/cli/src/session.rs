@@ -1,17 +1,17 @@
-//! `cockpit session`: drives an agent over its streaming protocol from a shell, for working on the chat without the
+//! `flightdeck session`: drives an agent over its streaming protocol from a shell, for working on the chat without the
 //! window. A session lives as long as the command does.
 
 use std::time::Duration;
 
 use crate::proc::fail;
-use cockpit_core::hub;
+use flightdeck_core::hub;
 use serde_json::{Value, json};
 
-const USAGE: &str = "An agent cockpit drives itself, over its streaming protocol.
+const USAGE: &str = "An agent flightdeck drives itself, over its streaming protocol.
 
-    cockpit session run <agent> <cwd> <prompt>...   starts it, sends the prompt, prints what comes back, ends it
-    cockpit session answer <ask> allow|deny         answers a permission it asks, at a terminal
-    cockpit session modes                           the permission modes an agent takes";
+    flightdeck session run <agent> <cwd> <prompt>...   starts it, sends the prompt, prints what comes back, ends it
+    flightdeck session answer <ask> allow|deny         answers a permission it asks, at a terminal
+    flightdeck session modes                           the permission modes an agent takes";
 
 pub fn main(args: &[String]) {
     match args.first().map(String::as_str) {
@@ -61,7 +61,7 @@ fn run(args: &[String]) {
         for ask in now["pending"].as_array().into_iter().flatten() {
             let id = ask["id"].as_str().unwrap_or_default().to_string();
             if !shown.contains(&id) {
-                println!("ASKS {}  (cockpit session answer {id} allow|deny)", serde_json::to_string(ask).unwrap_or_default());
+                println!("ASKS {}  (flightdeck session answer {id} allow|deny)", serde_json::to_string(ask).unwrap_or_default());
                 shown.push(id);
             }
         }
@@ -73,7 +73,7 @@ fn run(args: &[String]) {
     let _ = act("stop", json!({"key": key, "confirm": true}));
 }
 
-/// The ask and the verdict `cockpit session answer` was given: both are required, and only at a terminal.
+/// The ask and the verdict `flightdeck session answer` was given: both are required, and only at a terminal.
 fn verdict(args: &[String], at_a_terminal: bool) -> Result<(String, bool), String> {
     let (Some(id), Some(word)) = (args.first(), args.get(1)) else { return Err(USAGE.into()) };
     let allow = match word.as_str() {
@@ -87,9 +87,9 @@ fn verdict(args: &[String], at_a_terminal: bool) -> Result<(String, bool), Strin
     Ok((id.clone(), allow))
 }
 
-/// `cockpit session answer <ask> allow|deny` — what the card does in the window.
+/// `flightdeck session answer <ask> allow|deny` — what the card does in the window.
 fn answer(args: &[String]) {
-    let (id, allow) = verdict(args, cockpit_agents::cli::at_a_terminal()).unwrap_or_else(|e| fail(&e));
+    let (id, allow) = verdict(args, flightdeck_agents::cli::at_a_terminal()).unwrap_or_else(|e| fail(&e));
     match act("answer", json!({"ask": id, "allow": allow, "source": "cli:command"})) {
         Ok(note) => println!("{note}"),
         Err(why) => fail(&why),

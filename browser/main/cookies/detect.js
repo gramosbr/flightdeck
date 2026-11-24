@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/sources/browser-cookie-detection.ts,
 // sources/browser-cookie-source-profiles.ts and chromium/chromium-cookie-path.ts (macOS rows).
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import os from "node:os";

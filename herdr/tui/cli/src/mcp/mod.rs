@@ -1,4 +1,4 @@
-//! `cockpit mcp`: cockpit's agent tools (show, cockpit_search, cockpit_changes, report_step) as a stdio MCP server, in
+//! `flightdeck mcp`: flightdeck's agent tools (show, flightdeck_search, flightdeck_changes, report_step) as a stdio MCP server, in
 //! newline-delimited JSON-RPC 2.0. The drawing guidance goes out as the server's instructions.
 
 mod report;
@@ -82,7 +82,7 @@ pub fn handle(message: &Value) -> Option<Value> {
             json!({
                 "protocolVersion": version,
                 "capabilities": {"tools": {"listChanged": false}},
-                "serverInfo": {"name": "cockpit", "title": "cockpit", "version": env!("CARGO_PKG_VERSION")},
+                "serverInfo": {"name": "flightdeck", "title": "flightdeck", "version": env!("CARGO_PKG_VERSION")},
                 "instructions": tools::instructions(),
             })
         }
@@ -104,7 +104,7 @@ pub fn handle(message: &Value) -> Option<Value> {
     Some(json!({"jsonrpc": "2.0", "id": id, "result": result}))
 }
 
-/// A tool's text, or what went wrong as the tool's error; None for a tool cockpit does not have.
+/// A tool's text, or what went wrong as the tool's error; None for a tool flightdeck does not have.
 fn call(name: &str, args: &Value) -> Option<Result<String, String>> {
     Some(match name {
         "show" => {
@@ -114,36 +114,37 @@ fn call(name: &str, args: &Value) -> Option<Result<String, String>> {
             }
             shown
         }
-        "cockpit_search" => {
+        "flightdeck_search" => {
             let query = args["query"].as_str().unwrap_or_default().trim();
             if query.is_empty() {
                 Err("query: the words to search for, e.g. a ticket id or part of a PR title".into())
             } else {
-                find::search_json(query).map(|v| v.to_string()).map_err(|e| format!("cockpit search: {e}"))
+                find::search_json(query).map(|v| v.to_string()).map_err(|e| format!("flightdeck search: {e}"))
             }
         }
-        "cockpit_changes" => {
-            changes(args).and_then(|(since, app)| find::events_json(since, &app).map(|v| v.to_string()).map_err(|e| format!("cockpit events: {e}")))
+        "flightdeck_changes" => {
+            changes(args).and_then(|(since, app)| find::events_json(since, &app).map(|v| v.to_string()).map_err(|e| format!("flightdeck events: {e}")))
         }
-        "cockpit_read" => {
-            let raw = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+        "flightdeck_read" => {
+            let raw = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
             let (source, verb) = (args["source"].as_str().unwrap_or_default(), args["verb"].as_str().unwrap_or_default());
             let values = if args["values"].is_object() { args["values"].clone() } else { json!({}) };
-            cockpit_connectors::reads::read(&raw, source, verb, &values)
+            flightdeck_connectors::reads::read(&raw, source, verb, &values)
         }
-        "cockpit_health" => {
-            let raw = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+        "flightdeck_health" => {
+            let raw = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
             let now = find::now_ms() as i64;
-            let at =
-                |key: &str, default: i64| args[key].as_str().filter(|t| *t != "now").map_or(default, |t| cockpit_connectors::observability::start_of(t, now));
+            let at = |key: &str, default: i64| {
+                args[key].as_str().filter(|t| *t != "now").map_or(default, |t| flightdeck_connectors::observability::start_of(t, now))
+            };
             let service = args["service"].as_str().unwrap_or_default().trim();
             if service.is_empty() {
                 Err("service: the service's name as the metrics tool knows it".to_string())
             } else {
-                cockpit_connectors::reads::health(&raw, service, at("from", now - 3_600_000), at("to", now), now).map(|v| v.to_string())
+                flightdeck_connectors::reads::health(&raw, service, at("from", now - 3_600_000), at("to", now), now).map(|v| v.to_string())
             }
         }
-        "report_step" => report::report(&cockpit_core::files::cache().join("handoffs"), args),
+        "report_step" => report::report(&flightdeck_core::files::cache().join("handoffs"), args),
         _ => return None,
     })
 }
@@ -183,8 +184,8 @@ mod tests {
         let answer = ask("initialize", json!({"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "codex", "version": "1"}}));
         assert_eq!(answer["id"], 7);
         assert_eq!(answer["result"]["protocolVersion"], "2025-03-26");
-        assert_eq!(answer["result"]["serverInfo"]["name"], "cockpit");
-        assert!(answer["result"]["instructions"].as_str().unwrap().contains("cockpit's show tool"));
+        assert_eq!(answer["result"]["serverInfo"]["name"], "flightdeck");
+        assert!(answer["result"]["instructions"].as_str().unwrap().contains("flightdeck's show tool"));
         assert_eq!(ask("initialize", json!({"protocolVersion": "1999-01-01"}))["result"]["protocolVersion"], "2025-06-18");
         assert_eq!(handle(&json!({"jsonrpc": "2.0", "method": "notifications/initialized"})), None);
     }
@@ -193,7 +194,7 @@ mod tests {
     fn it_lists_the_plugins_tools() {
         let tools = ask("tools/list", json!({}));
         let names: Vec<&str> = tools["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
-        assert_eq!(names, ["show", "cockpit_search", "cockpit_changes", "cockpit_read", "cockpit_health", "report_step"]);
+        assert_eq!(names, ["show", "flightdeck_search", "flightdeck_changes", "flightdeck_read", "flightdeck_health", "report_step"]);
     }
 
     #[test]
@@ -201,7 +202,7 @@ mod tests {
         let shown = ask("tools/call", json!({"name": "show", "arguments": {"pane": "x", "title": "t", "blocks": [{"type": "pie"}]}}));
         assert_eq!(shown["result"]["isError"], true);
         assert!(shown["result"]["content"][0]["text"].as_str().unwrap().starts_with("at /blocks/0: unknown block type \"pie\""));
-        let empty = ask("tools/call", json!({"name": "cockpit_search", "arguments": {"query": " "}}));
+        let empty = ask("tools/call", json!({"name": "flightdeck_search", "arguments": {"query": " "}}));
         assert_eq!(empty["result"]["content"][0]["text"], "query: the words to search for, e.g. a ticket id or part of a PR title");
         assert_eq!(ask("tools/call", json!({"name": "nope", "arguments": {}}))["error"]["code"], -32602);
         assert_eq!(ask("resources/read", json!({}))["error"]["code"], -32601);

@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use cockpit_core::input::Input;
+use flightdeck_core::input::Input;
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher, Utf32Str};
 

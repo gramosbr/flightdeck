@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>cockpit · see every coding agent and what it is working on</title>
-  <meta name="description" content="cockpit shows every coding agent you are running (Claude Code, Codex and the others Herdr runs) with its ticket, PR, CI run and deploy, and which ones are waiting for an answer. For herdr and the Herdr app.">
+  <title>flightdeck · see every coding agent and what it is working on</title>
+  <meta name="description" content="flightdeck shows every coding agent you are running (Claude Code, Codex and the others Herdr runs) with its ticket, PR, CI run and deploy, and which ones are waiting for an answer. For herdr and the Herdr app.">
   <meta name="color-scheme" content="light dark">
-  <meta property="og:title" content="cockpit">
+  <meta property="og:title" content="flightdeck">
   <meta property="og:description" content="See every coding agent you are running, what it is working on, and which ones are waiting for you.">
   <meta property="og:image" content="img/app/home-dark.png">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
@@ -22,13 +22,13 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="index.html"><img src="img/logo.svg" alt="" width="30" height="30">cockpit</a>
+    <a class="brand" href="index.html"><img src="img/logo.svg" alt="" width="30" height="30">flightdeck</a>
     <nav class="site-nav" aria-label="Site">
       <a href="index.html" aria-current="page">Home</a>
       <a href="desktop.html">Herdr APP</a>
       <a href="terminal.html">Herdr TUI</a>
-      <a href="https://github.com/quaresc/cockpit/releases">Changelog</a>
-      <a href="https://github.com/quaresc/cockpit"><svg aria-hidden="true"><use href="#i-gh"/></svg>GitHub</a>
+      <a href="https://github.com/gramosbr/flightdeck/releases">Changelog</a>
+      <a href="https://github.com/gramosbr/flightdeck"><svg aria-hidden="true"><use href="#i-gh"/></svg>GitHub</a>
     </nav>
   </div>
 </header>
@@ -48,7 +48,7 @@
 
       <figure class="frame" id="demo">
         <video controls muted playsinline preload="metadata" poster="img/app/home-dark.png" width="1600" height="1025">
-          <source src="img/cockpit.mp4" type="video/mp4">
+          <source src="img/flightdeck.mp4" type="video/mp4">
         </video>
       </figure>
     </div>
@@ -65,7 +65,7 @@
   <section class="section" id="why">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Why cockpit</span>
+        <span class="eyebrow">Why flightdeck</span>
         <h2>Three things you only get here</h2>
       </div>
       <div class="rows">
@@ -93,14 +93,14 @@
             <h3>A real browser inside Herdr<span class="badge new">New</span></h3>
             <p>Each session gets a Chromium of its own, docked in the side panel, with your sign-ins. The agent tests its page there while you watch.</p>
             <p>Click an element and write what should change. The agent gets its selector, its source file and a picture; leave several notes and send them together.</p>
-            <p class="fine">Herdr app on macOS, turned on in Cockpit settings. Everywhere else the browser runs in a terminal pane.</p>
+            <p class="fine">Herdr app on macOS, turned on in Flightdeck settings. Everywhere else the browser runs in a terminal pane.</p>
           </div>
           <figure class="frame">
             <picture class="crop" style="--ar:130/94;--z:123.1%;--x:-23.1%;--y:-3.2%"><source srcset="img/app/browser-light.png" media="(prefers-color-scheme: light)"><img src="img/app/browser-dark.png" alt="An agent in its terminal and, beside it, its page in a docked browser with a note being written on the Search button" width="1600" height="1000" loading="lazy"></picture>
           </figure>
         </div>
       </div>
-      <p class="more">And many more features: Cockpit Chat, to-dos, a release monitor, routines, a command palette, recaps, usage limits and notifications. <a href="#features">See them all</a></p>
+      <p class="more">And many more features: Flightdeck Chat, to-dos, a release monitor, routines, a command palette, recaps, usage limits and notifications. <a href="#features">See them all</a></p>
     </div>
   </section>
 
@@ -156,8 +156,8 @@
           <div class="fbody"><h3>Notes on the page<span class="badge new">New</span></h3><p>Click an element, write what should change; the agent gets the selector, the file and a picture.</p><span class="where">Herdr APP · macOS</span></div>
         </article>
         <article class="fcard only-app">
-          <a class="fshot" href="desktop.html#chat" data-note="App only"><picture class="half-app" style="--z:128%;--x:-27.5%;--y:-4%"><source srcset="img/app/chat-light.png" media="(prefers-color-scheme: light)"><img src="img/app/chat-dark.png" alt="Cockpit Chat" width="1600" height="1000" loading="lazy"></picture></a>
-          <div class="fbody"><h3>Cockpit Chat<span class="badge new">New</span></h3><p>One agent as a conversation, turns folded, permissions answered in place; no terminal needed.</p><span class="where">Herdr APP</span></div>
+          <a class="fshot" href="desktop.html#chat" data-note="App only"><picture class="half-app" style="--z:128%;--x:-27.5%;--y:-4%"><source srcset="img/app/chat-light.png" media="(prefers-color-scheme: light)"><img src="img/app/chat-dark.png" alt="Flightdeck Chat" width="1600" height="1000" loading="lazy"></picture></a>
+          <div class="fbody"><h3>Flightdeck Chat<span class="badge new">New</span></h3><p>One agent as a conversation, turns folded, permissions answered in place; no terminal needed.</p><span class="where">Herdr APP</span></div>
         </article>
         <article class="fcard">
           <a class="fshot" href="desktop.html#show"><picture class="half-app" style="--z:170%;--x:-70%;--y:-7%"><source srcset="img/app/show-light.png" media="(prefers-color-scheme: light)"><img src="img/app/show-dark.png" alt="Charts, drawn unasked" width="1600" height="1025" loading="lazy"></picture><img class="half-tui tui" src="img/show.svg" alt="Charts, drawn unasked" width="1296" height="679" loading="lazy"></a>
@@ -273,7 +273,7 @@
       </div>
       <div class="panel" role="tabpanel" id="p-chat" aria-labelledby="t-chat">
         <figure class="frame">
-          <picture><source srcset="img/app/chat-light.png" media="(prefers-color-scheme: light)"><img class="app-shot" src="img/app/chat-dark.png" alt="Cockpit Chat on one agent, with a permission to answer" width="1600" height="1000" loading="lazy"></picture>
+          <picture><source srcset="img/app/chat-light.png" media="(prefers-color-scheme: light)"><img class="app-shot" src="img/app/chat-dark.png" alt="Flightdeck Chat on one agent, with a permission to answer" width="1600" height="1000" loading="lazy"></picture>
           <figcaption><b>Chat.</b> One agent as a conversation, its permission answered in place.</figcaption>
         </figure>
       </div>
@@ -307,7 +307,7 @@
       </div>
       <div class="compare">
         <article class="plan">
-          <div class="thumb"><picture><source srcset="img/app/home-light.png" media="(prefers-color-scheme: light)"><img src="img/app/home-dark.png" alt="cockpit in the Herdr app" width="1600" height="1025" loading="lazy"></picture></div>
+          <div class="thumb"><picture><source srcset="img/app/home-light.png" media="(prefers-color-scheme: light)"><img src="img/app/home-dark.png" alt="flightdeck in the Herdr app" width="1600" height="1025" loading="lazy"></picture></div>
           <div class="body">
             <span class="kicker">Desktop</span>
             <h3>Herdr APP</h3>
@@ -317,18 +317,18 @@
               <li><svg class="i"><use href="#i-check"/></svg><span>Sidebar: questions answered in place, agents by ticket</span></li>
               <li><svg class="i"><use href="#i-check"/></svg><span>Side panel per agent: documents, review, runbook, files</span></li>
               <li><svg class="i"><use href="#i-check"/></svg><span>A Chromium browser docked beside each agent (macOS)</span></li>
-              <li><svg class="i"><use href="#i-check"/></svg><span>Cockpit Chat: one agent read as a conversation</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>Flightdeck Chat: one agent read as a conversation</span></li>
               <li><svg class="i"><use href="#i-check"/></svg><span>Buttons, hover cards, right-click menus, <kbd>⌘</kbd> keys</span></li>
             </ul>
             <a class="button" href="desktop.html">Explore the app <svg class="i"><use href="#i-arrow"/></svg></a>
           </div>
         </article>
         <article class="plan">
-          <div class="thumb"><img src="img/overview.svg" alt="cockpit in herdr: sidebar, an agent, a browser beside it and the footer" width="1296" height="679" loading="lazy"></div>
+          <div class="thumb"><img src="img/overview.svg" alt="flightdeck in herdr: sidebar, an agent, a browser beside it and the footer" width="1296" height="679" loading="lazy"></div>
           <div class="body">
             <span class="kicker">Terminal</span>
             <h3>Herdr TUI</h3>
-            <p class="tagline">A herdr plugin: cockpit in your terminal, beside your agents.</p>
+            <p class="tagline">A herdr plugin: flightdeck in your terminal, beside your agents.</p>
             <ul class="checks">
               <li><svg class="i"><use href="#i-check"/></svg><span>Sidebar with each agent's task, branch, ticket and CI</span></li>
               <li><svg class="i"><use href="#i-check"/></svg><span>Footer: one click to ticket, PR, deploy and preview</span></li>
@@ -358,25 +358,25 @@
       <div>
         <div class="term">
           <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><em>Claude Code</em>
-            <button class="copy" type="button" data-copy="/plugin install cockpit --marketplace quaresc/cockpit&#10;/cockpit:setup"><svg class="i"><use href="#i-copy"/></svg><span>Copy</span></button>
+            <button class="copy" type="button" data-copy="/plugin install flightdeck --marketplace gramosbr/flightdeck&#10;/flightdeck:setup"><svg class="i"><use href="#i-copy"/></svg><span>Copy</span></button>
           </div>
-<pre><code><span class="p">&gt; </span>/plugin install cockpit --marketplace quaresc/cockpit
-<span class="p">&gt; </span>/cockpit:setup
+<pre><code><span class="p">&gt; </span>/plugin install flightdeck --marketplace gramosbr/flightdeck
+<span class="p">&gt; </span>/flightdeck:setup
 <span class="c"># any time later</span>
-<span class="p">&gt; </span>/cockpit:doctor
-<span class="p">&gt; </span>/plugin update cockpit@cockpit</code></pre>
+<span class="p">&gt; </span>/flightdeck:doctor
+<span class="p">&gt; </span>/plugin update flightdeck@flightdeck</code></pre>
         </div>
         <div class="term">
           <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><em>shell, for any other agent</em>
-            <button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh&#10;cockpit setup"><svg class="i"><use href="#i-copy"/></svg><span>Copy</span></button>
+            <button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh&#10;flightdeck setup"><svg class="i"><use href="#i-copy"/></svg><span>Copy</span></button>
           </div>
-<pre><code><span class="p">$ </span>curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh
-<span class="p">$ </span>cockpit setup
+<pre><code><span class="p">$ </span>curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh
+<span class="p">$ </span>flightdeck setup
 <span class="c"># any time later</span>
-<span class="p">$ </span>cockpit doctor
-<span class="p">$ </span>cockpit update</code></pre>
+<span class="p">$ </span>flightdeck doctor
+<span class="p">$ </span>flightdeck update</code></pre>
         </div>
-        <p class="after"><code>/cockpit:doctor</code> or <code>cockpit doctor</code> checks every part and fixes what is broken. A notification tells you when a new version is out; a click, or <code>cockpit update</code>, updates every part.</p>
+        <p class="after"><code>/flightdeck:doctor</code> or <code>flightdeck doctor</code> checks every part and fixes what is broken. A notification tells you when a new version is out; a click, or <code>flightdeck update</code>, updates every part.</p>
       </div>
     </div>
   </section>
@@ -391,15 +391,15 @@
         <details open>
           <summary>Do I need API tokens?</summary>
           <p>No. GitHub goes through your <code>gh</code> login. Tickets, CI, meetings, deploys and the release monitor come
-            from MCP servers: cockpit calls them itself, with any agent. Setup finds the ones your agents already use, logs
-            cockpit in once through your browser, and has your agent map a server cockpit does not know yet.</p>
-          <p>In Claude Code, cockpit can use its connectors instead, through one hidden, idle session the hub keeps.</p>
+            from MCP servers: flightdeck calls them itself, with any agent. Setup finds the ones your agents already use, logs
+            flightdeck in once through your browser, and has your agent map a server flightdeck does not know yet.</p>
+          <p>In Claude Code, flightdeck can use its connectors instead, through one hidden, idle session the hub keeps.</p>
         </details>
         <details>
           <summary>What does it cost?</summary>
-          <p>cockpit is free and MIT-licensed. What it asks an agent to do runs on your own agent's plan: recaps,
+          <p>flightdeck is free and MIT-licensed. What it asks an agent to do runs on your own agent's plan: recaps,
             meeting briefs, and routines, which take a weekly budget. Each one can be turned off.</p>
-          <p>Reading your MCP servers costs nothing: cockpit calls them itself, and the hidden Claude Code session some setups
+          <p>Reading your MCP servers costs nothing: flightdeck calls them itself, and the hidden Claude Code session some setups
             keep sits idle at its prompt.</p>
         </details>
         <details>
@@ -409,8 +409,8 @@
         </details>
         <details>
           <summary>Is my data sent anywhere?</summary>
-          <p>Not to cockpit: there is no cockpit server. The hub runs on your machine, listens only on 127.0.0.1 with a token,
-            and keeps its state in <code>~/.cache/cockpit</code>.</p>
+          <p>Not to flightdeck: there is no flightdeck server. The hub runs on your machine, listens only on 127.0.0.1 with a token,
+            and keeps its state in <code>~/.cache/flightdeck</code>.</p>
           <p>It talks to GitHub, your ticket and CI tools and your calendar as you, and agent features go through your
             own agent. Search over past sessions uses a small model, downloaded once and run locally.</p>
         </details>
@@ -422,10 +422,10 @@
     <div class="wrap">
       <div class="cta">
         <h2>Stop hunting for the agent that needs you</h2>
-        <p>Install cockpit and see what every agent is working on.</p>
+        <p>Install flightdeck and see what every agent is working on.</p>
         <div class="buttons">
           <a class="button primary" href="#install">Install</a>
-          <a class="button" href="https://github.com/quaresc/cockpit"><svg class="i" style="fill:currentColor;stroke:none" viewBox="0 0 16 16"><use href="#i-gh"/></svg>Star on GitHub</a>
+          <a class="button" href="https://github.com/gramosbr/flightdeck"><svg class="i" style="fill:currentColor;stroke:none" viewBox="0 0 16 16"><use href="#i-gh"/></svg>Star on GitHub</a>
         </div>
       </div>
     </div>
@@ -434,12 +434,12 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <a class="brand" href="index.html"><img src="img/logo.svg" alt="" width="24" height="24">cockpit</a>
+    <a class="brand" href="index.html"><img src="img/logo.svg" alt="" width="24" height="24">flightdeck</a>
     <nav aria-label="Footer">
       <a href="desktop.html">Herdr APP</a>
       <a href="terminal.html">Herdr TUI</a>
-      <a href="https://github.com/quaresc/cockpit/releases">Changelog</a>
-      <a href="https://github.com/quaresc/cockpit">GitHub</a>
+      <a href="https://github.com/gramosbr/flightdeck/releases">Changelog</a>
+      <a href="https://github.com/gramosbr/flightdeck">GitHub</a>
       <a href="https://herdr.dev">herdr</a>
     </nav>
     <small>MIT license · Screens show the fictional acme world.</small>
@@ -447,7 +447,7 @@
 </footer>
 
 <script>
-  // The demo video falls back to the screenshot while img/cockpit.mp4 is missing.
+  // The demo video falls back to the screenshot while img/flightdeck.mp4 is missing.
   (function () {
     var video = document.querySelector("#demo video");
     var source = video && video.querySelector("source");
@@ -455,7 +455,7 @@
       if (!video.parentNode) return;
       var pic = document.createElement("picture");
       pic.innerHTML = '<source srcset="img/app/home-light.png" media="(prefers-color-scheme: light)">' +
-        '<img class="app-shot" src="img/app/home-dark.png" alt="The cockpit Home in the Herdr app" width="1600" height="1025">';
+        '<img class="app-shot" src="img/app/home-dark.png" alt="The flightdeck Home in the Herdr app" width="1600" height="1025">';
       video.replaceWith(pic);
     }
     if (source) {

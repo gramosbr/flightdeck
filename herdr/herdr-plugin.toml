@@ -1,5 +1,5 @@
-id = "cockpit"
-name = "Cockpit"
+id = "flightdeck"
+name = "Flightdeck"
 version = "1.5.2"
 min_herdr_version = "0.7.5"
 description = "See every coding agent you are running and what it is working on: one agent per space, any agent herdr runs, with pinned inbox, to-do, runbook, meetings, monitor, routines and mail spaces, PR peek popups, E2E tests in terminal-browser beside the agent"
@@ -61,31 +61,31 @@ command = ["sh", "prune-browsers.sh"]
 command = ["sh", "whats-new.sh"]
 
 [[startup]]
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "tab.created"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "tab.closed"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "tab.renamed"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "pane.agent_status_changed"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "pane.moved"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "pane.closed"
-command = ["sh", "cockpit.sh", "actions", "sidebar"]
+command = ["sh", "flightdeck.sh", "actions", "sidebar"]
 
 [[events]]
 on = "pane.closed"
@@ -113,7 +113,7 @@ title = "Agents"
 placement = "popup"
 width = "80%"
 height = "75%"
-command = ["sh", "cockpit.sh", "agents", "pick"]
+command = ["sh", "flightdeck.sh", "agents", "pick"]
 
 [[panes]]
 id = "queue"
@@ -121,7 +121,7 @@ title = "Queue"
 placement = "popup"
 width = "60%"
 height = "50%"
-command = ["sh", "cockpit.sh", "queue", "pick"]
+command = ["sh", "flightdeck.sh", "queue", "pick"]
 
 [[panes]]
 id = "start-work"
@@ -129,15 +129,15 @@ title = "Start work"
 placement = "popup"
 width = "70%"
 height = "80%"
-command = ["sh", "cockpit.sh", "start-work"]
+command = ["sh", "flightdeck.sh", "start-work"]
 
 [[panes]]
 id = "palette"
-title = "Cockpit"
+title = "Flightdeck"
 placement = "popup"
 width = "70%"
 height = "60%"
-command = ["sh", "cockpit.sh", "palette"]
+command = ["sh", "flightdeck.sh", "palette"]
 
 [[panes]]
 id = "whats-new"
@@ -145,4 +145,4 @@ title = "What's new"
 placement = "popup"
 width = "70%"
 height = "75%"
-command = ["sh", "cockpit.sh", "options", "ask"]
+command = ["sh", "flightdeck.sh", "options", "ask"]

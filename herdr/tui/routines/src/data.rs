@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use chrono::{FixedOffset, NaiveDateTime, Utc};
-use cockpit_core::routines::Zone;
+use flightdeck_core::routines::Zone;
 use serde::Deserialize;
 use serde_json::Value;
 

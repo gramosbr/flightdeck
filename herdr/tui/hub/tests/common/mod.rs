@@ -76,7 +76,7 @@ impl Sandbox {
         git(&api, &["commit", "-q", "--allow-empty", "-m", "start"]);
         git(&api, &["checkout", "-q", "-b", "me/eng-401-login"]);
         std::fs::write(root.join("herdr.json"), herdr.to_string()).unwrap();
-        let config_path = root.join("home/.config/cockpit/config.json");
+        let config_path = root.join("home/.config/flightdeck/config.json");
         let mut current: Value = serde_json::from_str(&std::fs::read_to_string(&config_path).unwrap()).unwrap();
         for (k, v) in config.as_object().into_iter().flatten() {
             current[k] = v.clone();
@@ -91,33 +91,33 @@ impl Sandbox {
     }
 
     pub fn socket(&self) -> PathBuf {
-        self.home().join(".cache/cockpit/hub.sock")
+        self.home().join(".cache/flightdeck/hub.sock")
     }
 
-    /// The test's environment without what ties it to a herdr pane, a Claude session, cockpit settings or the terminal
+    /// The test's environment without what ties it to a herdr pane, a Claude session, flightdeck settings or the terminal
     /// app, then the sandbox's own.
     pub fn env(&self) -> Vec<(String, String)> {
         let path = format!("{}:{}", self.root.join("bin").display(), std::env::var("PATH").unwrap_or_default());
-        let inherited = std::env::vars().filter(|(k, _)| !["HERDR_", "HC_", "COCKPIT_", "CLAUDE", "__CFBundleIdentifier"].iter().any(|p| k.starts_with(p)));
+        let inherited = std::env::vars().filter(|(k, _)| !["HERDR_", "HC_", "FLIGHTDECK_", "CLAUDE", "__CFBundleIdentifier"].iter().any(|p| k.starts_with(p)));
         inherited
             .chain([
                 ("HOME".into(), self.home().to_string_lossy().into_owned()),
                 ("PATH".into(), path),
                 ("HERDR_BIN_PATH".into(), self.root.join("bin/herdr").to_string_lossy().into_owned()),
-                ("COCKPIT_TEST_DIR".into(), self.root.to_string_lossy().into_owned()),
-                ("COCKPIT_HERDR_DIR".into(), self.root.join("herdr").to_string_lossy().into_owned()),
+                ("FLIGHTDECK_TEST_DIR".into(), self.root.to_string_lossy().into_owned()),
+                ("FLIGHTDECK_HERDR_DIR".into(), self.root.join("herdr").to_string_lossy().into_owned()),
                 // Notifications reach the fake receiver instead of the screen.
-                ("COCKPIT_NOTIFY_PROGRAM".into(), self.root.join("bin/notify").to_string_lossy().into_owned()),
+                ("FLIGHTDECK_NOTIFY_PROGRAM".into(), self.root.join("bin/notify").to_string_lossy().into_owned()),
                 // The feed reaches GitHub on its own: only the feed's tests turn it on, against a fake GitHub.
-                ("COCKPIT_HUB_FEED".into(), "off".into()),
-                // Nor does it ask GitHub for a newer cockpit.
-                ("COCKPIT_PUBLISHED_URL".into(), "off".into()),
+                ("FLIGHTDECK_HUB_FEED".into(), "off".into()),
+                // Nor does it ask GitHub for a newer flightdeck.
+                ("FLIGHTDECK_PUBLISHED_URL".into(), "off".into()),
                 // Nor does the session index download its model.
-                ("COCKPIT_EMBED".into(), "off".into()),
+                ("FLIGHTDECK_EMBED".into(), "off".into()),
                 // Nor does the usage thread write the sidebar's `$limits`, which its first pass clears.
-                ("COCKPIT_HUB_LIMITS".into(), "off".into()),
+                ("FLIGHTDECK_HUB_LIMITS".into(), "off".into()),
                 // Nor does it ask the agents installed on this machine which models they list.
-                ("COCKPIT_HUB_MODELS".into(), "off".into()),
+                ("FLIGHTDECK_HUB_MODELS".into(), "off".into()),
             ])
             .collect()
     }
@@ -145,7 +145,7 @@ impl Sandbox {
 }
 
 /// Set on the test binary run again as a hub.
-const HUB_PROCESS: &str = "COCKPIT_TEST_HUB_PROCESS";
+const HUB_PROCESS: &str = "FLIGHTDECK_TEST_HUB_PROCESS";
 
 /// The hub as a process of its own: this test binary run again on `hub_process` alone, on the sandbox's environment.
 pub fn hub_command(sandbox: &Sandbox) -> Command {
@@ -156,20 +156,20 @@ pub fn hub_command(sandbox: &Sandbox) -> Command {
 }
 
 /// Set on a test's hub to place every sender in that agent's tree (a handle), else every sender is the person.
-pub const SENT_BY: &str = "COCKPIT_TEST_SENT_BY";
+pub const SENT_BY: &str = "FLIGHTDECK_TEST_SENT_BY";
 
 /// Set on a test's hub to place every sender by its real line of parents, as the person's hub does (no agent known).
-pub const PLACE_REAL: &str = "COCKPIT_TEST_PLACE_REAL";
+pub const PLACE_REAL: &str = "FLIGHTDECK_TEST_PLACE_REAL";
 
 /// Where a real process stands, the walk's verdict in the words a refusal carries.
-fn placed(pid: u32) -> cockpit_core::peer::Who {
-    use cockpit_agents::place::{System, Walk, table, walk};
-    use cockpit_core::peer::Who;
+fn placed(pid: u32) -> flightdeck_core::peer::Who {
+    use flightdeck_agents::place::{System, Walk, table, walk};
+    use flightdeck_core::peer::Who;
     match walk(pid, &table(), &[], &[], std::process::id(), &System::default()) {
         Walk::Front => Who::Person,
         Walk::Agent(handle) => Who::Agent(handle),
         Walk::Unwatched(_) => Who::Agent(String::new()),
-        Walk::Cockpit => Who::Unplaced("cockpit's own work".into()),
+        Walk::Flightdeck => Who::Unplaced("flightdeck's own work".into()),
         other => Who::Unplaced(format!("placed {other:?}")),
     }
 }
@@ -179,20 +179,20 @@ fn placed(pid: u32) -> cockpit_core::peer::Who {
 fn hub_process() {
     if std::env::var_os(HUB_PROCESS).is_some() {
         if std::env::var_os(PLACE_REAL).is_some() {
-            cockpit_core::peer::on_place(placed);
+            flightdeck_core::peer::on_place(placed);
         }
-        cockpit_core::peer::on_place(|_| match std::env::var(SENT_BY) {
-            Ok(handle) => cockpit_core::peer::Who::Agent(handle),
-            Err(_) => cockpit_core::peer::Who::Person,
+        flightdeck_core::peer::on_place(|_| match std::env::var(SENT_BY) {
+            Ok(handle) => flightdeck_core::peer::Who::Agent(handle),
+            Err(_) => flightdeck_core::peer::Who::Person,
         });
-        cockpit_hub::run();
+        flightdeck_hub::run();
     }
 }
 
 /// Set on this binary run again as a client: the request it sends, the socket, and where it writes the answer.
-pub const REQUEST: &str = "COCKPIT_TEST_REQUEST";
-pub const REQUEST_SOCKET: &str = "COCKPIT_TEST_REQUEST_SOCKET";
-pub const REQUEST_REPLY: &str = "COCKPIT_TEST_REQUEST_REPLY";
+pub const REQUEST: &str = "FLIGHTDECK_TEST_REQUEST";
+pub const REQUEST_SOCKET: &str = "FLIGHTDECK_TEST_REQUEST_SOCKET";
+pub const REQUEST_REPLY: &str = "FLIGHTDECK_TEST_REQUEST_REPLY";
 
 /// A client of the hub, when this binary runs as one: it sends REQUEST and writes the answer where REQUEST_REPLY says.
 #[test]
@@ -204,7 +204,7 @@ fn requester() {
 }
 
 /// Set on this binary run again as a program that only waits: how many seconds it waits.
-const WAIT: &str = "COCKPIT_TEST_WAIT";
+const WAIT: &str = "FLIGHTDECK_TEST_WAIT";
 
 /// A program that only waits, when this binary runs as one.
 #[test]
@@ -235,9 +235,9 @@ pub fn waiting(dir: &Path, name: &str, cwd: &Path, secs: u32) -> Child {
         .unwrap()
 }
 
-/// `request` sent by this test binary copied into `dir` as `cockpit` and run as `cockpit <word> …`: the hub's answer.
-pub fn sent_as_cockpit(dir: &Path, word: &str, socket: &Path, request: &Value) -> Value {
-    let copy = dir.join("cockpit");
+/// `request` sent by this test binary copied into `dir` as `flightdeck` and run as `flightdeck <word> …`: the hub's answer.
+pub fn sent_as_flightdeck(dir: &Path, word: &str, socket: &Path, request: &Value) -> Value {
+    let copy = dir.join("flightdeck");
     if !copy.exists() {
         std::fs::copy(std::env::current_exe().unwrap(), &copy).unwrap();
     }
@@ -251,7 +251,7 @@ pub fn sent_as_cockpit(dir: &Path, word: &str, socket: &Path, request: &Value) -
         .stdout(Stdio::null())
         .status()
         .unwrap();
-    assert!(ran.success(), "cockpit {word} did not run");
+    assert!(ran.success(), "flightdeck {word} did not run");
     serde_json::from_str(&std::fs::read_to_string(&reply).unwrap()).unwrap()
 }
 

@@ -1,5 +1,5 @@
-// The update tag's dialog, on the hub's update.json: what the published cockpit changes, and Install, which runs
-// `cockpit focus update` and follows update.log until cockpit.json names the new version. Once installed, by it or any
+// The update tag's dialog, on the hub's update.json: what the published flightdeck changes, and Install, which runs
+// `flightdeck focus update` and follows update.log until flightdeck.json names the new version. Once installed, by it or any
 // other way (`askAfterUpdate`), it shows what changed, the options it brought (saved only by the person's click or key)
 // and the new layout to try.
 
@@ -12,10 +12,10 @@ import { layoutName } from "./screens.js";
 import { ago } from "./fresh.js";
 import { tokens, alpha, TEXT, RADIUS, Icon, Button, Spinner, Mono, Toggle, Badge } from "./ui.js";
 
-const RELEASES = "https://github.com/quaresc/cockpit/releases/tag/v";
+const RELEASES = "https://github.com/gramosbr/flightdeck/releases/tag/v";
 
 /** An install this window started, followed again by the dialog the mod's reload in the middle of it makes anew. */
-const FLOW = "cockpit.update.flow";
+const FLOW = "flightdeck.update.flow";
 
 /** How long an install is followed before its output is pointed to instead. */
 const INSTALL_MS = 10 * 60 * 1000;
@@ -24,7 +24,7 @@ const INSTALL_MS = 10 * 60 * 1000;
 const LOAD = {};
 
 /** The layout's name in words. */
-const LAYOUT_TITLES = { "cockpit-chat": "Cockpit Chat" };
+const LAYOUT_TITLES = { "flightdeck-chat": "Flightdeck Chat" };
 
 /** Whether `a` is a later version than `b`, number by number, as the hub compares them. */
 export function isNewer(a, b) {
@@ -35,7 +35,7 @@ export function isNewer(a, b) {
 }
 
 /** The published version worth installing: {current, latest, notes, cache}, or null when this install is current,
- *  builds itself, or is the read-only client of a cockpit on another machine. */
+ *  builds itself, or is the read-only client of a flightdeck on another machine. */
 export async function pending() {
   const install = await hub.install();
   if (install.machine) return null;
@@ -46,7 +46,7 @@ export async function pending() {
 }
 
 /**
- * What runs here and what is published, from cockpit.json and the update.json the hub's checks write: {current, latest,
+ * What runs here and what is published, from flightdeck.json and the update.json the hub's checks write: {current, latest,
  * at, dev, newer, error}. `at` is the last look (`looked_at` for one asked for) and `error` why it failed when it did.
  */
 export async function versions() {
@@ -65,7 +65,7 @@ export async function checkNow(cx) {
   let failed = null;
   try {
     const r = await hub.act("update", "check", [], cx);
-    if (r?.unknown) failed = "this cockpit's hub cannot check on demand yet: update it first";
+    if (r?.unknown) failed = "this flightdeck's hub cannot check on demand yet: update it first";
     else if (r?.error) failed = String(r.error).replace(/^check: /, "");
   } catch (e) {
     failed = String(e?.message ?? e);
@@ -79,7 +79,7 @@ export async function checkNow(cx) {
  * `update` is true when the published version installs from here (not on an install that builds itself).
  */
 export function versionLine(v, { checking = false, now = Date.now() } = {}) {
-  const runs = v?.current ? `Cockpit ${v.current}${v.dev ? ", your own build" : ""}` : "Cockpit";
+  const runs = v?.current ? `Flightdeck ${v.current}${v.dev ? ", your own build" : ""}` : "Flightdeck";
   if (checking) return { text: `${runs} · checking for updates…`, state: "checking", update: false };
   if (!v) return { text: runs, state: "never", update: false };
   const out = v.newer ? `${v.latest} is ${v.dev ? "published" : "out"}` : null;
@@ -95,7 +95,7 @@ export function versionLine(v, { checking = false, now = Date.now() } = {}) {
  * opened it, so what it shows counts as seen at once.
  */
 export function openUpdate({ after = false, person = false } = {}) {
-  openOverlay({ mod: "cockpit", props: { app: "update", after, person: Boolean(person) }, kind: "dialog", width: 620, height: 580 });
+  openOverlay({ mod: "flightdeck", props: { app: "update", after, person: Boolean(person) }, kind: "dialog", width: 620, height: 580 });
 }
 
 /** Whether the update the hub noted has something to say in this window: notes, options it brought, a layout to try. */
@@ -117,7 +117,7 @@ export function afterOf(view, flow) {
     from,
     to: noted?.to ?? flow?.to ?? null,
     notes: noted ? (noted.notes ?? []) : (flow?.notes ?? []),
-    // The dialog asks about switches; an option of another kind an update brings is set in Cockpit settings.
+    // The dialog asks about switches; an option of another kind an update brings is set in Flightdeck settings.
     options: (view && !view.error ? view.options ?? [] : []).filter((o) => (o.kind ?? "toggle") === "toggle" && (noted ? o.new : Boolean(from) && Boolean(o.since) && isNewer(o.since, from))),
     layout: noted ? (view.layout ?? null) : null,
   };
@@ -147,14 +147,14 @@ function followed() {
 }
 
 /** Whether an update dialog beats in this window. */
-const dialogOpen = () => Date.now() - (globalThis.cockpitUpdateBeat ?? 0) < 2500;
+const dialogOpen = () => Date.now() - (globalThis.flightdeckUpdateBeat ?? 0) < 2500;
 
 /**
  * Once per load of the mod, a little after the window starts: when an update not shown yet has something to say and no
  * dialog shows it, the dialog opens on it. A remote desk's updates are its runner's.
  */
 export function askAfterUpdate(cx) {
-  const g = (globalThis.cockpitAfterUpdate ??= {});
+  const g = (globalThis.flightdeckAfterUpdate ??= {});
   if (g.load === LOAD && (g.done || Date.now() - g.at < 30_000)) return;
   Object.assign(g, { load: LOAD, at: Date.now(), done: false });
   cx.spawn(async (cx) => {
@@ -177,7 +177,7 @@ export function askAfterUpdate(cx) {
 }
 
 /**
- * The published cockpit as a tag, `u` being what pending() found: a click opens what it changes. `rail` is the icon
+ * The published flightdeck as a tag, `u` being what pending() found: a click opens what it changes. `rail` is the icon
  * alone, and `mono` draws it without colour, where the layout keeps colour for what the agents do.
  */
 export function UpdateTag(id, u, { rail = false, mono = false } = {}) {
@@ -193,13 +193,13 @@ export function UpdateTag(id, u, { rail = false, mono = false } = {}) {
     .hover((s) => s.bg(mono ? k.selected : alpha(k.done, 0.24)))
     .on_click(() => openUpdate({ person: true }))
     .child(Icon("arrow-up", { size: 14, color: mono ? k.foreground : k.done }));
-  if (rail) return row.h(28).justify_center().tooltip(`Cockpit ${u.latest} is out — you run ${u.current}`);
+  if (rail) return row.h(28).justify_center().tooltip(`Flightdeck ${u.latest} is out — you run ${u.current}`);
   return row
     .h(30)
     .px(8)
     .gap(8)
     .tooltip(`You run ${u.current}`)
-    .child(div().flex_1().truncate().text_size(TEXT.sm).font_medium().text_color(k.foreground).child(`Update cockpit to ${u.latest}`))
+    .child(div().flex_1().truncate().text_size(TEXT.sm).font_medium().text_color(k.foreground).child(`Update flightdeck to ${u.latest}`))
     .child(Icon("chevron-right", { size: 14, color: k.mutedFg }));
 }
 
@@ -218,7 +218,7 @@ export default class Update {
     this.step = null;
     this.done = null;
     this.error = null;
-    // The dialog opens on its own after an update, or from any local process (`cockpit.update`): space and ⏎ change
+    // The dialog opens on its own after an update, or from any local process (`flightdeck.update`): space and ⏎ change
     // nothing until the person moves in it (j/k) or clicks in it, and what it shows counts as seen only once the person
     // opened it or acted in it.
     this.pointed = true;
@@ -237,7 +237,7 @@ export default class Update {
   }
 
   beat() {
-    globalThis.cockpitUpdateBeat = Date.now();
+    globalThis.flightdeckUpdateBeat = Date.now();
   }
 
   dismiss() {
@@ -280,7 +280,7 @@ export default class Update {
     }
   }
 
-  /** update.sh in the background, its output followed until cockpit.json names the published version. */
+  /** update.sh in the background, its output followed until flightdeck.json names the published version. */
   start(cx) {
     if (this.phase !== "notes" || !this.state) return;
     const flow = { from: this.state.current, to: this.state.latest, notes: this.state.notes, at: Date.now() };
@@ -290,7 +290,7 @@ export default class Update {
     cx.notify();
     cx.spawn(async (cx) => {
       try {
-        const r = await hub.cockpit(["focus", "update"]);
+        const r = await hub.flightdeck(["focus", "update"]);
         if (r.code !== 0) throw new Error(r.stderr.trim() || "the update did not start");
       } catch (e) {
         setShared(FLOW, null);
@@ -366,8 +366,8 @@ export default class Update {
   next(cx, said = null) {
     this.error = null;
     if (this.at + 1 >= this.steps.length) {
-      // Cockpit Chat keeps colour for what the agents do.
-      if (said) notify({ title: said, level: layoutName() === "cockpit-chat" ? "info" : "success", timeout: 5000 });
+      // Flightdeck Chat keeps colour for what the agents do.
+      if (said) notify({ title: said, level: layoutName() === "flightdeck-chat" ? "info" : "success", timeout: 5000 });
       this.dismiss();
       return;
     }
@@ -389,7 +389,7 @@ export default class Update {
       try {
         const r = await hub.act("options", "set", [values], cx);
         if (r?.error) throw new Error(r.error);
-        if (r?.unknown) throw new Error("this cockpit cannot save options: update it first");
+        if (r?.unknown) throw new Error("this flightdeck cannot save options: update it first");
         this.saving = false;
         this.after.options = this.after.options.map((o) => ({ ...o, value: picked(this.picks, o) }));
         this.next(cx, "Options saved");
@@ -412,7 +412,7 @@ export default class Update {
   tryLayout() {
     const name = this.after?.layout;
     if (this.phase !== "after" || !name) return;
-    notify({ title: `This is ${LAYOUT_TITLES[name] ?? name}`, body: "⌘⇧L switches back to Cockpit.", level: "info", timeout: 8000 });
+    notify({ title: `This is ${LAYOUT_TITLES[name] ?? name}`, body: "⌘⇧L switches back to Flightdeck.", level: "info", timeout: 8000 });
     this.dismiss();
     run("layout.switch", { name });
   }
@@ -538,10 +538,10 @@ export default class Update {
         .child(div().flex_1().min_w(0).whitespace_normal().text_size(TEXT.base).text_color(k.foreground).child(text));
     return v_flex()
       .gap(14)
-      .child(div().whitespace_normal().text_size(TEXT.base).text_color(k.mutedFg).child("Cockpit Chat reads one agent at a time, like a conversation. Your Cockpit layout stays as it is."))
+      .child(div().whitespace_normal().text_size(TEXT.base).text_color(k.mutedFg).child("Flightdeck Chat reads one agent at a time, like a conversation. Your Flightdeck layout stays as it is."))
       .child(line("message-square", "Your prompt, one folded line for the work the agent did, then its answer."))
       .child(line("panel-right", "The sidebar and the side panel slide in when you need them, and stay when you pin them."))
-      .child(line("keyboard", "⌘⇧L switches back to Cockpit at any time, as do the palette's Layout entries and Cockpit settings, under Layout."));
+      .child(line("keyboard", "⌘⇧L switches back to Flightdeck at any time, as do the palette's Layout entries and Flightdeck settings, under Layout."));
   }
 
   /** The header's title and the line under it, for the phase and step shown. */
@@ -551,10 +551,10 @@ export default class Update {
       const step = this.steps[this.at];
       if (step === "options") return ["New options", a.from ? `New since ${a.from}: turn on what you want` : "Turn on what you want"];
       if (step === "layout") return [`Try ${LAYOUT_TITLES[a.layout] ?? a.layout}`, "The new layout, one agent at a time"];
-      return [`Cockpit ${a.to} is installed`, a.from ? `What changed since ${a.from}` : "What changed"];
+      return [`Flightdeck ${a.to} is installed`, a.from ? `What changed since ${a.from}` : "What changed"];
     }
-    if (this.phase === "reading") return ["Cockpit is updated", "Reading what changed…"];
-    return [`Cockpit ${this.state?.latest ?? ""}`.trim(), null];
+    if (this.phase === "reading") return ["Flightdeck is updated", "Reading what changed…"];
+    return [`Flightdeck ${this.state?.latest ?? ""}`.trim(), null];
   }
 
   body(k) {
@@ -571,7 +571,7 @@ export default class Update {
       return s.notes.length ? s.notes.map((n) => this.section(k, n)) : [div().text_size(TEXT.base).text_color(k.mutedFg).child("No notes were published for this version.")];
     }
     const busy = !this.error && (this.phase === "loading" || this.phase === "reading");
-    const said = this.error ?? (this.phase === "latest" ? "You are on the latest cockpit." : this.phase === "reading" ? "Reading what the update brought…" : "Reading what is published…");
+    const said = this.error ?? (this.phase === "latest" ? "You are on the latest flightdeck." : this.phase === "reading" ? "Reading what the update brought…" : "Reading what is published…");
     return [
       h_flex()
         .h(160)
@@ -596,15 +596,15 @@ export default class Update {
       const said = (fallback) => (this.error ? words(this.error, k.destructive) : words(this.hint ?? (this.done ? `${this.done}. ${fallback}` : fallback)));
       if (step === "options") {
         return row
-          .child(said("You can change them later in Cockpit settings, under Options."))
+          .child(said("You can change them later in Flightdeck settings, under Options."))
           .when(this.saving, (e) => e.child(Spinner({ size: 13 })))
           .child(Button("update-skip", { label: "Skip", variant: "ghost", size: "sm", disabled: this.saving, tooltip: "Keep them as they are", onClick: (_e, cx) => this.skip(cx) }))
           .child(Button("update-save", { label: last ? "Save" : "Save and continue", icon: "check", size: "sm", disabled: this.saving, kbd: "⏎", onClick: (_e, cx) => this.save(cx) }));
       }
       if (step === "layout") {
         return row
-          .child(said("⌘⇧L brings Cockpit back."))
-          .child(Button("update-keep", { label: "Keep Cockpit", variant: "ghost", size: "sm", onClick: () => this.dismiss() }))
+          .child(said("⌘⇧L brings Flightdeck back."))
+          .child(Button("update-keep", { label: "Keep Flightdeck", variant: "ghost", size: "sm", onClick: () => this.dismiss() }))
           .child(Button("update-try", { label: `Try ${LAYOUT_TITLES[a.layout] ?? a.layout}`, iconRight: "chevron-right", size: "sm", kbd: "⏎", onClick: () => this.tryLayout() }));
       }
       return row
@@ -626,8 +626,8 @@ export default class Update {
 
   render(cx) {
     const k = tokens();
-    // Cockpit Chat keeps colour for what the agents do.
-    const mono = layoutName() === "cockpit-chat";
+    // Flightdeck Chat keeps colour for what the agents do.
+    const mono = layoutName() === "flightdeck-chat";
     const [title, sub] = this.heading();
     const after = this.phase === "after";
     const icon = after ? ({ options: "square-check", layout: "layout" }[this.steps[this.at]] ?? "sparkles") : "arrow-up";

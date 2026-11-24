@@ -41,7 +41,7 @@ async function datadog($: $, source: Block): Promise<Rows> {
     from: source.from ?? 'now-1h',
     raw_data: true,
     max_tokens: 20000,
-    telemetry: { intent: 'A live chart in a cockpit show pane beside a Claude Code session' },
+    telemetry: { intent: 'A live chart in a flightdeck show pane beside a Claude Code session' },
   })
   const json = text.match(/<JSON_DATA>([\s\S]*?)<\/JSON_DATA>/)?.[1]?.trim()
   if (!json) throw new Error(text.includes('NO_DATA') ? 'Datadog: no data for these queries in this window' : `Datadog: ${text.slice(0, 160)}`)

@@ -180,7 +180,7 @@ fn routines(before: &Value, after: &Value) -> Vec<Value> {
         let name = list(&after["routines"]).iter().find(|r| s(r, "slug") == slug).map_or(slug.as_str(), |r| s(r, "name"));
         for run in list(runs).iter().rev().filter(|r| !known.contains(s(r, "id"))) {
             let summary = s(run, "summary");
-            // A sentence of cockpit's own already says how it failed.
+            // A sentence of flightdeck's own already says how it failed.
             let said_why = run["reason"].as_str().is_some_and(|r| r == summary);
             let (kind, line) = match run["ok"].as_bool() {
                 _ if run["skipped"].is_string() => ("routine_skipped", format!("⏭ {name} skipped: {summary}")),
@@ -270,19 +270,19 @@ mod tests {
     }
 
     #[test]
-    fn a_skipped_run_is_one_event_for_its_whole_stretch_and_a_failure_cockpit_explains_reads_once() {
+    fn a_skipped_run_is_one_event_for_its_whole_stretch_and_a_failure_flightdeck_explains_reads_once() {
         let skip = |times: u64| json!({"id": "4", "ok": true, "skipped": "precheck", "summary": "nothing waits for review", "times": times});
         let doc = |runs: Value| json!({"version": 1, "routines": [{"slug": "digest", "name": "Review digest"}], "runs": {"digest": runs}});
         let first = of("routines", &doc(json!([])), &doc(json!([skip(1)])), &Value::Null);
         assert_eq!(titles(&first), ["⏭ Review digest skipped: nothing waits for review"]);
         assert_eq!(first[0]["kind"], "routine_skipped");
         assert!(of("routines", &doc(json!([skip(1)])), &doc(json!([skip(2)])), &Value::Null).is_empty(), "the stretch keeps its id");
-        let missed = json!({"id": "5", "ok": false, "missed": true, "summary": "Missed Sun 09:00: cockpit was not running then."});
+        let missed = json!({"id": "5", "ok": false, "missed": true, "summary": "Missed Sun 09:00: flightdeck was not running then."});
         let broken = json!({"id": "6", "ok": false, "summary": "Did not start: the folder /x does not exist.", "reason": "Did not start: the folder /x does not exist."});
         let events = of("routines", &doc(json!([])), &doc(json!([broken, missed])), &Value::Null);
         assert_eq!(
             titles(&events),
-            ["⏭ Review digest: Missed Sun 09:00: cockpit was not running then.", "❌ Review digest: Did not start: the folder /x does not exist."]
+            ["⏭ Review digest: Missed Sun 09:00: flightdeck was not running then.", "❌ Review digest: Did not start: the folder /x does not exist."]
         );
     }
 

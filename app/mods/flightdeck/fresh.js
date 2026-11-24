@@ -4,10 +4,10 @@
 /** Sources are read one after another: a read is late only two intervals, five minutes at least, past when it was due. */
 const GRACE_MIN = 5 * 60_000;
 
-/** When data turns stale, as `cockpit_core::fresh::stale_after` says it. */
+/** When data turns stale, as `flightdeck_core::fresh::stale_after` says it. */
 export const staleAfter = (s) => Math.max(s.next ?? 0, s.at + s.every) + Math.max(2 * s.every, GRACE_MIN);
 
-/** never | fresh | stale | failing, as `cockpit_core::fresh::Freshness::state` says it. */
+/** never | fresh | stale | failing, as `flightdeck_core::fresh::Freshness::state` says it. */
 export function state(s, now) {
   if (s?.error) return "failing";
   if (!s?.at) return "never";

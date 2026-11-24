@@ -6,7 +6,7 @@ type $ = EngineInterface
 
 const KEEP = 300
 
-// What a session did, one JSON line per event in ~/.cache/cockpit/activity/<tab>.jsonl, for the herdr recap popup.
+// What a session did, one JSON line per event in ~/.cache/flightdeck/activity/<tab>.jsonl, for the herdr recap popup.
 export type Activity = { at: number; kind: 'edit' | 'command' | 'turn'; text: string }
 
 const appended = new Map<string, number>()

@@ -1,5 +1,5 @@
 // The agent tools' names, descriptions and input schemas, and the drawing guidance ({show} stands for the show tool),
-// shared with `cockpit mcp`, which parses the object below as JSON: keep it strict JSON, double quotes and no trailing commas.
+// shared with `flightdeck mcp`, which parses the object below as JSON: keep it strict JSON, double quotes and no trailing commas.
 export const MCP = {
   "tools": {
     "show": {
@@ -20,7 +20,7 @@ export const MCP = {
         "value picks, so a ms series peaking at 96000 draws 96s, not 96k); ",
         "{type:\"table\", columns, rows}; a chart or table can instead take source:{metabase:{question:<id>}|{query:<MBQL>}} or ",
         "source:{datadog:{queries:[...], from?:\"now-1h\"}} or source:{metrics:{queries:[...], from?}} (queries in the language of ",
-        "the metrics tool cockpit's setup connected) to refresh itself every `every` seconds, or command:<shell printing JSON> ",
+        "the metrics tool flightdeck's setup connected) to refresh itself every `every` seconds, or command:<shell printing JSON> ",
         "with every; {type:\"flow\", nodes:[{id, label, kind?:\"box\"|\"round\"|\"decision\"}], edges:[{from, to, label?}], ",
         "direction?:\"down\"|\"right\"}; {type:\"sequence\", actors?:[...], messages:[{from, to, label, reply?} | {note, over}]}; ",
         "{type:\"mermaid\", text} for a flowchart or sequenceDiagram; {type:\"blueprint\", text}, the living plan of a task of ",
@@ -102,10 +102,10 @@ export const MCP = {
         ]
       }
     },
-    "cockpit_search": {
-      "name": "cockpit_search",
+    "flightdeck_search": {
+      "name": "flightdeck_search",
       "description": [
-        "Searches everything cockpit knows, as its palette does: the person's PRs and the reviews asked of them, their tickets, ",
+        "Searches everything flightdeck knows, as its palette does: the person's PRs and the reviews asked of them, their tickets, ",
         "runbooks and their steps, show views, to-dos, meetings, monitored apps and their releases, the week's events (a review ",
         "requested, CI turning red, a ticket moving, a release judged) and past agent sessions by what was said in them. Use it ",
         "to find a PR, ticket, runbook, meeting, release or past session the person names loosely (\"the quota PR\", \"yesterday's ",
@@ -128,10 +128,10 @@ export const MCP = {
         ]
       }
     },
-    "cockpit_changes": {
-      "name": "cockpit_changes",
+    "flightdeck_changes": {
+      "name": "flightdeck_changes",
       "description": [
-        "What changed in the person's work, newest first, from the week of history cockpit keeps: reviews requested, PRs opened, ",
+        "What changed in the person's work, newest first, from the week of history flightdeck keeps: reviews requested, PRs opened, ",
         "approved, merged or asked for changes, CI turning red or green, tickets moving status, releases judged or moving their ",
         "numbers. Use it for \"what changed since this morning\", \"what happened while I was away\", \"anything new on my PRs\". ",
         "Returns JSON {events: [{at, when, app, doc, key, title}]}."
@@ -157,16 +157,16 @@ export const MCP = {
         }
       }
     },
-    "cockpit_read": {
-      "name": "cockpit_read",
+    "flightdeck_read": {
+      "name": "flightdeck_read",
       "description": [
-        "Reads from the person's tools through the MCP servers cockpit itself is connected to, whatever they are (Linear, Jira, ",
-        "GitLab, CircleCI, a calendar, a deploy platform, Grafana, Sentry, a mail server…), as cockpit's setup mapped them: ",
+        "Reads from the person's tools through the MCP servers flightdeck itself is connected to, whatever they are (Linear, Jira, ",
+        "GitLab, CircleCI, a calendar, a deploy platform, Grafana, Sentry, a mail server…), as flightdeck's setup mapped them: ",
         "tickets (listMine, get, details, comments, listStates; values {ticket}), ci (listRuns, listWorkflows, listJobs, getJob, ",
         "listTests, logs; values {run}, {workflow}, {job}), calendar (listEvents, getEvent; {event}), platform (deployStatus, ",
         "deployHistory, listPreviews, previewStatus; {appId}, {login}, {preview}), observability (metric, monitors, issues; ",
         "{query}, {from}, {to}, {service}, {env}), mail (listInbox, get; {message}), code (listMine, listReviews, listMerged, ",
-        "details). Read-only. Returns the tool's answer as JSON; a source cockpit does not reach itself says so."
+        "details). Read-only. Returns the tool's answer as JSON; a source flightdeck does not reach itself says so."
       ],
       "annotations": {
         "readOnlyHint": true
@@ -201,10 +201,10 @@ export const MCP = {
         ]
       }
     },
-    "cockpit_health": {
-      "name": "cockpit_health",
+    "flightdeck_health": {
+      "name": "flightdeck_health",
       "description": [
-        "A service's health from the metrics and errors tool cockpit is connected to (Datadog, Grafana, Sentry or any other ",
+        "A service's health from the metrics and errors tool flightdeck is connected to (Datadog, Grafana, Sentry or any other ",
         "it mapped): errors, hits and p95 latency over a window, its alerting monitors and its open errors of the day. Use it ",
         "to compare before and after a deploy. Read-only. Returns JSON {service, from, to, numbers, monitors, issues}."
       ],

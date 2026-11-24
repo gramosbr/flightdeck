@@ -10,7 +10,7 @@ cp -R "$repo/site" "$out"
 mkdir -p "$out/img/app"
 cp "$repo"/docs/*.svg "$repo"/docs/*.png "$out/img/"
 cp "$repo"/docs/app/*.png "$out/img/app/"
-cp "$repo/docs/cockpit.mp4" "$out/img/"
+cp "$repo/docs/flightdeck.mp4" "$out/img/"
 echo "site: $out/index.html"
 
 [ $# -eq 0 ] && exit 0

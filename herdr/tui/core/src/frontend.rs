@@ -1,7 +1,7 @@
-//! Which window cockpit drives: the herdr TUI (its `herdr` CLI) or the Herdr desktop app (`herdr-app do` and `hc`).
+//! Which window flightdeck drives: the herdr TUI (its `herdr` CLI) or the Herdr desktop app (`herdr-app do` and `hc`).
 //! Every place that opens, focuses or runs something in a window goes through here, so both halves stay in step.
 //!
-//! A request names its frontend (`"frontend": "app"`), else the environment does: `COCKPIT_FRONTEND`, `HERDR_ENV=1`
+//! A request names its frontend (`"frontend": "app"`), else the environment does: `FLIGHTDECK_FRONTEND`, `HERDR_ENV=1`
 //! (a herdr TUI pane), `HC_TERMINAL_ID` (a Herdr app terminal), the config's `frontend`, then whichever is running.
 //! Handles for things already open carry their frontend: an app terminal is `app:t3`, anything else a herdr pane id.
 
@@ -24,7 +24,7 @@ pub enum Frontend {
 /// The prefix of a handle that names a Herdr app terminal.
 pub const APP: &str = "app:";
 
-/// The stack in the cockpit layout that holds the work area and one block per app.
+/// The stack in the flightdeck layout that holds the work area and one block per app.
 pub const STACK: &str = "center";
 
 thread_local! {
@@ -67,7 +67,7 @@ pub fn for_notice() -> Frontend {
     if let Some(f) = CURRENT.with(Cell::get) {
         return f;
     }
-    let told = ["COCKPIT_FRONTEND", "HC_TERMINAL_ID", "HERDR_ENV"].iter().any(|v| std::env::var(v).is_ok_and(|v| !v.is_empty()))
+    let told = ["FLIGHTDECK_FRONTEND", "HC_TERMINAL_ID", "HERDR_ENV"].iter().any(|v| std::env::var(v).is_ok_and(|v| !v.is_empty()))
         || files::config()["frontend"].is_string();
     if told || !app_home().join("herdr-app.sock").exists() || !tui_running() {
         return detect();
@@ -86,7 +86,7 @@ fn app_in_front() -> bool {
 }
 
 pub fn detect() -> Frontend {
-    if let Some(found) = std::env::var("COCKPIT_FRONTEND").ok().as_deref().and_then(Frontend::parse) {
+    if let Some(found) = std::env::var("FLIGHTDECK_FRONTEND").ok().as_deref().and_then(Frontend::parse) {
         return found;
     }
     let terminal = std::env::var("HC_TERMINAL_ID").ok().filter(|v| !v.is_empty());
@@ -134,8 +134,8 @@ pub fn app_home() -> PathBuf {
 
 /// A program on PATH, else in ~/.local/bin where the Herdr installer puts it.
 pub fn program(name: &str, env: &str) -> String {
-    // COCKPIT_<env> too, which `cockpit app install` hands on to the mod's commands (the sandbox's wrappers).
-    if let Some(path) = [env.to_string(), format!("COCKPIT_{env}")].iter().find_map(|v| std::env::var(v).ok().filter(|p| !p.is_empty())) {
+    // FLIGHTDECK_<env> too, which `flightdeck app install` hands on to the mod's commands (the sandbox's wrappers).
+    if let Some(path) = [env.to_string(), format!("FLIGHTDECK_{env}")].iter().find_map(|v| std::env::var(v).ok().filter(|p| !p.is_empty())) {
         return path;
     }
     let local = files::home().join(".local/bin").join(name);
@@ -211,27 +211,27 @@ pub fn app_space_named(name: &str) -> Option<String> {
     app_spaces().into_iter().find(|s| s["name"] == name).and_then(|s| s["id"].as_str().map(str::to_string))
 }
 
-/// The cockpit layouts: each name, and the stack that holds its screens.
-const COCKPIT_LAYOUTS: [(&str, &str); 2] = [("cockpit", STACK), ("cockpit-chat", "screen")];
+/// The flightdeck layouts: each name, and the stack that holds its screens.
+const FLIGHTDECK_LAYOUTS: [(&str, &str); 2] = [("flightdeck", STACK), ("flightdeck-chat", "screen")];
 
-/// The cockpit layout a shown layout is, or is a copy of (`cockpit-chat-copy`): its name and its screens' stack.
-pub fn cockpit_layout(shown: &str) -> Option<(&'static str, &'static str)> {
-    COCKPIT_LAYOUTS.iter().copied().filter(|(name, _)| shown == *name || shown.starts_with(&format!("{name}-"))).max_by_key(|(name, _)| name.len())
+/// The flightdeck layout a shown layout is, or is a copy of (`flightdeck-chat-copy`): its name and its screens' stack.
+pub fn flightdeck_layout(shown: &str) -> Option<(&'static str, &'static str)> {
+    FLIGHTDECK_LAYOUTS.iter().copied().filter(|(name, _)| shown == *name || shown.starts_with(&format!("{name}-"))).max_by_key(|(name, _)| name.len())
 }
 
-/// The commands that show an app's screen, in order: a cockpit layout shows it in its own stacks, any other switches to
-/// the cockpit layout first. `shown` is the layout in front, None when no window answers.
+/// The commands that show an app's screen, in order: a flightdeck layout shows it in its own stacks, any other switches to
+/// the flightdeck layout first. `shown` is the layout in front, None when no window answers.
 pub fn show_plan(shown: Option<&str>, child: &str) -> Vec<(String, Value)> {
     let mut plan = Vec::new();
-    if shown.is_some_and(|s| cockpit_layout(s).is_none()) {
-        plan.push(("layout.switch".to_string(), json!({"name": "cockpit"})));
+    if shown.is_some_and(|s| flightdeck_layout(s).is_none()) {
+        plan.push(("layout.switch".to_string(), json!({"name": "flightdeck"})));
     }
-    plan.push((format!("cockpit.go:{child}"), json!({})));
+    plan.push((format!("flightdeck.go:{child}"), json!({})));
     plan
 }
 
-/// Shows an app's screen (`inbox`, `runbook`, `todo`, ...) in whichever cockpit layout is in front, through the mod's
-/// `cockpit.go:<app>`, so the mod knows which screen is in front; another layout gives way to the cockpit one.
+/// Shows an app's screen (`inbox`, `runbook`, `todo`, ...) in whichever flightdeck layout is in front, through the mod's
+/// `flightdeck.go:<app>`, so the mod knows which screen is in front; another layout gives way to the flightdeck one.
 pub fn app_show(child: &str) -> bool {
     let shown = app_status().and_then(|s| s["layout"].as_str().map(str::to_string));
     let plan = show_plan(shown.as_deref(), child);
@@ -239,15 +239,15 @@ pub fn app_show(child: &str) -> bool {
     for (command, args) in &plan {
         shown_ok = app_do(command, args).is_some();
     }
-    let stack = shown.as_deref().and_then(cockpit_layout).map_or(STACK, |(_, stack)| stack);
+    let stack = shown.as_deref().and_then(flightdeck_layout).map_or(STACK, |(_, stack)| stack);
     shown_ok || app_do("layout.select", &json!({"stack": stack, "child": child})).is_some()
 }
 
-/// Shows where you deal with an agent in the cockpit layout in front: the work area's panes, or the reading layout's
+/// Shows where you deal with an agent in the flightdeck layout in front: the work area's panes, or the reading layout's
 /// chat (the mod's `go:work`).
 pub fn app_show_work() {
-    if app_status().is_some_and(|s| s["layout"].as_str().and_then(cockpit_layout).is_some()) {
-        app_do("cockpit.go:work", &json!({}));
+    if app_status().is_some_and(|s| s["layout"].as_str().and_then(flightdeck_layout).is_some()) {
+        app_do("flightdeck.go:work", &json!({}));
     }
 }
 
@@ -329,7 +329,7 @@ fn root_pane(created: &Value) -> Option<String> {
 // ---------------------------------------------------------------------------------------------------------------------
 // What callers use
 
-/// Brings an app's place into view: its pinned space in the TUI, its block of the cockpit layout in the app.
+/// Brings an app's place into view: its pinned space in the TUI, its block of the flightdeck layout in the app.
 pub fn show_app(app: &str, space: &str) -> bool {
     match current() {
         Frontend::App => app_show(app),
@@ -597,15 +597,15 @@ mod tests {
     }
 
     #[test]
-    fn showing_an_app_keeps_the_cockpit_layout_in_front() {
-        let go = |child: &str| (format!("cockpit.go:{child}"), json!({}));
-        assert_eq!(show_plan(Some("cockpit-chat"), "inbox"), [go("inbox")], "the reading layout shows it in its own stack");
-        assert_eq!(show_plan(Some("cockpit"), "todo"), [go("todo")]);
-        assert_eq!(show_plan(Some("cockpit-chat-copy"), "mail"), [go("mail")], "a copy of a cockpit layout is one");
-        assert_eq!(show_plan(Some("main"), "inbox"), [("layout.switch".to_string(), json!({"name": "cockpit"})), go("inbox")]);
+    fn showing_an_app_keeps_the_flightdeck_layout_in_front() {
+        let go = |child: &str| (format!("flightdeck.go:{child}"), json!({}));
+        assert_eq!(show_plan(Some("flightdeck-chat"), "inbox"), [go("inbox")], "the reading layout shows it in its own stack");
+        assert_eq!(show_plan(Some("flightdeck"), "todo"), [go("todo")]);
+        assert_eq!(show_plan(Some("flightdeck-chat-copy"), "mail"), [go("mail")], "a copy of a flightdeck layout is one");
+        assert_eq!(show_plan(Some("main"), "inbox"), [("layout.switch".to_string(), json!({"name": "flightdeck"})), go("inbox")]);
         assert_eq!(show_plan(None, "inbox"), [go("inbox")], "no window answers: nothing to switch");
-        assert_eq!(cockpit_layout("cockpit-chat-mine"), Some(("cockpit-chat", "screen")));
-        assert_eq!(cockpit_layout("cockpits"), None);
+        assert_eq!(flightdeck_layout("flightdeck-chat-mine"), Some(("flightdeck-chat", "screen")));
+        assert_eq!(flightdeck_layout("flightdecks"), None);
     }
 
     #[test]

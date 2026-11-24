@@ -6,16 +6,16 @@ from term2svg import screen_of, rows_svg, window
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.join(HERE, "home")
-BOOK = os.path.join(HOME, ".config", "cockpit", "runbooks", "eng-410.md")
+BOOK = os.path.join(HOME, ".config", "flightdeck", "runbooks", "eng-410.md")
 COLS, ROWS, CROP = 140, 30, 30
 HOLD_BEFORE, HOLD_AFTER = 1.2, 2.8
 
 pid, fd = pty.fork()
 if pid == 0:
     os.chdir(os.path.join(HERE, "..", "..", "herdr"))
-    argv = ["tui/target/release/cockpit", "runbook"]
+    argv = ["tui/target/release/flightdeck", "runbook"]
     os.execvpe(argv[0], argv, {**os.environ, "HOME": HOME, "HERDR_BIN_PATH": "/usr/bin/true", "TERM": "xterm-256color",
-                               "COCKPIT_HERDR_DIR": os.getcwd(), "COCKPIT_HUB_IDLE_SECS": "20"})
+                               "FLIGHTDECK_HERDR_DIR": os.getcwd(), "FLIGHTDECK_HUB_IDLE_SECS": "20"})
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", ROWS, COLS, 0, 0))
 
 out, start, changed, samples = b"", time.time(), None, []

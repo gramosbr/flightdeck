@@ -1,4 +1,4 @@
-//! What any agent may read through cockpit (its `cockpit_read` and `cockpit_health` tools): a source's read verbs on the
+//! What any agent may read through flightdeck (its `flightdeck_read` and `flightdeck_health` tools): a source's read verbs on the
 //! server the config names for it, and a service's numbers from the observability server.
 
 use serde_json::{Value, json};
@@ -7,7 +7,7 @@ use crate::observability::{self, Signals};
 use crate::tools::Mapped;
 use crate::{Server, block_on, connect};
 
-/// The read verbs of each source; the others change things and stay with cockpit's own actions.
+/// The read verbs of each source; the others change things and stay with flightdeck's own actions.
 pub const READS: &[(&str, &[&str])] = &[
     ("tickets", &["listMine", "get", "comments", "listStates", "details"]),
     ("ci", &["listRuns", "listWorkflows", "listJobs", "getJob", "listTests", "logs"]),
@@ -35,17 +35,17 @@ fn mapping(source: &str, section: &Value) -> Value {
     }
 }
 
-/// The server and mapped section of a source, from the raw config, or why cockpit cannot reach it.
+/// The server and mapped section of a source, from the raw config, or why flightdeck cannot reach it.
 pub fn reach(raw: &Value, source: &str) -> Result<(Server, Value), String> {
     if source == "observability" {
-        return observability::server(raw).ok_or_else(|| "no metrics or errors server of cockpit's own (cockpit setup)".into());
+        return observability::server(raw).ok_or_else(|| "no metrics or errors server of flightdeck's own (flightdeck setup)".into());
     }
     let section = &raw[source];
-    let name = section["server"].as_str().filter(|s| !s.is_empty()).ok_or_else(|| format!("no {source} server in cockpit's config"))?;
+    let name = section["server"].as_str().filter(|s| !s.is_empty()).ok_or_else(|| format!("no {source} server in flightdeck's config"))?;
     let server = Server::from_entry(&raw["servers"][name])
-        .ok_or_else(|| format!("{name} is not a server cockpit calls itself (it is an agent connector): use your own tools for it"))?;
+        .ok_or_else(|| format!("{name} is not a server flightdeck calls itself (it is an agent connector): use your own tools for it"))?;
     if !server.is_ready() {
-        return Err(format!("cockpit is not logged in to {name}: cockpit connector login {name}"));
+        return Err(format!("flightdeck is not logged in to {name}: flightdeck connector login {name}"));
     }
     Ok((server, mapping(source, section)))
 }

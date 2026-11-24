@@ -1,4 +1,4 @@
-# cockpit's apps, the hub they share and the commands the scripts call, all in the one `cockpit` binary, on the core crate.
+# flightdeck's apps, the hub they share and the commands the scripts call, all in the one `flightdeck` binary, on the core crate.
 [workspace]
 resolver = "3"
 members = ["core", "hub", "agents", "inbox", "runbook", "show", "todo", "meetings", "monitor", "routines", "review", "mail", "palette", "update", "connectors", "cli"]
@@ -8,12 +8,12 @@ version = "1.5.2"
 edition = "2024"
 rust-version = "1.90"
 license = "MIT"
-repository = "https://github.com/quaresc/cockpit"
+repository = "https://github.com/gramosbr/flightdeck"
 publish = false
 
 [workspace.dependencies]
-cockpit-core = { path = "core" }
-cockpit-update = { path = "update" }
+flightdeck-core = { path = "core" }
+flightdeck-update = { path = "update" }
 insta = "1"
 ansi-to-tui = "8.0.1"
 chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }

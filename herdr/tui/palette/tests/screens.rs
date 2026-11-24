@@ -1,9 +1,9 @@
 //! The popup as drawn, its commands chosen by key, and what a found item becomes in the agent session below it.
 
-use cockpit_core::hub::Found;
-use cockpit_core::testing::render;
-use cockpit_palette::{App, Arrived, Command, Over, Then, agent_commands, commands, into_session, keyed_commands};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::hub::Found;
+use flightdeck_core::testing::render;
+use flightdeck_palette::{App, Arrived, Command, Over, Then, agent_commands, commands, into_session, keyed_commands};
 use serde_json::{Value, json};
 
 fn press(code: KeyCode) -> Event {
@@ -109,7 +109,7 @@ fn over_an_agent_session_it_forks_it_and_opens_its_folder() {
     assert!(app.event(press(KeyCode::Enter)));
     assert_eq!(app.then, Some(Then::Editor("/repos/api".into())));
     let shell = Over { agent: None, session: None, ..claude() };
-    assert_eq!(cockpit_palette::session_commands(&shell), [Command::Editor("/repos/api".into())]);
+    assert_eq!(flightdeck_palette::session_commands(&shell), [Command::Editor("/repos/api".into())]);
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn the_agent_below_brings_its_links_then_its_documents() {
     assert_eq!(app.then, Some(Then::Open("https://github.com/acme/api/pull/12".into())));
 }
 
-/// The demo's agents as both halves list them: herdr panes, the app's terminals, and a session cockpit drives.
+/// The demo's agents as both halves list them: herdr panes, the app's terminals, and a session flightdeck drives.
 fn demo_agents(frontend: &str) -> Value {
     let row = |t: &str, title: &str, stage: &str, mins: u64, tab: &str| {
         let terminal = if frontend == "tui" { format!("w1:{t}") } else { format!("app:{t}") };
@@ -162,7 +162,7 @@ const NOW: u64 = 1_793_611_400_000;
 #[test]
 fn lists_the_agents_waiting_on_you_first_then_the_latest() {
     let keys = [("inbox", "prefix+i")].iter().map(|(s, k)| (s.to_string(), k.to_string())).collect();
-    let mut commands = cockpit_palette::agent_entries(&both_halves(), NOW);
+    let mut commands = flightdeck_palette::agent_entries(&both_halves(), NOW);
     commands.extend(keyed_commands(&["inbox".into()], &keys));
     let mut app = App::new(commands, None, None);
     insta::assert_snapshot!(render(&mut app, 80, 24));
@@ -172,14 +172,14 @@ fn lists_the_agents_waiting_on_you_first_then_the_latest() {
 
 #[test]
 fn the_tui_lists_its_own_panes_and_no_driven_session() {
-    let entries = cockpit_palette::agent_entries(&both_halves(), NOW);
+    let entries = flightdeck_palette::agent_entries(&both_halves(), NOW);
     let terminals: Vec<String> = entries.iter().filter_map(|c| if let Command::Agent { jump, .. } = c { Some(jump.terminal.clone()) } else { None }).collect();
     assert_eq!(terminals, ["w1:t2", "w1:t4", "w1:t3", "w1:t1", "w1:t5"], "no app terminal, no driven session");
 }
 
 #[test]
 fn the_order_is_the_hubs_for_every_palette() {
-    let order: Vec<String> = cockpit_palette::jumps(&demo_agents("app"), Some("app"), NOW).into_iter().map(|j| j.title).collect();
+    let order: Vec<String> = flightdeck_palette::jumps(&demo_agents("app"), Some("app"), NOW).into_iter().map(|j| j.title).collect();
     assert_eq!(
         order,
         [
@@ -191,7 +191,7 @@ fn the_order_is_the_hubs_for_every_palette() {
             "Flaky checkout e2e test"
         ]
     );
-    let driven = cockpit_palette::jumps(&demo_agents("app"), Some("app"), NOW).into_iter().find(|j| j.driven).map(|j| j.json());
+    let driven = flightdeck_palette::jumps(&demo_agents("app"), Some("app"), NOW).into_iter().find(|j| j.driven).map(|j| j.json());
     assert_eq!(driven.map(|j| j["driven"].clone()), Some(json!(true)), "a desktop palette knows which one has no terminal");
 }
 
@@ -200,13 +200,13 @@ fn the_selection_stays_on_its_entry_when_the_agents_arrive() {
     let (tx, rx) = std::sync::mpsc::channel();
     let mut app = App::new(commands(&["inbox".into()]), None, Some(rx));
     app.event(press(KeyCode::Down));
-    tx.send(Arrived { over: None, links: Vec::new(), agents: cockpit_palette::agent_entries(&both_halves(), NOW) }).unwrap();
+    tx.send(Arrived { over: None, links: Vec::new(), agents: flightdeck_palette::agent_entries(&both_halves(), NOW) }).unwrap();
     assert!(app.tick());
     assert!(app.event(press(KeyCode::Enter)));
     assert_eq!(app.then, Some(Then::RefreshInbox), "the entry picked before the agents arrived");
     let (tx, rx) = std::sync::mpsc::channel();
     let mut app = App::new(commands(&["inbox".into()]), None, Some(rx));
-    tx.send(Arrived { over: None, links: Vec::new(), agents: cockpit_palette::agent_entries(&both_halves(), NOW) }).unwrap();
+    tx.send(Arrived { over: None, links: Vec::new(), agents: flightdeck_palette::agent_entries(&both_halves(), NOW) }).unwrap();
     app.tick();
     assert!(app.event(press(KeyCode::Enter)));
     assert_eq!(app.then, Some(Then::Agent("w1:t2".into())), "a selection left at the top stays there: the agent waiting longest");

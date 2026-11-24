@@ -14,7 +14,7 @@ export default class Placeholder {
 
   render() {
     const k = tokens();
-    const [title, icon] = NAMES[this.app] ?? [this.app || "cockpit", "layout"];
+    const [title, icon] = NAMES[this.app] ?? [this.app || "flightdeck", "layout"];
     return v_flex()
       .size_full()
       .bg(k.background)

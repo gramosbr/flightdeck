@@ -1,4 +1,4 @@
-//! The Chromium side browser: cockpit's own Electron shell, which the hub starts and every command reaches over a unix
+//! The Chromium side browser: flightdeck's own Electron shell, which the hub starts and every command reaches over a unix
 //! socket. One JSON request per line, one JSON answer per line; `subscribe` turns the connection into a stream of events.
 
 use std::io::{BufRead, BufReader, Write};
@@ -16,13 +16,13 @@ use crate::{files, options};
 pub enum Engine {
     /// terminal-browser in a terminal pane.
     Terminal,
-    /// cockpit's Chromium window, docked in the Herdr app's side panel.
+    /// flightdeck's Chromium window, docked in the Herdr app's side panel.
     Chromium,
 }
 
 /// What a command says when config.json asks for Chromium where it cannot run.
-pub const MAC_ONLY: &str = "the Chromium side browser runs on macOS only; cockpit browse uses terminal-browser here";
-pub const APP_ONLY: &str = "the Chromium side browser shows in the Herdr app only; cockpit browse uses terminal-browser in herdr";
+pub const MAC_ONLY: &str = "the Chromium side browser runs on macOS only; flightdeck browse uses terminal-browser here";
+pub const APP_ONLY: &str = "the Chromium side browser shows in the Herdr app only; flightdeck browse uses terminal-browser in herdr";
 
 /// The engine for a config, a frontend and a machine, and why Chromium was asked for and not used.
 pub fn engine_for(config: &Value, frontend: Frontend, chromium_here: bool) -> (Engine, Option<&'static str>) {
@@ -40,7 +40,7 @@ pub fn engine_for(config: &Value, frontend: Frontend, chromium_here: bool) -> (E
 pub fn engine() -> Engine {
     let (engine, why) = engine_for(&files::config(), crate::frontend::current(), options::CHROMIUM_HERE);
     if let Some(why) = why {
-        eprintln!("cockpit: {why}");
+        eprintln!("flightdeck: {why}");
     }
     engine
 }
@@ -55,7 +55,7 @@ pub fn cache() -> PathBuf {
     files::cache().join("browser")
 }
 
-/// ~/.cache/cockpit/browser.sock, or a name in the temp folder when that path is longer than a unix socket allows.
+/// ~/.cache/flightdeck/browser.sock, or a name in the temp folder when that path is longer than a unix socket allows.
 pub fn socket() -> PathBuf {
     let path = files::cache().join("browser.sock");
     if path.as_os_str().len() < 100 {
@@ -64,7 +64,7 @@ pub fn socket() -> PathBuf {
     use std::hash::{Hash, Hasher};
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     files::cache().hash(&mut hasher);
-    std::env::temp_dir().join(format!("cockpit-browser-{:016x}.sock", hasher.finish()))
+    std::env::temp_dir().join(format!("flightdeck-browser-{:016x}.sock", hasher.finish()))
 }
 
 /// A connection to the running shell; None when it is not running.

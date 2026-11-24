@@ -1,6 +1,6 @@
-// cockpit in the Herdr app: one mod, one view per place it shows (`props.app`), so the views share the hub client
+// flightdeck in the Herdr app: one mod, one view per place it shows (`props.app`), so the views share the hub client
 // (hub.js) and the design kit (ui.js). A view is a class with init(props, cx), render(cx), and optionally
-// command(name, cx, key) for keys.json's `cockpit.<command>` (`key` names a person's pick, person.js) and close(cx);
+// command(name, cx, key) for keys.json's `flightdeck.<command>` (`key` names a person's pick, person.js) and close(cx);
 // add it to VIEWS.
 
 import { View } from "gpui-kit";
@@ -46,7 +46,7 @@ import { unkey, testKeys } from "./person.js";
 
 const VIEWS = { code: Code, reader: Reader, inbox: Inbox, monitor: Monitor, "monitor-window": MonitorWindow, routines: Routines, mail: Mail, show: Show, review: Review, files: Files, changes: Changes, recap: Recap, home: Home, status: Status, bell: Bell, activity: Activity, "agent-head": AgentHead, queue: Queue, runbook: Runbook, meetings: Meetings, todo: Todo, sidebar: Sidebar, palette: Palette, menu: Menu, kit: Kit, pane: PaneHeader, update: Update, chat: Chat, "chat-top": ChatTop, "side-peek": SidePeek, "panel-peek": PanelPeek, needs: Needs, settings: Settings, diagnostics: Settings, usage: Usage, start: Start, web: Web };
 
-export default class Cockpit extends View {
+export default class Flightdeck extends View {
   init(p, cx) {
     const given = p ?? props() ?? {};
     const app = given.app ?? props()?.app ?? "";
@@ -71,8 +71,8 @@ export default class Cockpit extends View {
         // A menu, the palette or a click sends its command with a one-time key (person.js): the view gets it apart, and
         // a command without one only navigates.
         const { command, key } = unkey(await nextCommand());
-        // `cockpit.key:<keystroke>` presses a key in the view in front, for tests driving the window from a shell, and
-        // only in a sandbox started with COCKPIT_TEST_KEYS=1 in its own environment: elsewhere a key from outside
+        // `flightdeck.key:<keystroke>` presses a key in the view in front, for tests driving the window from a shell, and
+        // only in a sandbox started with FLIGHTDECK_TEST_KEYS=1 in its own environment: elsewhere a key from outside
         // answers and confirms nothing. It is marked as pressed from outside, and the chat's digits ignore it.
         if (command.startsWith("key:")) {
           if (!this.view.key || !front().includes(this.copy) || !(await testKeys())) continue;

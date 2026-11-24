@@ -1,4 +1,4 @@
-//! The review view for the Herdr app's cockpit mod: a repo's changes in one of three scopes (uncommitted, the branch
+//! The review view for the Herdr app's flightdeck mod: a repo's changes in one of three scopes (uncommitted, the branch
 //! against its base, its pull request) drawn like a show diff, the comments made on it sent to the agent working there
 //! as one message, and the guided walkthrough of those changes (`crate::walkthrough`).
 
@@ -171,7 +171,7 @@ pub fn read(folder: &str, scope: &str, since: Option<u64>) -> Read {
 fn taken_in(repo: &str, scope: &str, patch: &str) -> Value {
     let since = format!("{:016x}", crate::gui::fnv(patch));
     let request = json!({"op": "view", "name": "review", "args": {"repo": repo, "scope": scope, "since": since}});
-    cockpit_core::hub::request(&request, Duration::from_secs(10))
+    flightdeck_core::hub::request(&request, Duration::from_secs(10))
         .ok()
         .map(|answer| answer["value"]["walkthrough"].clone())
         .filter(|w| w.is_object())
@@ -221,7 +221,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     let first = args.first().and_then(Value::as_str).unwrap_or_default();
     // A walkthrough starts an agent and stops one: the person's to do.
     if matches!(action, "walkthrough" | "stop_walkthrough")
-        && let Err(why) = cockpit_core::peer::person("a walkthrough is started and stopped by a person, not by an agent's tools")
+        && let Err(why) = flightdeck_core::peer::person("a walkthrough is started and stopped by a person, not by an agent's tools")
     {
         return Some(Err(why));
     }
@@ -285,10 +285,10 @@ fn send(terminal: &str, review: &Value) -> Result<String, String> {
         return Err("no agent to send it to: focus the agent's terminal first".into());
     }
     // An app terminal comes as its address (t3); a herdr pane id or a handle (app:t3) as it is.
-    let handle = if terminal.contains(':') || terminal.contains('-') { terminal.to_string() } else { format!("{}{terminal}", cockpit_core::frontend::APP) };
+    let handle = if terminal.contains(':') || terminal.contains('-') { terminal.to_string() } else { format!("{}{terminal}", flightdeck_core::frontend::APP) };
     // The person's review, or an agent's own tools reviewing for their own agent: never words for another agent.
-    cockpit_core::peer::may_touch(&handle)?;
-    cockpit_core::deliver::deliver(&handle, &line)?;
+    flightdeck_core::peer::may_touch(&handle)?;
+    flightdeck_core::deliver::deliver(&handle, &line)?;
     Ok(sent_note(review))
 }
 

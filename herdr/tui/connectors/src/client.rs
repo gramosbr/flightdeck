@@ -66,7 +66,7 @@ impl Server {
         Some(Server::Command { argv: std::iter::once(command.to_string()).chain(strings(&entry["args"])).collect(), env: pairs(&entry["env"]) })
     }
 
-    /// Ready to call: a command always, a URL once cockpit has a login for it.
+    /// Ready to call: a command always, a URL once flightdeck has a login for it.
     pub fn is_ready(&self) -> bool {
         match self {
             Server::Http(url) | Server::App { url, .. } => Store::new(url).has_login(),
@@ -99,10 +99,10 @@ pub fn printed_token(stdout: &str) -> Option<String> {
 
 pub struct Connection(RunningService<RoleClient, ClientConfig>);
 
-/// cockpit as an MCP client, opening with the newest protocol version that still has an `initialize` handshake: rmcp's
+/// flightdeck as an MCP client, opening with the newest protocol version that still has an `initialize` handshake: rmcp's
 /// latest has none, and servers such as Google's refuse a handshake under it.
 fn handler() -> ClientConfig {
-    ClientConfig::new(ClientCapabilities::default(), Implementation::new("cockpit", env!("CARGO_PKG_VERSION")))
+    ClientConfig::new(ClientCapabilities::default(), Implementation::new("flightdeck", env!("CARGO_PKG_VERSION")))
         .with_protocol_version(ProtocolVersion::LATEST_WITH_INITIALIZE)
 }
 
@@ -126,7 +126,7 @@ async fn login_as(url: &str, app: Option<(&String, &String, &Vec<String>)>, open
     let mut manager = AuthorizationManager::new(url).await.map_err(|e| format!("{url}: {e}"))?;
     manager.set_credential_store(Store::new(url));
     let mut state = OAuthState::Unauthorized(manager);
-    let mut request = AuthorizationRequest::new(&redirect).with_client_name("cockpit");
+    let mut request = AuthorizationRequest::new(&redirect).with_client_name("flightdeck");
     if let Some((client_id, secret, scopes)) = app {
         request = request.with_preregistered_client(client_id.as_str());
         if !secret.is_empty() {
@@ -136,7 +136,7 @@ async fn login_as(url: &str, app: Option<(&String, &String, &Vec<String>)>, open
             request = request.with_scopes(scopes.iter().map(String::as_str));
         }
     }
-    state.start_authorization(request).await.map_err(|e| format!("{url} refused cockpit's login: {e}"))?;
+    state.start_authorization(request).await.map_err(|e| format!("{url} refused flightdeck's login: {e}"))?;
     let auth_url = state.get_authorization_url().await.map_err(|e| e.to_string())?;
     open(&auth_url);
     let callback = tokio::time::timeout(std::time::Duration::from_secs(300), callback(&listener, &redirect))
@@ -158,7 +158,7 @@ async fn callback(listener: &tokio::net::TcpListener, redirect: &str) -> Result<
             let _ = socket.write_all(b"HTTP/1.1 404 Not Found\r\ncontent-length: 0\r\n\r\n").await;
             continue;
         }
-        let body = "<html><body style=\"font-family:system-ui;padding:3em\">cockpit is logged in. You can close this tab.</body></html>";
+        let body = "<html><body style=\"font-family:system-ui;padding:3em\">flightdeck is logged in. You can close this tab.</body></html>";
         let reply = format!("HTTP/1.1 200 OK\r\ncontent-type: text/html\r\ncontent-length: {}\r\n\r\n{body}", body.len());
         let _ = socket.write_all(reply.as_bytes()).await;
         let base = redirect.trim_end_matches("/callback");
@@ -174,20 +174,20 @@ pub async fn connect(server: &Server) -> Result<Connection, String> {
             if store.has_login() {
                 let mut manager = AuthorizationManager::new(url.as_str()).await.map_err(|e| format!("{url}: {e}"))?;
                 manager.set_credential_store(store);
-                manager.initialize_from_store().await.map_err(|e| format!("{url}: stored login unusable ({e}) → cockpit connector login {url}"))?;
+                manager.initialize_from_store().await.map_err(|e| format!("{url}: stored login unusable ({e}) → flightdeck connector login {url}"))?;
                 let client = AuthClient::new(reqwest::Client::default(), manager);
                 handler().serve(StreamableHttpClientTransport::with_client(client, config)).await.map_err(|e| format!("{url}: {e}"))?
             } else {
                 let transport = StreamableHttpClientTransport::with_client(reqwest::Client::default(), config);
-                handler().serve(transport).await.map_err(|e| format!("{url}: {e} (a server that needs a login: cockpit connector login {url})"))?
+                handler().serve(transport).await.map_err(|e| format!("{url}: {e} (a server that needs a login: flightdeck connector login {url})"))?
             }
         }
         Server::App { url, client_id, client_secret, .. } => {
             let mut manager = AuthorizationManager::new(url.as_str()).await.map_err(|e| format!("{url}: {e}"))?;
             manager.set_credential_store(Store::new(url));
-            let known = manager.initialize_from_store().await.map_err(|e| format!("{url}: stored login unusable ({e}) → cockpit connector login {url}"))?;
+            let known = manager.initialize_from_store().await.map_err(|e| format!("{url}: stored login unusable ({e}) → flightdeck connector login {url}"))?;
             if !known {
-                return Err(format!("cockpit is not logged in to {url} → cockpit connector login {url}"));
+                return Err(format!("flightdeck is not logged in to {url} → flightdeck connector login {url}"));
             }
             // A refresh presents the app's secret, as the person's own app is a confidential one.
             let mut app = OAuthClientConfig::new(client_id.as_str(), "http://127.0.0.1/callback");
@@ -331,7 +331,7 @@ mod tests {
     fn the_handshake_names_a_version_that_has_one() {
         let info = handler();
         assert!(info.protocol_version.has_initialize());
-        assert_eq!(info.client_info.name, "cockpit");
+        assert_eq!(info.client_info.name, "flightdeck");
     }
 
     #[test]

@@ -1,7 +1,7 @@
 //! What a waiting agent asks, read off the bottom of its screen: the question, its numbered choices, whether they are
 //! checkboxes, where the cursor is and where Submit sits; and the keys that answer it. Ported from herdr-relevo's
 //! `lib/prompt.js` (Apache-2.0), whose key sequences were measured on Claude Code's menus.
-//! Source: https://github.com/johnny4young/herdr-relevo (Apache-2.0), modified for cockpit; see THIRD_PARTY_NOTICES.md.
+//! Source: https://github.com/johnny4young/herdr-relevo (Apache-2.0), modified for flightdeck; see THIRD_PARTY_NOTICES.md.
 
 use std::sync::LazyLock;
 
@@ -48,7 +48,7 @@ pub struct Question {
     pub permission: bool,
     /// Its choices are numbered on screen; an unnumbered menu (Claude's folder trust) is moved through with arrows.
     pub numbered: bool,
-    /// A permission cockpit cannot show in full (no frame on the screen tells where it starts, or nothing of it was
+    /// A permission flightdeck cannot show in full (no frame on the screen tells where it starts, or nothing of it was
     /// read): it is answered in the agent's terminal.
     pub cut: bool,
     /// Its preview is Markdown (a plan, read whole from the transcript): the card renders it rather than showing it as typed.
@@ -96,7 +96,7 @@ impl Question {
     }
 
     /// What it waits on, the same across hub restarts: its prompt's shape, else that it reached a limit, else that it
-    /// asks nothing cockpit can read. A dismissal holds while this stays.
+    /// asks nothing flightdeck can read. A dismissal holds while this stays.
     pub fn identity(&self) -> String {
         match (self.asks(), &self.limit) {
             (true, _) => format!("{:016x}", fnv(self.shape().as_bytes())),
@@ -191,7 +191,7 @@ const QUESTION_LINES: usize = 8;
 /// one, since a prompt indents what it quotes.
 fn frame_rule(line: &str, width: usize) -> bool {
     let line = line.trim_end();
-    let n = cockpit_core::text::width(line);
+    let n = flightdeck_core::text::width(line);
     n >= 20 && n * 10 >= width * 9 && line.chars().all(|c| matches!(c, '─' | '━' | '═' | '▔' | '▁' | '╭' | '╮' | '┌' | '┐'))
 }
 
@@ -211,7 +211,7 @@ fn unframe(line: &str) -> String {
     FRAME.replace_all(line, "").into_owned()
 }
 
-/// How an agent's screen reads around its words, compiled from the agent table (`cockpit_core::agent`): its permission
+/// How an agent's screen reads around its words, compiled from the agent table (`flightdeck_core::agent`): its permission
 /// prompts, its own furniture, and the lines that say a limit was reached or is over.
 #[derive(Default)]
 pub struct Shapes {
@@ -228,7 +228,7 @@ impl Shapes {
     pub fn of(id: &str) -> std::sync::Arc<Shapes> {
         type Held = std::collections::HashMap<String, (Vec<Option<std::time::SystemTime>>, std::sync::Arc<Shapes>)>;
         static HELD: std::sync::Mutex<Option<Held>> = std::sync::Mutex::new(None);
-        let files = [cockpit_core::files::cache().join("config.json"), cockpit_core::files::config_dir().join("config.json")];
+        let files = [flightdeck_core::files::cache().join("config.json"), flightdeck_core::files::config_dir().join("config.json")];
         let stamp: Vec<Option<std::time::SystemTime>> = files.iter().map(|f| std::fs::metadata(f).and_then(|m| m.modified()).ok()).collect();
         let mut held = HELD.lock().unwrap_or_else(|e| e.into_inner());
         let held = held.get_or_insert_with(Default::default);
@@ -237,20 +237,22 @@ impl Shapes {
         {
             return std::sync::Arc::clone(shapes);
         }
-        let all = cockpit_core::agent::all();
+        let all = flightdeck_core::agent::all();
         let own = all.iter().find(|a| a.id == id || a.aliases.iter().any(|x| x == id)).map(|a| a.permission.clone()).filter(|p| !p.is_empty());
-        let shapes =
-            std::sync::Arc::new(Shapes::with(&own.unwrap_or_else(|| all.into_iter().flat_map(|a| a.permission).collect()), &cockpit_core::agent::screen(id)));
+        let shapes = std::sync::Arc::new(Shapes::with(
+            &own.unwrap_or_else(|| all.into_iter().flat_map(|a| a.permission).collect()),
+            &flightdeck_core::agent::screen(id),
+        ));
         held.insert(id.to_string(), (stamp, std::sync::Arc::clone(&shapes)));
         shapes
     }
 
     /// These permission patterns, with every agent's furniture.
     pub fn asking(permission: &[String]) -> Shapes {
-        Shapes::with(permission, &cockpit_core::agent::screen(""))
+        Shapes::with(permission, &flightdeck_core::agent::screen(""))
     }
 
-    fn with(permission: &[String], screen: &cockpit_core::agent::Screen) -> Shapes {
+    fn with(permission: &[String], screen: &flightdeck_core::agent::Screen) -> Shapes {
         Shapes {
             permission: patterns(permission),
             footer: patterns(&screen.footer),
@@ -291,7 +293,7 @@ pub fn read_for(screen: &str, shapes: &Shapes) -> Question {
     q.text = question_above(&lines, first);
     q.free = free_option(&q);
     // In display columns: combining marks and wide characters count as the screen draws them.
-    let width = raw.iter().map(|l| cockpit_core::text::width(l.trim_end())).max().unwrap_or(0);
+    let width = raw.iter().map(|l| flightdeck_core::text::width(l.trim_end())).max().unwrap_or(0);
     let top = (0..first).rev().find(|&i| frame_rule(raw[i], width)).map(|i| i + 1);
     let own: Vec<&str> = lines[top.unwrap_or(0)..first].iter().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
     let shaped = |l: &str| asks.iter().any(|r| r.is_match(l));
@@ -320,7 +322,7 @@ pub fn read_for(screen: &str, shapes: &Shapes) -> Question {
     q
 }
 
-/// What a permission cockpit cannot show in full is told, on every surface: it is answered in the agent's terminal.
+/// What a permission flightdeck cannot show in full is told, on every surface: it is answered in the agent's terminal.
 pub const CUT: &str = "Part of what it would run is off its screen: answer it in its terminal";
 /// A numbered menu, walking up from its last choice to choice 1: the question and the line choice 1 is on.
 fn numbered_menu(lines: &[String], screen: &str) -> Option<(Question, usize, usize)> {
@@ -881,7 +883,7 @@ Enter to select · ↑/↓ to navigate · Esc to cancel";
     }
 
     fn shapes(id: &str) -> Vec<String> {
-        cockpit_core::agent::builtin().into_iter().find(|a| a.id == id).map(|a| a.permission).unwrap_or_default()
+        flightdeck_core::agent::builtin().into_iter().find(|a| a.id == id).map(|a| a.permission).unwrap_or_default()
     }
 
     const BASH: &str = include_str!("../tests/fixtures/screens/claude-bash.txt");
@@ -1091,7 +1093,7 @@ Enter to select · ↑/↓ to navigate · Esc to cancel";
             assert_eq!(q.limit, Some(Limit { reset: Some("08:00".into()), zone: None }), "its last output says so, and when it ends");
             assert!(!q.block.iter().any(|l| l.contains("7d 100%") || l.contains("auto mode") || l.contains("daily-quotas")), "{:?}", q.block);
         }
-        // Each mode line, under each status line, with the box and without it, for its own agent and for one cockpit
+        // Each mode line, under each status line, with the box and without it, for its own agent and for one flightdeck
         // does not know: what it said reads without its furniture, a question always, a statement where its empty box
         // waits for words.
         for shapes in [Shapes::of("claude"), Shapes::of("some-other-agent"), std::sync::Arc::new(Shapes::asking(&[]))] {

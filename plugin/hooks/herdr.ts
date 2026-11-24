@@ -1,6 +1,6 @@
 import type { EngineInterface } from 'claude-code'
 
-import { cockpitCommand, loadConfig } from './config'
+import { flightdeckCommand, loadConfig } from './config'
 
 type $ = EngineInterface
 
@@ -46,7 +46,7 @@ async function isAppTerminal($: $) {
   const isTui = (await $.env.get('HERDR_ENV')) === '1'
   if (!terminal || !isTui) return Boolean(terminal)
   if (appTerminal?.key === terminal) return appTerminal.value
-  const script = `${APP_PATH}; shell=$("\${COCKPIT_HC_BIN:-hc}" get "$1" --json | sed -n 's/.*"pid":\\([0-9]*\\).*/\\1/p' | tail -1)
+  const script = `${APP_PATH}; shell=$("\${FLIGHTDECK_HC_BIN:-hc}" get "$1" --json | sed -n 's/.*"pid":\\([0-9]*\\).*/\\1/p' | tail -1)
 pid=$PPID
 while [ -n "$pid" ] && [ "$pid" -gt 1 ]; do [ "$pid" = "$shell" ] && exit 0; pid=$(ps -o ppid= -p "$pid" | tr -d ' '); done
 exit 1`
@@ -99,7 +99,7 @@ export function findTerminal(spaces: AppSpace[], terminal: string) {
   return undefined
 }
 
-// `pane` is the handle cockpit's CLI and hub take: a herdr pane id, or `app:<terminal>` in the Herdr app, where
+// `pane` is the handle flightdeck's CLI and hub take: a herdr pane id, or `app:<terminal>` in the Herdr app, where
 // `paneId` is the app's pane and `terminal` the core terminal.
 export type Here = { pane: string; tab: string; space: string; frontend?: Frontend; terminal?: string; paneId?: string }
 
@@ -199,8 +199,8 @@ export type Browser = { tabs?: { url: string; title?: string; active?: boolean }
 // side browser's tabs for its worktree; none outside herdr and the app.
 export async function browsersBeside($: $, here: Here): Promise<Browser[]> {
   if (here.frontend === 'app') {
-    const cockpit = await cockpitCommand($)
-    const found = cockpit ? await $.process.run([...cockpit, 'browse', '--browsers', await $.session.id()], { timeoutMs: 15_000 }).catch(() => undefined) : undefined
+    const flightdeck = await flightdeckCommand($)
+    const found = flightdeck ? await $.process.run([...flightdeck, 'browse', '--browsers', await $.session.id()], { timeoutMs: 15_000 }).catch(() => undefined) : undefined
     return found?.exitCode === 0 ? (JSON.parse(found.stdout || '[]') as Browser[]) : []
   }
   const listed = await $.process.run(['sh', '-c', 'PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH" exec terminal-browser ls --json'], {
@@ -224,5 +224,5 @@ export async function pageContext($: $) {
   if (!page || page.url === toldPage) return []
   toldPage = page.url
   return [`The browser beside this conversation shows "${page.title || page.url}" at ${page.url}. ` +
-    'When the person says "this page" they mean it; read or drive it with `sh ~/.config/cockpit/herdr/browse.sh action -- snapshot -i` (the side-browser skill).']
+    'When the person says "this page" they mean it; read or drive it with `sh ~/.config/flightdeck/herdr/browse.sh action -- snapshot -i` (the side-browser skill).']
 }

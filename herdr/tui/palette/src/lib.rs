@@ -1,5 +1,5 @@
-//! `cockpit palette`: the launcher herdr opens as a popup over any pane (prefix+space). It searches every app, the
-//! week's events and past agent sessions as you type, and lists the agents waiting on you first, then cockpit's own
+//! `flightdeck palette`: the launcher herdr opens as a popup over any pane (prefix+space). It searches every app, the
+//! week's events and past agent sessions as you type, and lists the agents waiting on you first, then flightdeck's own
 //! commands: the pinned spaces, a refresh of the inbox, the doctor's report and today's brief. Over an agent's session, a
 //! found item can also go into that session: typed at its prompt, asked about, or looked into by a fork of it. Words
 //! nothing matches are offered as a start: the Start work form on them.
@@ -13,11 +13,11 @@ mod then;
 use std::sync::mpsc::{Receiver, channel};
 use std::time::Duration;
 
-use cockpit_core::hub::Found;
-use cockpit_core::palette::{Entry, FALLBACK, Outcome, Palette};
-use cockpit_core::theme::{FG, ORANGE, PANEL, base, bold, dim, fg};
-use cockpit_core::{actions, agent, files, keys, term};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use flightdeck_core::hub::Found;
+use flightdeck_core::palette::{Entry, FALLBACK, Outcome, Palette};
+use flightdeck_core::theme::{FG, ORANGE, PANEL, base, bold, dim, fg};
+use flightdeck_core::{actions, agent, files, keys, term};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::Style;
@@ -31,14 +31,14 @@ pub use reference::reference;
 use report::Report;
 pub use then::Then;
 
-/// `cockpit palette`: the popup until a choice or esc, then the choice, its failure told in a notification.
+/// `flightdeck palette`: the popup until a choice or esc, then the choice, its failure told in a notification.
 pub fn run() -> std::io::Result<()> {
     let mut app = App::start(std::env::var("PALETTE_PANE").ok().filter(|p| !p.is_empty()));
     term::run(&mut app)?;
     if let Some(then) = app.then.take()
         && let Err(error) = then.run()
     {
-        cockpit_core::notify::post("⚠️ Cockpit", &error, "", &[]);
+        flightdeck_core::notify::post("⚠️ Flightdeck", &error, "", &[]);
     }
     Ok(())
 }
@@ -122,7 +122,7 @@ impl Command {
             // Lowercase, as every in-app palette: the same command must not read two ways.
             Command::Space(name, key) => (format!("go to the {name} space"), key.clone().unwrap_or_else(|| "a pinned space".into())),
             Command::RefreshInbox => ("refresh the inbox".into(), "PRs, reviews, tickets and CI fetched again now".into()),
-            Command::Doctor => ("check cockpit".into(), "the doctor's report: every part of cockpit, ok, warn or fail".into()),
+            Command::Doctor => ("check flightdeck".into(), "the doctor's report: every part of flightdeck, ok, warn or fail".into()),
             Command::Brief => ("today's brief".into(), "the morning brief: meetings, reviews, CI, tickets".into()),
             Command::Usage => ("usage and limits".into(), "every agent's limits, resets and account, and the week's tokens".into()),
             Command::Editor(cwd) => (format!("open {} in your editor", folder_name(cwd)), cwd.clone()),
@@ -155,7 +155,7 @@ pub fn into_session(key: char, over: &Over, found: &Found, inbox: &Value, config
             cwd: over.cwd.clone(),
             title: found.title.clone(),
             prompt: format!(
-                "This is a fork of a session, opened from the cockpit palette to look into {text}. Look into it with what this \
+                "This is a fork of a session, opened from the flightdeck palette to look into {text}. Look into it with what this \
                  session knows, sum up in a few lines what you find, then wait for my questions. Change nothing (no edits, \
                  commits, pushes or ticket updates) unless I ask."
             ),
@@ -169,7 +169,7 @@ fn folder_name(cwd: &str) -> &str {
 }
 
 /// The herdr TUI's agents of the hub's agents view as entries, in the order every palette lists them; a session
-/// cockpit drives has no pane to bring into view, so it is left out.
+/// flightdeck drives has no pane to bring into view, so it is left out.
 pub fn agent_entries(agents: &Value, now: u64) -> Vec<Command> {
     let list: Vec<Jump> = jumps(agents, Some("tui"), now).into_iter().filter(|j| !j.driven).collect();
     let shown = listed(&list);
@@ -230,7 +230,7 @@ impl App {
         std::thread::spawn(move || {
             let over = pane.as_ref().and_then(|pane| actions::herdr(&["pane", "get", pane]).and_then(|r| Over::of(&r["pane"])));
             let request = serde_json::json!({"op": "view", "name": "agents", "args": {}});
-            let agents = cockpit_core::hub::request(&request, Duration::from_secs(3)).map(|r| r["value"].clone()).unwrap_or_default();
+            let agents = flightdeck_core::hub::request(&request, Duration::from_secs(3)).map(|r| r["value"].clone()).unwrap_or_default();
             let links = pane.as_deref().map(|pane| agent_commands(pane, &agents)).unwrap_or_default();
             let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or_default();
             let _ = tx.send(Arrived { over, links, agents: agent_entries(&agents, now) });

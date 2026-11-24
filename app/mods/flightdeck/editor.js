@@ -1,5 +1,5 @@
 // Open in editor: a folder in the person's editor, on this machine or over SSH for a remote space (VS Code's and
-// Cursor's Remote-SSH). The editor is the cockpit config's `editor` (code, cursor, zed, ...), else VS Code.
+// Cursor's Remote-SSH). The editor is the flightdeck config's `editor` (code, cursor, zed, ...), else VS Code.
 
 import { exec, readTextFile, hc, window as win } from "herdr";
 import * as hub from "./hub.js";
@@ -12,7 +12,7 @@ const APPS = { code: "Visual Studio Code", cursor: "Cursor", zed: "Zed", windsur
  */
 export async function editor() {
   const { home, cache } = await hub.install().catch(() => ({}));
-  for (const path of [cache && `${cache}/config.json`, home && `${home}/.config/cockpit/config.json`].filter(Boolean)) {
+  for (const path of [cache && `${cache}/config.json`, home && `${home}/.config/flightdeck/config.json`].filter(Boolean)) {
     try {
       const name = JSON.parse((await readTextFile(path)) ?? "null")?.editor;
       if (typeof name === "string" && name.trim() && !name.trim().startsWith("-")) return name.trim();
@@ -48,7 +48,7 @@ export async function openInEditor(folder, machine = null) {
   const app = APPS[name] ?? name;
   // An editor whose command isn't on the PATH still opens by its app name on macOS.
   const opened = win()?.platform === "macos" ? await exec("open", ["-a", app, folder]).catch(() => null) : null;
-  return opened?.code === 0 ? null : `${app} is not installed (set "editor" in the cockpit config)`;
+  return opened?.code === 0 ? null : `${app} is not installed (set "editor" in the flightdeck config)`;
 }
 
 /** The editor's name, for labels: "VS Code", "Cursor", ... */

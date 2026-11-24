@@ -6,7 +6,7 @@
         "pane",
         "open",
         "--plugin",
-        "cockpit",
+        "flightdeck",
         "--entrypoint",
         "peek",
         "--placement",

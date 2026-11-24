@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 pub fn unpack(dir: &Path, archive: &[u8], version: &str) -> Result<(), String> {
     let staging = Staging::new(dir)?;
     tar::Archive::new(flate2::read::GzDecoder::new(archive)).unpack(&staging.0).map_err(|_| "unreadable archive".to_string())?;
-    if !staging.0.join("cockpit").is_file() {
-        return Err("no cockpit binary in the archive".into());
+    if !staging.0.join("flightdeck").is_file() {
+        return Err("no flightdeck binary in the archive".into());
     }
     for entry in std::fs::read_dir(&staging.0).map_err(|e| e.to_string())?.flatten() {
         if entry.path().is_file() {
@@ -21,11 +21,11 @@ pub fn unpack(dir: &Path, archive: &[u8], version: &str) -> Result<(), String> {
     staging.install(version)
 }
 
-/// Puts the running binary in as bin/cockpit, on its own version, for a folder whose release is not out yet.
+/// Puts the running binary in as bin/flightdeck, on its own version, for a folder whose release is not out yet.
 pub fn copy_own(dir: &Path, version: &str) -> Result<(), String> {
     let staging = Staging::new(dir)?;
     let own = std::env::current_exe().map_err(|e| e.to_string())?;
-    std::fs::copy(&own, staging.0.join("cockpit")).map_err(|e| format!("copy of {} failed: {e}", own.display()))?;
+    std::fs::copy(&own, staging.0.join("flightdeck")).map_err(|e| format!("copy of {} failed: {e}", own.display()))?;
     staging.install(version)
 }
 

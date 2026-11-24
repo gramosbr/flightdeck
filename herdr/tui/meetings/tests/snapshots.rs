@@ -5,11 +5,11 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
-use cockpit_core::files::Density;
-use cockpit_core::testing::render;
-use cockpit_meetings::app::App;
-use cockpit_meetings::timeline::{self, Layout};
-use cockpit_meetings::week::{Clock, Week};
+use flightdeck_core::files::Density;
+use flightdeck_core::testing::render;
+use flightdeck_meetings::app::App;
+use flightdeck_meetings::timeline::{self, Layout};
+use flightdeck_meetings::week::{Clock, Week};
 use ratatui_image::picker::Picker;
 use serde_json::Value;
 
@@ -90,9 +90,9 @@ fn overlapping_meetings_share_their_column() {
 #[test]
 fn reports_the_next_meeting() {
     let week = Week::parse(&data());
-    assert_eq!(cockpit_meetings::pinned::next_text(&week, &clock()), "\u{f455}  now · Pairing on quotas");
+    assert_eq!(flightdeck_meetings::pinned::next_text(&week, &clock()), "\u{f455}  now · Pairing on quotas");
     let later = Clock { now: clock().now + chrono::TimeDelta::minutes(30), ..clock() };
-    assert_eq!(cockpit_meetings::pinned::next_text(&week, &later), "\u{f455}  in 38 min · Ledger Move Daily");
+    assert_eq!(flightdeck_meetings::pinned::next_text(&week, &later), "\u{f455}  in 38 min · Ledger Move Daily");
 }
 
 #[test]

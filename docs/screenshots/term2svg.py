@@ -121,10 +121,10 @@ def rows_svg(screen, ys, chars, cover=False, at=None):
 
 def window(columns, rows, title, chars, body, style=""):
     W, H = columns * CW + 2 * PAD, rows * LH + 2 * PAD + BAR
-    faces = font_face(chars, "Cockpit Mono", "FiraCodeNerdFontMono-Regular.ttf") + font_face(chars, "Cockpit Mono", "FiraCodeNerdFontMono-Bold.ttf")
+    faces = font_face(chars, "Flightdeck Mono", "FiraCodeNerdFontMono-Regular.ttf") + font_face(chars, "Flightdeck Mono", "FiraCodeNerdFontMono-Bold.ttf")
     dots = "".join(f'<circle cx="{PAD + 6 + i * 20}" cy="{BAR / 2 + 4}" r="6" fill="{c}"/>' for i, c in enumerate(["#FF5F57", "#FEBC2E", "#28C840"]))
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W:.0f}" height="{H:.0f}" viewBox="0 0 {W:.0f} {H:.0f}">
-<style>{faces} text{{font-family:'Cockpit Mono',monospace;font-size:{SIZE}px;white-space:pre}}{style}</style>
+<style>{faces} text{{font-family:'Flightdeck Mono',monospace;font-size:{SIZE}px;white-space:pre}}{style}</style>
 <rect width="100%" height="100%" rx="12" fill="{BG}" stroke="#2C2C30"/>{dots}
 <text x="{W / 2:.0f}" y="{BAR / 2 + 8:.0f}" text-anchor="middle" fill="#707070" font-size="12">{html.escape(title)}</text>
 {body}</svg>'''

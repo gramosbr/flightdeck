@@ -1,4 +1,4 @@
-//! History for the apps' sparklines, one JSON line per point in ~/.cache/cockpit/history/<kind>.jsonl:
+//! History for the apps' sparklines, one JSON line per point in ~/.cache/flightdeck/history/<kind>.jsonl:
 //! `ticket_estimate` (what each ticket has cost so far as `usage` estimates it, a point whenever it changes) and
 //! `ci_duration` (seconds from a CI run's start to when the hub first saw it finished, a point per run), 60 per key.
 
@@ -61,7 +61,7 @@ fn append(cache: &Path, kind: &str, new: Vec<Value>) {
 pub const TICKET_ESTIMATE: &str = "ticket_estimate";
 
 fn record_costs(cache: &Path, at: f64) {
-    record_costs_of(cache, at, cockpit_core::usage::ticket_estimates());
+    record_costs_of(cache, at, flightdeck_core::usage::ticket_estimates());
 }
 
 /// A point for each ticket whose cost moved since its last one.
@@ -84,12 +84,12 @@ fn record_costs_of(cache: &Path, at: f64, costs: HashMap<String, f64>) {
 
 fn record_ci(cache: &Path, at: f64) {
     let state_path = dir(cache).join("ci-running.json");
-    let mut running: HashMap<String, f64> = cockpit_core::files::load(&state_path)
+    let mut running: HashMap<String, f64> = flightdeck_core::files::load(&state_path)
         .and_then(|v| v.as_object().map(|m| m.iter().filter_map(|(k, v)| Some((k.clone(), v.as_f64()?))).collect()))
         .unwrap_or_default();
     let known: Vec<String> = points(cache, "ci_duration").iter().filter_map(|p| p["id"].as_str().map(str::to_string)).collect();
     let mut new = Vec::new();
-    let ci = cockpit_core::files::load(&cache.join("ci.json")).unwrap_or(Value::Null);
+    let ci = flightdeck_core::files::load(&cache.join("ci.json")).unwrap_or(Value::Null);
     for run in list(&ci["runs"]) {
         let Some(id) = run["runId"].as_str().or(run["workflowId"].as_str()) else {
             continue;
@@ -111,7 +111,7 @@ fn record_ci(cache: &Path, at: f64) {
     }
     running.retain(|_, seen| at - *seen < 86_400.0);
     append(cache, "ci_duration", new);
-    let _ = cockpit_core::files::write(&state_path, &json!(running));
+    let _ = flightdeck_core::files::write(&state_path, &json!(running));
 }
 
 /// Records whatever the caches say now; points only for what changed.
@@ -124,7 +124,7 @@ pub fn record(cache: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cockpit_core::files::write;
+    use flightdeck_core::files::write;
 
     #[test]
     fn ticket_costs_change_points_only() {

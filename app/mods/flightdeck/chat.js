@@ -87,13 +87,13 @@ const NEXT_FLAG = "chat_next";
 /** The bindings that give the chat its keys: anywhere in it, and in its box, where they come before the box's own. */
 export function chatBindings() {
   const own = Object.entries(OWN_KEYS).flatMap(([keystroke, flag]) => {
-    const action = `cockpit_${flag}`;
-    const box = { keystroke, action, context: `CockpitChat && ${flag} > Input` };
-    return keystroke === "enter" ? [box] : [{ keystroke, action, context: `CockpitChat && ${flag}` }, box];
+    const action = `flightdeck_${flag}`;
+    const box = { keystroke, action, context: `FlightdeckChat && ${flag} > Input` };
+    return keystroke === "enter" ? [box] : [{ keystroke, action, context: `FlightdeckChat && ${flag}` }, box];
   });
   const next = NEXT_KEYS.flatMap((keystroke) => {
-    const action = `cockpit_${NEXT_FLAG}_${keystroke}`;
-    return [{ keystroke, action, context: `CockpitChat && ${NEXT_FLAG}` }, { keystroke, action, context: `CockpitChat && ${NEXT_FLAG} > Input` }];
+    const action = `flightdeck_${NEXT_FLAG}_${keystroke}`;
+    return [{ keystroke, action, context: `FlightdeckChat && ${NEXT_FLAG}` }, { keystroke, action, context: `FlightdeckChat && ${NEXT_FLAG} > Input` }];
   });
   return [...own, ...next];
 }
@@ -105,7 +105,7 @@ export function chatBindings() {
 export function chatContext({ front = true, holds = true, hints = false, question = false, live = false, closes = false, confirm = false, next = false } = {}) {
   const flags = [];
   // A popup over the chat (the palette, a menu) has the keyboard: its keys are its own.
-  if (!holds) return "CockpitChat";
+  if (!holds) return "FlightdeckChat";
   if (front && !confirm && (hints || question)) flags.push(OWN_KEYS.tab);
   if (front && !confirm && live) flags.push(OWN_KEYS["shift-tab"]);
   if ((front && (hints || closes || next)) || confirm) flags.push(OWN_KEYS.escape);
@@ -113,7 +113,7 @@ export function chatContext({ front = true, holds = true, hints = false, questio
   if (front && !confirm) flags.push(OWN_KEYS.enter);
   // Next steps take 1, 2, 3 and 0 only while they show, which is with the box empty: typed digits stay digits.
   if (front && !confirm && !hints && next) flags.push(NEXT_FLAG);
-  return ["CockpitChat", ...flags].join(" ");
+  return ["FlightdeckChat", ...flags].join(" ");
 }
 
 /** How long a pinned agent the hub listed before, or one it has not listed yet, may be missing before the chat lets go. */
@@ -226,7 +226,7 @@ export function rowsOf(messages, { working = false, now = null, stopped = false,
     if (m.role === "user") {
       const marker = INTERRUPTED.test(text.trim());
       close(false, marker);
-      // Sent to a session cockpit drives and not replayed by it yet: it is still on its way.
+      // Sent to a session flightdeck drives and not replayed by it yet: it is still on its way.
       const id = m.id ?? m.at;
       const ids = [msgId(m)];
       rows.push(marker ? { kind: "stopped", at: m.at, ids, base: `stopped:${id}` } : { kind: "said", text, at: m.at, ids, base: `said:${id}:${hashOf(text)}`, ...(m.echo === true ? { pending: true } : {}) });
@@ -414,7 +414,7 @@ export default class Chat {
       for (;;) {
         const want = this.wanted();
         if (want !== this.target) this.watch(want, cx);
-        // Whether it is a session cockpit drives comes with the agents view: its session is followed once that says so.
+        // Whether it is a session flightdeck drives comes with the agents view: its session is followed once that says so.
         else if (this.driven(want) !== this.watchedDriven) this.watch(want, cx, true);
         this.inFrontNow(cx);
         this.asked(cx);
@@ -497,7 +497,7 @@ export default class Chat {
     if (key !== this.target) this.watch(key, cx);
   }
 
-  /** Whether the agents view lists this key as a session cockpit drives: null before it says. */
+  /** Whether the agents view lists this key as a session flightdeck drives: null before it says. */
   driven(key) {
     if (!key) return false;
     // While the hub is down its rows are Herdr's own, which know no session: the subject stays what it was.
@@ -506,7 +506,7 @@ export default class Chat {
     return row ? row.driven === true : this.model.value ? false : null;
   }
 
-  /** A question the Cockpit layout left for this session: put once the chat is on it. */
+  /** A question the Flightdeck layout left for this session: put once the chat is on it. */
   asked(cx) {
     const ask = shared(CHAT_ASK);
     if (!ask?.key) return;
@@ -661,7 +661,7 @@ export default class Chat {
   }
 
   /**
-   * Follows one subject in place of the one before: its conversation, its queue, and its session when cockpit drives
+   * Follows one subject in place of the one before: its conversation, its queue, and its session when flightdeck drives
    * it. What was typed for the last one is kept for when it comes back; the side panel's review follows along.
    */
   watch(subject, cx, keep = false) {
@@ -761,7 +761,7 @@ export default class Chat {
   }
 
   /**
-   * The session cockpit drives, when it is the subject. Its words arrive as protocol events rather than from a
+   * The session flightdeck drives, when it is the subject. Its words arrive as protocol events rather than from a
    * transcript, so they are already in the shape the chat draws.
    */
   session() {
@@ -827,7 +827,7 @@ export default class Chat {
     cx.notify();
   }
 
-  /** Whether a layout key is the chat's to act on: it is the screen in front, showing a session cockpit drives. */
+  /** Whether a layout key is the chat's to act on: it is the screen in front, showing a session flightdeck drives. */
   ownKey() {
     return inFront("chat") && Boolean(this.session());
   }
@@ -1568,7 +1568,7 @@ export default class Chat {
     this.drafts.delete(this.target);
   }
 
-  /** Stops the turn it is taking: a session cockpit drives through its own interrupt, a terminal through its keys. */
+  /** Stops the turn it is taking: a session flightdeck drives through its own interrupt, a terminal through its keys. */
   stop(cx) {
     const live = this.session();
     if (live) return this.sessionAct("interrupt", {}, cx);
@@ -1604,7 +1604,7 @@ export default class Chat {
 
   /**
    * The subject in one line over the conversation: what it is doing, its name, where it works, its branch, and its PR
-   * with CI. A session cockpit drives can also be resumed in a terminal of its own.
+   * with CI. A session flightdeck drives can also be resumed in a terminal of its own.
    */
   header(k, row, live) {
     const cwd = live?.cwd || this.value?.session?.cwd || row.cwd || "";
@@ -1842,7 +1842,7 @@ export default class Chat {
             .text_color(k.foreground)
             .child(TextView.markdown(`chat-s${row.slot}`, linkify(text)).selectable(true).text_size(TEXT.base).on_link_click((url) => this.openLink(url))),
         ))
-        // Sent to a session cockpit drives, not yet replayed by it.
+        // Sent to a session flightdeck drives, not yet replayed by it.
         .when(Boolean(row.pending), (e) => e.child(h_flex().gap(5).items_center().text_size(TEXT.xs).text_color(k.dim).child(Spinner({ size: 10, color: k.dim })).child(div().child("Sending…")))),
     );
   }
@@ -2108,7 +2108,7 @@ export default class Chat {
     if (docs.length === 0) return [];
     const open = (name) => {
       openPanel("show");
-      run(`cockpit.show:go:${name}`);
+      run(`flightdeck.show:go:${name}`);
     };
     return [
       h_flex()
@@ -2389,7 +2389,7 @@ export default class Chat {
     // Not over the hints: a "/" typed is the box's own.
     const offer = hints.items.length ? null : this.nextOffer();
     const mode = MODES[live?.mode] ?? MODES.default;
-    // Its cost is cockpit's estimate from the transcript, as everywhere, not the figure the agent reports.
+    // Its cost is flightdeck's estimate from the transcript, as everywhere, not the figure the agent reports.
     const seat = { ...(live ? { cwd: live.cwd } : (this.value?.session ?? {})), cost: row?.cost };
     const agent = this.value?.agent ?? {};
     // What the model picker says it is working with, rather than four more chips in the bar.
@@ -2596,7 +2596,7 @@ export default class Chat {
     this.all = all;
     const unseen = this.unseen();
     const down = Boolean(this.hubWasDown);
-    // No agent to read: the empty state, and what is still to set up when cockpit is new here.
+    // No agent to read: the empty state, and what is still to set up when flightdeck is new here.
     const nobody = () => {
       // The setup checklist is read the first time this empty state shows, not before; the box starts work meanwhile.
       this.started.want(cx);
@@ -2666,14 +2666,14 @@ export default class Chat {
           next: this.nextKeys(),
         }),
       )
-      .on_action("cockpit_chat_tab", (_e, cx) => this.action("tab", cx))
-      .on_action("cockpit_chat_cycle", (_e, cx) => this.action("shift-tab", cx))
-      .on_action("cockpit_chat_escape", (_e, cx) => this.action("escape", cx))
-      .on_action("cockpit_chat_complete", (_e, cx) => this.action("enter", cx))
-      .on_action("cockpit_chat_next_1", (_e, cx) => this.action("1", cx))
-      .on_action("cockpit_chat_next_2", (_e, cx) => this.action("2", cx))
-      .on_action("cockpit_chat_next_3", (_e, cx) => this.action("3", cx))
-      .on_action("cockpit_chat_next_0", (_e, cx) => this.action("0", cx))
+      .on_action("flightdeck_chat_tab", (_e, cx) => this.action("tab", cx))
+      .on_action("flightdeck_chat_cycle", (_e, cx) => this.action("shift-tab", cx))
+      .on_action("flightdeck_chat_escape", (_e, cx) => this.action("escape", cx))
+      .on_action("flightdeck_chat_complete", (_e, cx) => this.action("enter", cx))
+      .on_action("flightdeck_chat_next_1", (_e, cx) => this.action("1", cx))
+      .on_action("flightdeck_chat_next_2", (_e, cx) => this.action("2", cx))
+      .on_action("flightdeck_chat_next_3", (_e, cx) => this.action("3", cx))
+      .on_action("flightdeck_chat_next_0", (_e, cx) => this.action("0", cx))
       .on_key_up((e) => this.released(e))
       .when(Boolean(row), (e) => e.child(this.header(k, row, live)))
       .when(Boolean(this.ending) && this.ending.key === live?.key, (e) =>
@@ -2734,7 +2734,7 @@ export default class Chat {
     cx.timer.after(0, () => {
       pendView(row, view);
       openPanel("show");
-      run(`cockpit.show:go:${view}`);
+      run(`flightdeck.show:go:${view}`);
     });
   }
 

@@ -2,7 +2,7 @@
 # The recap popup: what a tab's agent did since you left it. q closes it.
 . "$(dirname "$0")/lib.sh"
 tab=${RECAP_TAB:?} since=${RECAP_SINCE:?}
-log="$HOME/.cache/cockpit/activity/$tab.jsonl"
+log="$HOME/.cache/flightdeck/activity/$tab.jsonl"
 agent=$("$H" pane list | jq -c --arg t "$tab" '[.result.panes[] | select(.tab_id == $t and .agent != null)][0] // empty')
 label=$(place "$(printf '%s' "$agent" | jq -r '.pane_id // empty')" | cut -f1)
 [ -n "$label" ] || label=$("$H" tab get "$tab" | jq -r '.result.tab.label')

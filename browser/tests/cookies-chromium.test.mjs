@@ -27,7 +27,7 @@ let tmpDir;
 let writer;
 
 beforeEach(() => {
-  root = mkdtempSync(join(os.tmpdir(), "cockpit-cookies-chromium-test-"));
+  root = mkdtempSync(join(os.tmpdir(), "flightdeck-cookies-chromium-test-"));
   home = join(root, "home");
   tmpDir = join(root, "tmp");
   mkdirSync(tmpDir, { recursive: true });

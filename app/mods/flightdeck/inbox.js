@@ -381,8 +381,8 @@ export default class Inbox {
 
   /** A cleanup's lines: each worktree that goes (its folder, its branch once merged) and each that stays, with why. */
   cleanupLines(rows) {
-    // Cockpit Chat keeps colour for agents: a line that stays reads as words alone.
-    const tone = shared("layout") === "cockpit-chat" ? undefined : "warning";
+    // Flightdeck Chat keeps colour for agents: a line that stays reads as words alone.
+    const tone = shared("layout") === "flightdeck-chat" ? undefined : "warning";
     return rows.map((r) => {
       const kept = r.item?.blockers ?? [];
       return kept.length ? { text: `Stays: ${r.name} (${kept.map((b) => b.words).join(", ")})`, tone } : { text: `Goes: ${r.name}, its folder deleted; its branch too once git counts it merged` };
@@ -1295,8 +1295,8 @@ export default class Inbox {
     let title = d.title;
     let description = d.description;
     let body = null;
-    // Cockpit Chat's dialogs draw no keys.
-    const kbd = (key) => (shared("layout") === "cockpit-chat" ? undefined : key);
+    // Flightdeck Chat's dialogs draw no keys.
+    const kbd = (key) => (shared("layout") === "flightdeck-chat" ? undefined : key);
     let actions = [Button("dlg-cancel", { label: d.kind === "confirm" && !d.confirm && d.lines ? "Close" : "Cancel", variant: "outline", kbd: kbd("esc"), onClick: (_e, cx) => this.closeDialog(cx) })];
     const choiceList = (choices, onPick) =>
       v_flex().gap(4).children(
@@ -1394,7 +1394,7 @@ export default class Inbox {
     if (m.state !== "ok") {
       // Another version's cache is read once this version's own hub writes it again.
       const other = m.state === "other_version";
-      const title = m.state === "empty" ? "No inbox yet" : other ? "Written by another version of cockpit" : "Not readable yet";
+      const title = m.state === "empty" ? "No inbox yet" : other ? "Written by another version of flightdeck" : "Not readable yet";
       const description = other ? "This version reads it once its own hub writes it: after an update, or once the running hub restarts." : m.message;
       const refresh = Button("empty-refresh", { label: "Refresh", icon: "refresh-cw", kbd: "R", onClick: (_e, cx) => this.refresh(cx) });
       return Empty({ icon: other ? "circle-help" : "inbox", title, description, action: other ? undefined : refresh });

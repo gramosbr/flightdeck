@@ -1,21 +1,21 @@
-//! `cockpit agents connect|disconnect|connected`: cockpit's MCP server (`cockpit mcp`) in each installed agent's own
-//! config but Claude Code's, which has the plugin. A file is backed up before it changes, and only cockpit's entry
+//! `flightdeck agents connect|disconnect|connected`: flightdeck's MCP server (`flightdeck mcp`) in each installed agent's own
+//! config but Claude Code's, which has the plugin. A file is backed up before it changes, and only flightdeck's entry
 //! is touched.
 
 use std::path::{Path, PathBuf};
 
-use cockpit_core::{agent, files, jsonedit};
+use flightdeck_core::{agent, files, jsonedit};
 use serde_json::{Value, json};
 
 use crate::proc::{self, fail};
 
-const USAGE: &str = "cockpit agents connect [<agent>...]      cockpit's tools (show, search, changes, report_step) in each agent's MCP config
+const USAGE: &str = "flightdeck agents connect [<agent>...]      flightdeck's tools (show, search, changes, report_step) in each agent's MCP config
                                          (every installed agent but Claude Code, which has the plugin, when none is named)
-cockpit agents disconnect [<agent>...]   takes them out again
-cockpit agents connected                 which agents have them, as JSON";
+flightdeck agents disconnect [<agent>...]   takes them out again
+flightdeck agents connected                 which agents have them, as JSON";
 
 /// The entry's name in every agent's config.
-pub const NAME: &str = "cockpit";
+pub const NAME: &str = "flightdeck";
 
 /// Variables a herdr pane or a Herdr app terminal gives its programs, which tell the server where its agent sits; Codex
 /// hands its servers only the ones it is told to.
@@ -30,8 +30,8 @@ const FORWARDED: [&str; 12] = [
     "HC_SESSION",
     "HERDR_APP_HOME",
     "HERDR_APP_BIN",
-    "COCKPIT_FRONTEND",
-    "COCKPIT_HC_BIN",
+    "FLIGHTDECK_FRONTEND",
+    "FLIGHTDECK_HC_BIN",
 ];
 
 /// How an agent's config holds an MCP server.
@@ -45,7 +45,7 @@ enum Shape {
     Toml(bool),
 }
 
-/// One agent cockpit can connect, its config location checked against the agent's own documentation.
+/// One agent flightdeck can connect, its config location checked against the agent's own documentation.
 pub struct Target {
     pub id: &'static str,
     pub name: &'static str,
@@ -102,7 +102,7 @@ pub const TARGETS: &[Target] = &[
         file: ".cursor/mcp.json",
         home_var: None,
         shape: Shape::Servers(STDIO),
-        after: "approve it once with `cursor-agent mcp enable cockpit`",
+        after: "approve it once with `cursor-agent mcp enable flightdeck`",
     },
     Target {
         id: "omp",
@@ -159,7 +159,7 @@ impl Target {
         agent::get(self.id).is_some_and(|a| a.installed()) || proc::which(self.bin).is_some()
     }
 
-    /// What the config holds for cockpit's server, in this agent's terms.
+    /// What the config holds for flightdeck's server, in this agent's terms.
     fn entry(&self, bin: &str) -> Value {
         match self.shape {
             Shape::Local => json!({"type": "local", "command": [bin, "mcp"], "enabled": true}),
@@ -185,7 +185,7 @@ impl Target {
         if self.shape == Shape::Local { "mcp" } else { "mcpServers" }
     }
 
-    /// cockpit's entry as the config holds it now; Err when the file cannot be read as the agent's format.
+    /// flightdeck's entry as the config holds it now; Err when the file cannot be read as the agent's format.
     pub fn current(&self) -> Result<Option<Value>, String> {
         let text = std::fs::read_to_string(self.path()).unwrap_or_default();
         match self.shape {
@@ -200,8 +200,8 @@ impl Target {
         }
     }
 
-    /// The other MCP servers this agent's config holds, as `servers` entries of cockpit's config (`{url}`, or
-    /// `{command, args, env}`); disabled ones and cockpit's own are left out.
+    /// The other MCP servers this agent's config holds, as `servers` entries of flightdeck's config (`{url}`, or
+    /// `{command, args, env}`); disabled ones and flightdeck's own are left out.
     pub fn servers(&self) -> Vec<(String, Value)> {
         let text = std::fs::read_to_string(self.path()).unwrap_or_default();
         let all: Vec<(String, Value)> = match self.shape {
@@ -218,7 +218,7 @@ impl Target {
         all.into_iter().filter(|(name, _)| name != NAME).filter_map(|(name, raw)| Some((name, normalized(&raw)?))).collect()
     }
 
-    /// The config's text with cockpit's server in it.
+    /// The config's text with flightdeck's server in it.
     fn with(&self, text: &str, bin: &str) -> Result<String, String> {
         match self.shape {
             Shape::Toml(forward) => {
@@ -242,7 +242,7 @@ impl Target {
         }
     }
 
-    /// The config's text without cockpit's server; None when it has none.
+    /// The config's text without flightdeck's server; None when it has none.
     fn without(&self, text: &str) -> Result<Option<String>, String> {
         match self.shape {
             Shape::Toml(_) => {
@@ -258,25 +258,25 @@ impl Target {
             }
             _ => {
                 let Some(next) = jsonedit::remove(text, &[self.json_path()], NAME)? else { return Ok(None) };
-                // The servers' object cockpit's entry leaves empty goes with it.
+                // The servers' object flightdeck's entry leaves empty goes with it.
                 let empty = jsonedit::get(&next, &[], self.json_path())?.is_some_and(|v| v == json!({}));
                 Ok(Some(if empty { jsonedit::remove(&next, &[], self.json_path())?.unwrap_or(next) } else { next }))
             }
         }
     }
 
-    /// Whether the config holds cockpit's server on this binary, or the agent's cockpit plugin.
+    /// Whether the config holds flightdeck's server on this binary, or the agent's flightdeck plugin.
     pub fn is_connected(&self, bin: &str) -> bool {
         self.has_plugin() || self.current().ok().flatten().is_some_and(|e| self.same(&e, bin))
     }
 
-    /// Whether Codex has cockpit's plugin on, which brings the server itself.
+    /// Whether Codex has flightdeck's plugin on, which brings the server itself.
     pub fn has_plugin(&self) -> bool {
         let text = std::fs::read_to_string(self.path()).unwrap_or_default();
         let doc = text.parse::<toml_edit::DocumentMut>();
         self.id == "codex"
             && doc.is_ok_and(|d| {
-                d.get("plugins").and_then(|p| p.get("cockpit@cockpit")).is_some_and(|p| p.get("enabled").and_then(|e| e.as_bool()) != Some(false))
+                d.get("plugins").and_then(|p| p.get("flightdeck@flightdeck")).is_some_and(|p| p.get("enabled").and_then(|e| e.as_bool()) != Some(false))
             })
     }
 
@@ -287,33 +287,33 @@ impl Target {
         }
     }
 
-    /// Adds cockpit's server, or puts it on this binary; the line says what was done.
+    /// Adds flightdeck's server, or puts it on this binary; the line says what was done.
     pub fn connect(&self, bin: &str) -> Result<String, String> {
         let path = self.path();
         let text = std::fs::read_to_string(&path).unwrap_or_default();
-        // Codex's cockpit plugin brings the same server: a second one under the same name would clash.
+        // Codex's flightdeck plugin brings the same server: a second one under the same name would clash.
         if self.has_plugin() {
-            return Ok(format!("{} has cockpit's tools from its cockpit plugin ({})", self.name, tilde(&path)));
+            return Ok(format!("{} has flightdeck's tools from its flightdeck plugin ({})", self.name, tilde(&path)));
         }
         let current = self.current().map_err(|e| format!("{} does not read as the agent's config ({e}); left as it is", tilde(&path)))?;
         if current.as_ref().is_some_and(|e| self.same(e, bin)) {
-            return Ok(format!("{} already has cockpit's tools ({})", self.name, tilde(&path)));
+            return Ok(format!("{} already has flightdeck's tools ({})", self.name, tilde(&path)));
         }
         let next = self.with(&text, bin)?;
         let backup = write(&path, &text, &next)?;
         let after = if self.after.is_empty() { String::new() } else { format!("; {}", self.after) };
-        Ok(format!("{} has cockpit's tools in {}{}{after}", self.name, tilde(&path), backup.map(|b| format!(" (backup {})", tilde(&b))).unwrap_or_default()))
+        Ok(format!("{} has flightdeck's tools in {}{}{after}", self.name, tilde(&path), backup.map(|b| format!(" (backup {})", tilde(&b))).unwrap_or_default()))
     }
 
     pub fn disconnect(&self) -> Result<String, String> {
         let path = self.path();
         let Ok(text) = std::fs::read_to_string(&path) else { return Ok(format!("{} has no config at {}", self.name, tilde(&path))) };
         match self.without(&text).map_err(|e| format!("{} does not read as the agent's config ({e}); left as it is", tilde(&path)))? {
-            None => Ok(format!("{} has no cockpit server in {}", self.name, tilde(&path))),
+            None => Ok(format!("{} has no flightdeck server in {}", self.name, tilde(&path))),
             Some(next) => {
                 let backup = write(&path, &text, &next)?;
                 Ok(format!(
-                    "{}: cockpit's tools taken out of {}{}",
+                    "{}: flightdeck's tools taken out of {}{}",
                     self.name,
                     tilde(&path),
                     backup.map(|b| format!(" (backup {})", tilde(&b))).unwrap_or_default()
@@ -333,7 +333,7 @@ fn write(path: &Path, before: &str, after: &str) -> Result<Option<PathBuf>, Stri
     let mode = std::fs::metadata(path).ok().map(|m| m.permissions());
     let backup = if let Some(mode) = &mode {
         let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
-        let name = format!("{}.bak-cockpit-{stamp}", path.file_name().unwrap_or_default().to_string_lossy());
+        let name = format!("{}.bak-flightdeck-{stamp}", path.file_name().unwrap_or_default().to_string_lossy());
         let backup = path.with_file_name(name);
         std::fs::write(&backup, before).map_err(err)?;
         std::fs::set_permissions(&backup, mode.clone()).map_err(err)?;
@@ -341,7 +341,7 @@ fn write(path: &Path, before: &str, after: &str) -> Result<Option<PathBuf>, Stri
     } else {
         None
     };
-    let tmp = path.with_file_name(format!(".{}.cockpit-tmp", path.file_name().unwrap_or_default().to_string_lossy()));
+    let tmp = path.with_file_name(format!(".{}.flightdeck-tmp", path.file_name().unwrap_or_default().to_string_lossy()));
     std::fs::write(&tmp, after).map_err(err)?;
     if let Some(mode) = mode {
         let _ = std::fs::set_permissions(&tmp, mode);
@@ -355,15 +355,15 @@ fn tilde(path: &Path) -> String {
     path.strip_prefix(&home).map_or(path.display().to_string(), |rest| format!("~/{}", rest.display()))
 }
 
-/// The cockpit binary agents start: through the link that follows updates when it names this one.
+/// The flightdeck binary agents start: through the link that follows updates when it names this one.
 pub fn binary() -> String {
     let exe = std::env::current_exe().unwrap_or_default();
     let real = exe.canonicalize().unwrap_or(exe.clone());
-    let stable = [files::config_dir().join("herdr/bin/cockpit"), files::home().join(".local/bin/cockpit")];
+    let stable = [files::config_dir().join("herdr/bin/flightdeck"), files::home().join(".local/bin/flightdeck")];
     stable.into_iter().find(|p| p.canonicalize().is_ok_and(|c| c == real)).unwrap_or(exe).to_string_lossy().into_owned()
 }
 
-/// Every target with whether its agent is installed and whether it holds cockpit's server.
+/// Every target with whether its agent is installed and whether it holds flightdeck's server.
 pub fn status(bin: &str) -> Value {
     let rows: Vec<Value> = TARGETS
         .iter()
@@ -391,9 +391,10 @@ fn chosen(ids: &[String], all: impl Fn(&Target) -> bool) -> Vec<&'static Target>
     ids.iter()
         .map(|id| {
             if agent::get(id).is_some_and(|a| a.id == "claude") {
-                fail("Claude Code gets cockpit's tools from its plugin: /plugin install cockpit --marketplace quaresc/cockpit");
+                fail("Claude Code gets flightdeck's tools from its plugin: /plugin install flightdeck --marketplace gramosbr/flightdeck");
             }
-            target(id).unwrap_or_else(|| fail(&format!("cockpit cannot connect {id}: its MCP config is not documented where cockpit can write it\n{USAGE}")))
+            target(id)
+                .unwrap_or_else(|| fail(&format!("flightdeck cannot connect {id}: its MCP config is not documented where flightdeck can write it\n{USAGE}")))
         })
         .collect()
 }
@@ -406,7 +407,7 @@ pub fn main(args: &[String]) {
         "connect" => {
             let targets = chosen(ids, Target::installed);
             if targets.is_empty() {
-                println!("no agent cockpit can connect is installed");
+                println!("no agent flightdeck can connect is installed");
             }
             for t in targets {
                 match t.connect(&bin) {
@@ -458,7 +459,7 @@ fn toml_json(item: &toml_edit::Item) -> Value {
     }
 }
 
-/// An agent's server entry in cockpit's terms, whatever its agent calls the fields; None when it is off.
+/// An agent's server entry in flightdeck's terms, whatever its agent calls the fields; None when it is off.
 fn normalized(raw: &Value) -> Option<Value> {
     if raw["enabled"] == false || raw["disabled"] == true {
         return None;
@@ -501,11 +502,11 @@ mod tests {
         let codex = by("codex");
         let done = codex.with(text, "/c").unwrap();
         assert!(done.starts_with("model = \"o3\" # mine\n\n[mcp_servers.docs]\ncommand = \"docs\"\n"), "{done}");
-        assert!(done.contains("[mcp_servers.cockpit]\ncommand = \"/c\"\nargs = [\"mcp\"]\nenv_vars = [\"HERDR_ENV\""), "{done}");
+        assert!(done.contains("[mcp_servers.flightdeck]\ncommand = \"/c\"\nargs = [\"mcp\"]\nenv_vars = [\"HERDR_ENV\""), "{done}");
         assert_eq!(codex.without(&done).unwrap().unwrap(), text);
         assert_eq!(codex.without(text).unwrap(), None);
         let grok = by("grok").with("", "/c").unwrap();
-        assert_eq!(grok, "[mcp_servers.cockpit]\ncommand = \"/c\"\nargs = [\"mcp\"]\n");
+        assert_eq!(grok, "[mcp_servers.flightdeck]\ncommand = \"/c\"\nargs = [\"mcp\"]\n");
         assert_eq!(by("grok").without(&grok).unwrap().unwrap(), "");
     }
 
@@ -522,7 +523,7 @@ mod tests {
         assert_eq!(normalized(&json!({"httpUrl": "https://mcp.linear.app/mcp"})), Some(json!({"url": "https://mcp.linear.app/mcp"})));
         assert_eq!(normalized(&json!({"url": "https://x", "enabled": false})), None);
         let doc: toml_edit::DocumentMut =
-            "[mcp_servers.linear]\nurl = \"https://mcp.linear.app/mcp\"\n[mcp_servers.cockpit]\ncommand = \"cockpit\"\n".parse().unwrap();
+            "[mcp_servers.linear]\nurl = \"https://mcp.linear.app/mcp\"\n[mcp_servers.flightdeck]\ncommand = \"flightdeck\"\n".parse().unwrap();
         let servers = doc["mcp_servers"].as_table_like().unwrap();
         assert_eq!(normalized(&toml_json(servers.get("linear").unwrap())), Some(json!({"url": "https://mcp.linear.app/mcp"})));
     }

@@ -1,6 +1,6 @@
 //! Agent rows carry their display identity on watched terminals and driven sessions.
 
-use cockpit_agents::gui;
+use flightdeck_agents::gui;
 use serde_json::{Value, json};
 
 #[test]
@@ -22,7 +22,7 @@ fn watched_and_driven_rows_name_their_agent_and_herdr_icon() {
     // SAFETY: this test binary has one test and owns its environment.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_AGENTS_DEMO", &world);
+        std::env::set_var("FLIGHTDECK_AGENTS_DEMO", &world);
     }
     let rows = gui::view(&json!({}), &|_| Value::Null);
     // Rows are found by terminal: their title follows the naming chain, here the tab's own label.

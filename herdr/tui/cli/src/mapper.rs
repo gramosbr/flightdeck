@@ -1,10 +1,10 @@
-//! `cockpit connector map`: the default agent, run headless, writes the mapping of a server cockpit has no preset for.
-//! cockpit lists the tools, tries the agent's mapping on the real server and shows it what came back, up to three times.
+//! `flightdeck connector map`: the default agent, run headless, writes the mapping of a server flightdeck has no preset for.
+//! flightdeck lists the tools, tries the agent's mapping on the real server and shows it what came back, up to three times.
 
 use std::time::Duration;
 
-use cockpit_connectors::{Connection, Server};
-use cockpit_core::agent::{self, Headless};
+use flightdeck_connectors::{Connection, Server};
+use flightdeck_core::agent::{self, Headless};
 use serde_json::{Value, json};
 
 use crate::proc;
@@ -23,7 +23,7 @@ pub fn brief(section: &str) -> Option<&'static str> {
              Fill `fields` with dotted paths into the answers (`a.b`, `a.0.b`, `a|b` for the first that has one; \"\" is the answer itself): tickets (the \
              list in listMine's answer), id, title, url, status (the state's name), statusType (its category), parentId, project, description, \
              attachments, attachmentUrl, in details' answer labels, labelName (a label's name when labels are objects), priority, assignee, branch, \
-             in create's answer createdId and createdUrl, and in listStates' answer states, stateId, stateName, stateType. cockpit reads Linear's categories (triage, \
+             in create's answer createdId and createdUrl, and in listStates' answer states, stateId, stateName, stateType. flightdeck reads Linear's categories (triage, \
              backlog, unstarted, started, completed, canceled): map the tool's own to them in `statusTypes`, e.g. Jira's {\"new\": \"unstarted\", \
              \"indeterminate\": \"started\", \"done\": \"completed\"}. Answer {\"tools\", \"fields\", \"statusTypes\"}."
         }
@@ -96,7 +96,7 @@ pub fn brief(section: &str) -> Option<&'static str> {
 
 /// The read the mapping is tried with, and what it gives: a short sample, or the error and the tool's raw answer.
 async fn trial(connection: &Connection, section: &str, mapping: &Value) -> Result<String, String> {
-    use cockpit_connectors::{calendar, ci, platform, tickets, tools::Mapped};
+    use flightdeck_connectors::{calendar, ci, platform, tickets, tools::Mapped};
     let sample = |items: Vec<Value>| format!("{} item(s), the first: {}", items.len(), items.first().map(Value::to_string).unwrap_or_default());
     match section {
         "tickets" => {
@@ -117,12 +117,12 @@ async fn trial(connection: &Connection, section: &str, mapping: &Value) -> Resul
             platform::deployed_apps(&tools, &mapping).await.map(|apps| sample(apps.iter().map(|a| serde_json::to_value(a).unwrap_or_default()).collect()))
         }
         "mail" => {
-            let mapping = cockpit_connectors::mail::mapping(mapping);
-            cockpit_connectors::mail::inbox(&Mapped { connection, section: &mapping }, &mapping).await.map(sample)
+            let mapping = flightdeck_connectors::mail::mapping(mapping);
+            flightdeck_connectors::mail::inbox(&Mapped { connection, section: &mapping }, &mapping).await.map(sample)
         }
         "code" => {
-            let mapping = cockpit_connectors::code::mapping(mapping);
-            let [direct, _, _, mine, _] = cockpit_connectors::code::inbox(&Mapped { connection, section: &mapping }, &mapping).await?;
+            let mapping = flightdeck_connectors::code::mapping(mapping);
+            let [direct, _, _, mine, _] = flightdeck_connectors::code::inbox(&Mapped { connection, section: &mapping }, &mapping).await?;
             let mine = mine.as_array().cloned().unwrap_or_default();
             Ok(format!(
                 "{} of mine, {} asking for my review; the first: {}",
@@ -132,7 +132,7 @@ async fn trial(connection: &Connection, section: &str, mapping: &Value) -> Resul
             ))
         }
         "observability" => {
-            use cockpit_connectors::observability::{self, Signals};
+            use flightdeck_connectors::observability::{self, Signals};
             let mapping = observability::mapping(mapping);
             let tools = Mapped { connection, section: &mapping };
             let signals = Signals::Mapped { tools: &tools, section: &mapping };
@@ -156,7 +156,7 @@ async fn raw_answer(connection: &Connection, section: &str, mapping: &Value) -> 
         "mail" => "listInbox",
         _ => "deployStatus",
     };
-    match cockpit_connectors::call_mapped(connection, mapping, verb, &json!({})).await {
+    match flightdeck_connectors::call_mapped(connection, mapping, verb, &json!({})).await {
         Ok(answer) => answer.to_string().chars().take(6000).collect(),
         Err(e) => format!("error: {e}"),
     }
@@ -182,12 +182,12 @@ fn ask_agent(agent: &agent::Agent, prompt: &str) -> Result<String, String> {
 /// Writes a mapping for `section` from the server's tools, tried on the server; Ok holds the mapping and the trial's
 /// sample.
 pub fn map(section: &str, server: &Server, name: &str, agent: &agent::Agent) -> Result<(Value, String), String> {
-    let brief = brief(section).ok_or_else(|| format!("cockpit maps tickets, ci, calendar, platform, observability, code and mail, not {section}"))?;
-    cockpit_connectors::block_on(async {
-        let connection = cockpit_connectors::connect(server).await?;
+    let brief = brief(section).ok_or_else(|| format!("flightdeck maps tickets, ci, calendar, platform, observability, code and mail, not {section}"))?;
+    flightdeck_connectors::block_on(async {
+        let connection = flightdeck_connectors::connect(server).await?;
         let tools = connection.tool_list().await?;
         let mut prompt = format!(
-            "You map an MCP server's tools for cockpit, a dashboard that calls them itself. The server is {name}; its tools:\n{tools}\n\n{brief}\n\
+            "You map an MCP server's tools for flightdeck, a dashboard that calls them itself. The server is {name}; its tools:\n{tools}\n\n{brief}\n\
              Use only tools listed above, read-only ones for reads. Write nothing else than the JSON between <mapping> and </mapping>."
         );
         let mut last = String::new();
@@ -209,7 +209,7 @@ pub fn map(section: &str, server: &Server, name: &str, agent: &agent::Agent) -> 
                     last = outcome.unwrap_or_else(|e| e);
                     let raw = raw_answer(&connection, section, &merged).await;
                     prompt = format!(
-                        "{prompt}\n\nYou answered:\n{mapping}\ncockpit tried it and got: {last}\nThe first read's raw answer: {raw}\nFix the mapping and answer again."
+                        "{prompt}\n\nYou answered:\n{mapping}\nflightdeck tried it and got: {last}\nThe first read's raw answer: {raw}\nFix the mapping and answer again."
                     );
                 }
             }

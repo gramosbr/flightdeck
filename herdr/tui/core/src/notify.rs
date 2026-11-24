@@ -1,4 +1,4 @@
-//! System notifications with the cockpit icon: a click does the notification's action, a URL or a `cockpit focus`
+//! System notifications with the flightdeck icon: a click does the notification's action, a URL or a `flightdeck focus`
 //! target, and each `<label>=<action>` button does its own. Notifications switched off in the config silence every
 //! caller, the mod's and the apps' alike.
 
@@ -14,12 +14,12 @@ use crate::files;
 use crate::frontend::{self, Frontend};
 
 /// Names a program that gets each notification's arguments instead of showing it, for tests.
-pub const TEST_PROGRAM: &str = "COCKPIT_NOTIFY_PROGRAM";
+pub const TEST_PROGRAM: &str = "FLIGHTDECK_NOTIFY_PROGRAM";
 
 /// The notifier app's own bundle id, which is never the terminal to bring forward.
-const NOTIFIER: &str = "dev.cockpit.notifier";
+const NOTIFIER: &str = "dev.flightdeck.notifier";
 
-/// In the hub's own process, how a notification reaches the Herdr app's cockpit mod: true when a window took it.
+/// In the hub's own process, how a notification reaches the Herdr app's flightdeck mod: true when a window took it.
 pub static GUI: OnceLock<fn(&Value) -> bool> = OnceLock::new();
 
 /// Shows one notification: in the Herdr app as its toast (the mod falls back here when its window is not in front),
@@ -36,7 +36,7 @@ pub fn post(title: &str, body: &str, action: &str, buttons: &[String]) {
     system(frontend, title, body, action, buttons);
 }
 
-/// Prefixes a click's target so `cockpit focus` drives the Herdr app with it, whatever the environment it runs in.
+/// Prefixes a click's target so `flightdeck focus` drives the Herdr app with it, whatever the environment it runs in.
 pub const IN_APP: &str = "herdr-app:";
 
 /// Where a click leads in the Herdr app: the row the notification is about, in its view (`inbox:<PR url>`,
@@ -67,7 +67,7 @@ pub fn navigation(target: &str) -> bool {
     bare.starts_with("https://") || bare.starts_with("http://") || VIEWS.iter().any(|v| bare.len() > v.len() && bare.starts_with(v))
 }
 
-/// A target as one from outside cockpit's own threads may have it: what only brings something into view stays, a
+/// A target as one from outside flightdeck's own threads may have it: what only brings something into view stays, a
 /// button's act becomes the row it is about, where the person acts themselves, and anything else is dropped.
 pub fn to_view(target: &str) -> String {
     let bare = target.strip_prefix(IN_APP).unwrap_or(target);
@@ -116,7 +116,7 @@ fn for_app(action: &str, buttons: &[String]) -> (String, Vec<String>) {
     (lead(action), buttons)
 }
 
-/// Hands the notification to the cockpit mod through the hub: in-process in the hub, else over its socket when one
+/// Hands the notification to the flightdeck mod through the hub: in-process in the hub, else over its socket when one
 /// runs (none is started for it). False when no Herdr window follows the hub.
 fn to_app(notification: &Value) -> bool {
     if let Some(deliver) = GUI.get() {
@@ -164,9 +164,9 @@ fn quiet(command: &mut Command) -> &mut Command {
     command.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
 }
 
-/// macOS: the Cockpit app, built on first use, posts it with the cockpit icon and its buttons.
+/// macOS: the Flightdeck app, built on first use, posts it with the flightdeck icon and its buttons.
 fn notifier(title: &str, body: &str, action: &str, buttons: &[String]) -> bool {
-    let app = files::config_dir().join("Cockpit.app/Contents/MacOS/cockpit-notify");
+    let app = files::config_dir().join("Flightdeck.app/Contents/MacOS/flightdeck-notify");
     let built = quiet(Command::new("sh").arg(files::herdr_dir().join("notifier/build.sh"))).status().is_ok_and(|s| s.success());
     built
         && executable(&app)
@@ -181,7 +181,7 @@ fn notify_send(title: &str, body: &str, action: &str, buttons: &[String]) -> boo
     }
     let icon = files::herdr_dir().join("notifier/icon.png").to_string_lossy().into_owned();
     if (!action.is_empty() || !buttons.is_empty()) && supports_actions() {
-        let mut argv: Vec<String> = ["notify-send", "-a", "Cockpit", "-i", &icon].map(String::from).to_vec();
+        let mut argv: Vec<String> = ["notify-send", "-a", "Flightdeck", "-i", &icon].map(String::from).to_vec();
         let mut cases = String::new();
         if !action.is_empty() {
             argv.extend(["-A".into(), "default=Open".into()]);
@@ -193,14 +193,14 @@ fn notify_send(title: &str, body: &str, action: &str, buttons: &[String]) -> boo
             cases += &format!("b{}) target={} ;; ", n + 1, quote(target));
         }
         argv.extend(["--wait".into(), title.into(), body.into()]);
-        let focus = quote(&script("cockpit.sh").to_string_lossy());
+        let focus = quote(&script("flightdeck.sh").to_string_lossy());
         let wait = format!("choice=$(\"$@\" 2>/dev/null); target=; case \"$choice\" in {cases}esac; [ -n \"$target\" ] && exec sh {focus} focus \"$target\"");
         if let Ok(mut child) = quiet(Command::new("sh").arg("-c").arg(wait).arg("sh").args(argv)).process_group(0).spawn() {
             std::thread::spawn(move || child.wait());
             return true;
         }
     }
-    quiet(Command::new("notify-send").args(["-a", "Cockpit", "-i", &icon, title, body])).status().is_ok_and(|s| s.success())
+    quiet(Command::new("notify-send").args(["-a", "Flightdeck", "-i", &icon, title, body])).status().is_ok_and(|s| s.success())
 }
 
 fn supports_actions() -> bool {

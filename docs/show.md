@@ -1,7 +1,7 @@
 # The `show` tool
 
 An agent draws results in a pane beside the session with `show`: charts, tables, diagrams, diffs, logs, pictures
-and questions, rendered natively by herdr and the Herdr app. It is the reason cockpit holds back hand-written HTML
+and questions, rendered natively by herdr and the Herdr app. It is the reason flightdeck holds back hand-written HTML
 pages and claude.ai artifacts — those are the fallback, for what no block can draw.
 
 This is the reference. The tool's own description carries the same ground, and its errors name the exact rule a
@@ -58,7 +58,7 @@ A `chart` or a `table` can take its rows from a source instead of the call, and 
 
 - `source.metabase: {question: <id>}` or `{query: <MBQL>}`
 - `source.datadog: {queries: [...], from?: "now-1h"}`
-- `source.metrics: {queries: [...], from?}` — in the language of whichever metrics tool `cockpit setup` connected
+- `source.metrics: {queries: [...], from?}` — in the language of whichever metrics tool `flightdeck setup` connected
 - `command: <shell printing JSON>` with `every` (1 second at the least)
 
 A pane that runs a command asks the person the first time.
@@ -89,11 +89,11 @@ Only the first broken rule is reported, so a call with several mistakes takes a 
 
 In Claude Code, the plugin also refuses a hand-made HTML page beside the session, or a claude.ai artifact, when `show`
 could draw it. Asking for a page or a link in so many words lets it through, as does prefixing the command with
-`COCKPIT_SHOW_FALLBACK="<what show cannot draw>"`. Setting `artifactGuard: false` in `~/.config/cockpit/config.json` lets every
+`FLIGHTDECK_SHOW_FALLBACK="<what show cannot draw>"`. Setting `artifactGuard: false` in `~/.config/flightdeck/config.json` lets every
 artifact through, for a machine with no pane to draw in.
 
 ## Where it draws
 
 In herdr and the Herdr app the pane opens beside the session; `q` hides it and its footer chip brings it back.
-In a session running in neither, the view is written to `~/.cache/cockpit/show/<pane>.json` and nothing opens —
+In a session running in neither, the view is written to `~/.cache/flightdeck/show/<pane>.json` and nothing opens —
 the result says so.

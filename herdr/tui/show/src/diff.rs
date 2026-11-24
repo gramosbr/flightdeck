@@ -11,9 +11,9 @@ use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::style::{Color, Modifier, Style};
 use serde_json::{Value, json};
 
-use cockpit_core::input::{Edit, Input};
-use cockpit_core::text::{fit, width};
-use cockpit_core::theme::{BG, DIM, FG, GREEN, ORANGE, RED, SURFACE, bold, dim, fg};
+use flightdeck_core::input::{Edit, Input};
+use flightdeck_core::text::{fit, width};
+use flightdeck_core::theme::{BG, DIM, FG, GREEN, ORANGE, RED, SURFACE, bold, dim, fg};
 
 use crate::markdown::split_at_cells;
 use crate::patch::{File, Kind, Line};
@@ -878,7 +878,7 @@ impl Diff {
     /// Under a line: the comments sent on it (✓), those waiting for `S` (•), and the comment being typed about it.
     fn after_line(&self, marks: &Marks, l: usize, f: usize, cols: usize, out: &mut Vec<Row>) {
         for (mark, color, text) in marks.get(&(f, l)).into_iter().flatten() {
-            for (k, piece) in cockpit_core::text::wrap(text, cols.saturating_sub(8)).into_iter().enumerate() {
+            for (k, piece) in flightdeck_core::text::wrap(text, cols.saturating_sub(8)).into_iter().enumerate() {
                 out.push(Row::text(if k == 0 { *mark } else { "      " }, fg(*color)).add(piece, dim().add_modifier(Modifier::ITALIC)).target(Target::Diff));
             }
         }
@@ -1067,7 +1067,7 @@ mod tests {
     }
 
     /// Times what a 1 MB diff costs: reading, drawing, moving, comments and the walkthrough over it. Run with
-    /// `cargo test -p cockpit-show --lib large_diff -- --ignored --nocapture`.
+    /// `cargo test -p flightdeck-show --lib large_diff -- --ignored --nocapture`.
     #[test]
     #[ignore]
     fn large_diff_costs() {

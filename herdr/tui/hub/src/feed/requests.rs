@@ -3,8 +3,8 @@
 
 use std::path::Path;
 
-use cockpit_connectors::tools::Mapped;
-use cockpit_connectors::{Server, ci, platform, tickets};
+use flightdeck_connectors::tools::Mapped;
+use flightdeck_connectors::{Server, ci, platform, tickets};
 use serde_json::{Value, json};
 
 use super::{mcp, news, now_ms};
@@ -65,7 +65,7 @@ pub fn take(cache: &Path, config: &Config, raw: &Value) {
             continue;
         }
         let path = entry.path();
-        let Some(request) = cockpit_core::files::load(&path) else { continue };
+        let Some(request) = flightdeck_core::files::load(&path) else { continue };
         let kind = request["type"].as_str().unwrap_or_default();
         let section = section_of(kind);
         let Some(server) = mcp::server(raw, &config.0, section) else { continue };
@@ -81,7 +81,7 @@ pub fn take(cache: &Path, config: &Config, raw: &Value) {
         let result = results.join(&name);
         let write = |state: &str, message: &str| {
             let outcome = json!({"ok": state == "done", "state": state, "message": message, "at": now_ms()});
-            let _ = cockpit_core::files::write(&result, &outcome);
+            let _ = flightdeck_core::files::write(&result, &outcome);
             let _ = std::fs::remove_file(results.join(format!("{name}.claimed")));
         };
         if age > TTL_MS {
@@ -104,7 +104,7 @@ pub fn take(cache: &Path, config: &Config, raw: &Value) {
             }
             Err(e) => {
                 write("failed", &e.chars().take(200).collect::<String>());
-                news::notify(config, "⚠️ Cockpit", &format!("{label}: {e}"), "space:inbox", &[]);
+                news::notify(config, "⚠️ Flightdeck", &format!("{label}: {e}"), "space:inbox", &[]);
             }
         }
     }
@@ -168,20 +168,20 @@ fn carry_out(server: &Server, config: &Config, raw: &Value, request: &Value) -> 
             Ok((format!("extended by {days} days"), "🧪 Preview".into(), format!("{preview} extended by {days} days and redeploying"), dashboard(&preview)))
         }
         kind @ ("mail-archive" | "mail-read") => {
-            let mapping = cockpit_connectors::mail::mapping(section);
+            let mapping = flightdeck_connectors::mail::mapping(section);
             let message = serde_json::json!({"id": s("message")});
             if kind == "mail-archive" {
-                mcp::with(server, async |c| cockpit_connectors::mail::archive(&Mapped { connection: c, section: &mapping }, &message).await)?;
+                mcp::with(server, async |c| flightdeck_connectors::mail::archive(&Mapped { connection: c, section: &mapping }, &message).await)?;
             } else {
-                mcp::with(server, async |c| cockpit_connectors::mail::mark_read(&Mapped { connection: c, section: &mapping }, &message).await)?;
+                mcp::with(server, async |c| flightdeck_connectors::mail::mark_read(&Mapped { connection: c, section: &mapping }, &message).await)?;
             }
             Ok(("done".into(), "✉️ Mail".into(), format!("{} {}", if kind == "mail-archive" { "Archived" } else { "Read" }, s("label")), "space:mail".into()))
         }
         "mail-get" => {
-            let mapping = cockpit_connectors::mail::mapping(section);
+            let mapping = flightdeck_connectors::mail::mapping(section);
             let id = s("message");
             let message = super::mail::listed(&id);
-            let read = mcp::with(server, async |c| cockpit_connectors::mail::thread(&Mapped { connection: c, section: &mapping }, &mapping, &message).await);
+            let read = mcp::with(server, async |c| flightdeck_connectors::mail::thread(&Mapped { connection: c, section: &mapping }, &mapping, &message).await);
             let failed = read.as_ref().err().cloned();
             super::mail::keep_thread(&id, read);
             match failed {

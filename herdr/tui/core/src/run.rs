@@ -1,4 +1,4 @@
-//! Commands cockpit runs on its own (an agent asked headless, a model listing, a usage command): apart from the terminal
+//! Commands flightdeck runs on its own (an agent asked headless, a model listing, a usage command): apart from the terminal
 //! and agent session they were started from, their input empty, in a process group of their own that stops whole.
 
 use std::io::Read;
@@ -20,8 +20,8 @@ pub const SESSION_VARS: [&str; 8] = [
     "CLAUDE_CODE_SSE_PORT",
 ];
 
-/// The key of the session cockpit drives that a process runs in, so the views it shows are that session's.
-pub const DRIVEN_KEY: &str = "COCKPIT_SESSION_KEY";
+/// The key of the session flightdeck drives that a process runs in, so the views it shows are that session's.
+pub const DRIVEN_KEY: &str = "FLIGHTDECK_SESSION_KEY";
 
 /// Whether a variable ties a process to a Herdr terminal (`HERDR_*`, `HC_*`), an agent session or a driven one.
 pub fn tied(name: &str) -> bool {

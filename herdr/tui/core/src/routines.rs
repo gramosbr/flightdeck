@@ -1,4 +1,4 @@
-//! Routines: an agent's prompt or a shell script in ~/.config/cockpit/routines/<slug>.md that the hub runs on its own,
+//! Routines: an agent's prompt or a shell script in ~/.config/flightdeck/routines/<slug>.md that the hub runs on its own,
 //! on a schedule, every so often or when something happens. A file is a front matter of `key: value` lines, then the
 //! prompt (or the script); `when` says when it runs, in words or as cron, on the machine's clock or in `tz`.
 
@@ -657,7 +657,7 @@ pub const TEMPLATES: [Template; 4] = [
         model: "sonnet",
         tools: "Bash(gh run view:*), Bash(gh pr view:*), Bash(gh pr checks:*)",
         mode: "",
-        precheck: "case \"$COCKPIT_EVENT_KEY\" in https://*/pull/*) gh pr checks \"$COCKPIT_EVENT_KEY\" --json bucket --jq \
+        precheck: "case \"$FLIGHTDECK_EVENT_KEY\" in https://*/pull/*) gh pr checks \"$FLIGHTDECK_EVENT_KEY\" --json bucket --jq \
                    '[.[] | select(.bucket == \"fail\")] | length' | grep -qv '^0$' ;; *) true ;; esac",
         worktree: false,
         notify: "always",
@@ -898,7 +898,7 @@ mod tests {
             "runs": {
                 "a": [{"id": "3", "ok": true, "skipped": "precheck", "ended": 900}, {"id": "2", "ok": false, "ended": 800, "summary": "exit 3", "reason": "Ended with exit 3."}],
                 "b": [{"id": "5", "ok": true, "ended": 700}, {"id": "4", "ok": false, "ended": 600}],
-                "c": [{"id": "6", "ok": false, "missed": true, "ended": 500, "summary": "Missed Sun 09:00: cockpit was not running then."}],
+                "c": [{"id": "6", "ok": false, "missed": true, "ended": 500, "summary": "Missed Sun 09:00: flightdeck was not running then."}],
                 "e": [{"id": "7", "ok": false, "ended": 400, "read": true}],
                 "f": [{"id": "8", "ok": false, "stopped": true, "ended": 300}],
                 "g": [{"id": "9", "ok": false, "ended": 50}]}});
@@ -910,7 +910,7 @@ mod tests {
             look,
             [
                 ("a/run/2".into(), "failed".into(), "Ended with exit 3.".into()),
-                ("c/run/6".into(), "missed".into(), "Missed Sun 09:00: cockpit was not running then.".into()),
+                ("c/run/6".into(), "missed".into(), "Missed Sun 09:00: flightdeck was not running then.".into()),
                 ("d".into(), "broken".into(), "when?".into()),
             ],
             "b ran fine since, e is read, f was stopped by hand, g ended before the inbox began"

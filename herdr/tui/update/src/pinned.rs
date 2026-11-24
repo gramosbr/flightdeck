@@ -1,4 +1,4 @@
-//! Programs cockpit pins to one version and one checksum and downloads once: the Chromium side browser's Electron and
+//! Programs flightdeck pins to one version and one checksum and downloads once: the Chromium side browser's Electron and
 //! the agent-browser tool that drives it.
 
 use std::io::Read;

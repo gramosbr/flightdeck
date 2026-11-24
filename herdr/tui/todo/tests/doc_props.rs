@@ -1,6 +1,6 @@
 //! The file parser and writer: what it reads it writes back byte for byte, and an edit leaves every other line as it was.
 
-use cockpit_todo::doc::{Doc, undated};
+use flightdeck_todo::doc::{Doc, undated};
 use proptest::prelude::*;
 
 fn line() -> impl Strategy<Value = String> {

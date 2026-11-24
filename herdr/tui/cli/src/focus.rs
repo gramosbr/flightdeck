@@ -1,40 +1,40 @@
-//! `cockpit focus`: what a click on a cockpit notification does besides opening a URL, then the terminal hosting herdr
+//! `flightdeck focus`: what a click on a flightdeck notification does besides opening a URL, then the terminal hosting herdr
 //! brought forward on macOS.
 
 use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use cockpit_core::{files, frontend};
+use flightdeck_core::{files, frontend};
 use serde_json::{Value, json};
 
 use crate::proc;
 
-const USAGE: &str = "What a click on a cockpit notification does.
+const USAGE: &str = "What a click on a flightdeck notification does.
 
-    cockpit focus workspace:<id>                    the space of that agent
-    cockpit focus tab:<id>                          the tab of that agent, with its space
-    cockpit focus space:<name>                      a pinned space, e.g. space:inbox
-    cockpit focus runbook:<slug>[:<step>,<step>]    the runbook space, that runbook open and its steps played as done
-    cockpit focus meeting:<event id>                the meetings space, that meeting's brief open
-    cockpit focus monitor:<app>                     the monitor space, that app (its id or name) selected and unfolded
-    cockpit focus routine:<slug>[/run/<id>]         the routines space, that routine (or that run of it) selected
-    cockpit focus mail:<message id>                 the mail space, that message open
-    cockpit focus inbox:<PR url|ticket id>          the inbox space, that row selected
-    cockpit focus todo:<text>                       the to-do space, that item selected
-    cockpit focus herdr-app:<target>                that target in the Herdr app (its notifications' clicks)
-    cockpit focus update                            cockpit updated, in the background
-    cockpit focus resume                            the agents a restart stopped, resumed where they were
-    cockpit focus act:<review|ci|rerun|plan|merge|routine>:<ref>
+    flightdeck focus workspace:<id>                    the space of that agent
+    flightdeck focus tab:<id>                          the tab of that agent, with its space
+    flightdeck focus space:<name>                      a pinned space, e.g. space:inbox
+    flightdeck focus runbook:<slug>[:<step>,<step>]    the runbook space, that runbook open and its steps played as done
+    flightdeck focus meeting:<event id>                the meetings space, that meeting's brief open
+    flightdeck focus monitor:<app>                     the monitor space, that app (its id or name) selected and unfolded
+    flightdeck focus routine:<slug>[/run/<id>]         the routines space, that routine (or that run of it) selected
+    flightdeck focus mail:<message id>                 the mail space, that message open
+    flightdeck focus inbox:<PR url|ticket id>          the inbox space, that row selected
+    flightdeck focus todo:<text>                       the to-do space, that item selected
+    flightdeck focus herdr-app:<target>                that target in the Herdr app (its notifications' clicks)
+    flightdeck focus update                            flightdeck updated, in the background
+    flightdeck focus resume                            the agents a restart stopped, resumed where they were
+    flightdeck focus act:<review|ci|rerun|plan|merge|routine>:<ref>
                                                     a notification button: the row it is about (the PR, the ticket,
                                                     the routine), where you act
-    cockpit focus http(s)://…                       opened in the browser";
+    flightdeck focus http(s)://…                       opened in the browser";
 
 const TIMEOUT: Duration = Duration::from_secs(10);
 
 pub fn main(args: &[String]) {
     let [target] = args else { proc::fail(USAGE) };
-    if let Some(rest) = target.strip_prefix(cockpit_core::notify::IN_APP) {
+    if let Some(rest) = target.strip_prefix(flightdeck_core::notify::IN_APP) {
         return frontend::with(Some(frontend::Frontend::App), || main(&[rest.to_string()]));
     }
     // A button only navigates: what it names is done from its row, by the person.
@@ -51,7 +51,7 @@ pub fn main(args: &[String]) {
         return;
     }
     if target == "resume" {
-        let _ = cockpit_core::resume::resume_all();
+        let _ = flightdeck_core::resume::resume_all();
         terminal_forward();
         return;
     }
@@ -59,7 +59,7 @@ pub fn main(args: &[String]) {
         && let Some(found) = app_target(target)
     {
         // The hub shows the app's block and asks its view to bring the item into view.
-        let _ = cockpit_core::hub::request(&json!({"op": "go", "target": found, "frontend": "app"}), TIMEOUT);
+        let _ = flightdeck_core::hub::request(&json!({"op": "go", "target": found, "frontend": "app"}), TIMEOUT);
         terminal_forward();
         return;
     }
@@ -70,16 +70,16 @@ pub fn main(args: &[String]) {
         request("monitor-focus.json", &json!({"app": app, "at": now()}));
         space("monitor");
     } else if let Some(key) = target.strip_prefix("inbox:") {
-        cockpit_core::focus::request("inbox", &json!({"app": "inbox", "key": key}));
+        flightdeck_core::focus::request("inbox", &json!({"app": "inbox", "key": key}));
         space("inbox");
     } else if let Some(id) = target.strip_prefix("mail:") {
-        cockpit_core::focus::request("mail", &json!({"app": "mail", "key": id}));
+        flightdeck_core::focus::request("mail", &json!({"app": "mail", "key": id}));
         space("mail");
     } else if let Some(slug) = target.strip_prefix("routine:") {
-        cockpit_core::focus::request("routines", &json!({"app": "routines", "key": slug}));
+        flightdeck_core::focus::request("routines", &json!({"app": "routines", "key": slug}));
         space("routines");
     } else if let Some(text) = target.strip_prefix("todo:") {
-        cockpit_core::focus::request("todo", &json!({"app": "todo", "key": text}));
+        flightdeck_core::focus::request("todo", &json!({"app": "todo", "key": text}));
         space("to-do");
     } else if let Some(id) = target.strip_prefix("workspace:") {
         match id.strip_prefix(frontend::APP) {
@@ -178,7 +178,7 @@ fn space(name: &str) {
     }
 }
 
-/// cockpit updated by update.sh, left running in the background with its output in update.log.
+/// flightdeck updated by update.sh, left running in the background with its output in update.log.
 fn update() {
     let Ok(log) = std::fs::File::create(files::cache().join("update.log")) else { return };
     let Ok(err) = log.try_clone() else { return };

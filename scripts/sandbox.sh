@@ -1,11 +1,11 @@
 #!/bin/sh
-# A Herdr app window of its own on the acme demo world, for working on the cockpit mod: never the person's window,
-# never their cockpit data. Everything lives under $COCKPIT_SANDBOX (default: $TMPDIR/cockpit-gui). The window shares
+# A Herdr app window of its own on the acme demo world, for working on the flightdeck mod: never the person's window,
+# never their flightdeck data. Everything lives under $FLIGHTDECK_SANDBOX (default: $TMPDIR/flightdeck-gui). The window shares
 # herdr-core with the person's own: its spaces and terminals are theirs, so never create, close or type into them here.
 #
 #   sh scripts/sandbox.sh start            fake HOME from docs/screenshots/demo_data.py (FRESH=1 rebuilds it, with
-#                                      COCKPIT_DEMO_SOURCES=failing its sources failing), dev build, a separate Herdr
-#                                      window on the cockpit layout, and the layout and mod copied again each time a
+#                                      FLIGHTDECK_DEMO_SOURCES=failing its sources failing), dev build, a separate Herdr
+#                                      window on the flightdeck layout, and the layout and mod copied again each time a
 #                                      file of app/ changes (Herdr reloads the mod on its own)
 #   sh scripts/sandbox.sh do <cmd> [json]  a Herdr command in that window (layout.select, app.theme, ...)
 #   sh scripts/sandbox.sh show <app>       that app's block in front (work, todo, inbox, ...)
@@ -16,10 +16,10 @@
 #   sh scripts/sandbox.sh check            herdr-app check on the mod
 #   sh scripts/sandbox.sh status           herdr-app status (errors from the mod show here)
 #   sh scripts/sandbox.sh notify <title> <body> [action]
-#                                      a cockpit notification, as the hub and the plugin post them
+#                                      a flightdeck notification, as the hub and the plugin post them
 #   sh scripts/sandbox.sh hc-wrapper <file>
 #                                      writes the hc the sandbox's hub runs (start does it), for a test
-#   sh scripts/sandbox.sh env              the variables to run cockpit or herdr-app against the sandbox yourself
+#   sh scripts/sandbox.sh env              the variables to run flightdeck or herdr-app against the sandbox yourself
 #   sh scripts/sandbox.sh stop             quits the window and stops the sandbox's hub (and its herdr-core, see HC_SESSION)
 #
 # The window gets a herdr-core of its own, empty, so none of the person's terminals shows in it: HC_SESSION names it
@@ -30,11 +30,11 @@ set -eu
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
 tmp=${TMPDIR:-/tmp}
-box=${COCKPIT_SANDBOX:-${tmp%/}/cockpit-gui}
+box=${FLIGHTDECK_SANDBOX:-${tmp%/}/flightdeck-gui}
 box=${box%/}
 fake_home="$box/home"
 app_home="$box/herdr-home"
-bin=${COCKPIT_BIN:-$repo/herdr/tui/target/debug/cockpit}
+bin=${FLIGHTDECK_BIN:-$repo/herdr/tui/target/debug/flightdeck}
 herdr_app=${HERDR_APP_BIN:-$HOME/.local/bin/herdr-app}
 app_bundle=${HERDR_APP_BUNDLE:-$HOME/Applications/Herdr.app}
 session=${HC_SESSION:-$(basename "$box")}
@@ -43,8 +43,8 @@ session=${HC_SESSION:-$(basename "$box")}
 # on the real HOME: under the fake one it would start a herdr-core of its own, not the window's. The hub fetches
 # nothing and asks no agent of this machine for its models: the demo world's documents stay as written.
 in_box() {
-  HOME="$fake_home" HERDR_APP_HOME="$app_home" COCKPIT_FRONTEND=app COCKPIT_TOASTS=always COCKPIT_HUB_FEED=off \
-    COCKPIT_HUB_MODELS=off COCKPIT_NOTIFY_PROGRAM="$box/notified.sh" COCKPIT_HC_BIN="$box/hc.sh" "$@"
+  HOME="$fake_home" HERDR_APP_HOME="$app_home" FLIGHTDECK_FRONTEND=app FLIGHTDECK_TOASTS=always FLIGHTDECK_HUB_FEED=off \
+    FLIGHTDECK_HUB_MODELS=off FLIGHTDECK_NOTIFY_PROGRAM="$box/notified.sh" FLIGHTDECK_HC_BIN="$box/hc.sh" "$@"
 }
 app() { HERDR_APP_HOME="$app_home" "$herdr_app" "$@"; }
 
@@ -63,14 +63,14 @@ hc_wrapper() {
 running() { [ -S "$app_home/herdr-app.sock" ] && app status >/dev/null 2>&1; }
 
 start() {
-  (cd "$repo/herdr/tui" && cargo build -q -p cockpit-cli)
+  (cd "$repo/herdr/tui" && cargo build -q -p flightdeck-cli)
   mkdir -p "$fake_home" "$app_home"
   # The welcome window would cover every screenshot.
   [ -f "$app_home/shared.json" ] || printf '{"frame.welcomed": "skipped"}\n' >"$app_home/shared.json"
   printf '#!/bin/sh\nprintf "%%s | " "$@" >> "%s/notified.log"; echo >> "%s/notified.log"\n' "$box" "$box" >"$box/notified.sh"
   chmod +x "$box/notified.sh"
   hc_wrapper "$box/hc.sh"
-  if [ ! -f "$fake_home/.config/cockpit/config.json" ] || [ "${FRESH:-}" = 1 ]; then
+  if [ ! -f "$fake_home/.config/flightdeck/config.json" ] || [ "${FRESH:-}" = 1 ]; then
     # The window's mod would start a hub again at once, and the hub's store keeps the documents of the last run.
     if running; then
       app "do" app.quit >/dev/null 2>&1 || true
@@ -78,16 +78,16 @@ start() {
       while [ -S "$app_home/herdr-app.sock" ] && app status >/dev/null 2>&1 && [ $i -lt 40 ]; do i=$((i + 1)); sleep 0.25; done
     fi
     in_box "$bin" hub stop >/dev/null 2>&1 || true
-    rm -f "$fake_home/.cache/cockpit/store.redb" "$fake_home/.cache/cockpit/hub.stopped"
+    rm -f "$fake_home/.cache/flightdeck/store.redb" "$fake_home/.cache/flightdeck/hub.stopped"
     python3 "$repo/docs/screenshots/demo_data.py" "$fake_home" >/dev/null
   fi
   if ! running; then
     # The app writes its home (AGENTS.md, keys.json, the shipped mods) on its first start. Its own environment says it is
     # a sandbox that takes keys from a shell (`key`, `palette:type:`): no file written later can say so.
     if [ -n "$session" ]; then
-      open -n "$app_bundle" --env HERDR_APP_HOME="$app_home" --env COCKPIT_SANDBOX="$box" --env COCKPIT_TEST_KEYS=1 --env HC_SESSION="$session"
+      open -n "$app_bundle" --env HERDR_APP_HOME="$app_home" --env FLIGHTDECK_SANDBOX="$box" --env FLIGHTDECK_TEST_KEYS=1 --env HC_SESSION="$session"
     else
-      open -n "$app_bundle" --env HERDR_APP_HOME="$app_home" --env COCKPIT_SANDBOX="$box" --env COCKPIT_TEST_KEYS=1
+      open -n "$app_bundle" --env HERDR_APP_HOME="$app_home" --env FLIGHTDECK_SANDBOX="$box" --env FLIGHTDECK_TEST_KEYS=1
     fi
     i=0
     until running; do
@@ -100,30 +100,30 @@ start() {
   in_box "$bin" app install --from "$repo/app"
   # The mod's next hub starts with the environment the install just wrote: the stop is not one the window waits out.
   in_box "$bin" hub stop >/dev/null 2>&1 || true
-  rm -f "$fake_home/.cache/cockpit/hub.stopped"
+  rm -f "$fake_home/.cache/flightdeck/hub.stopped"
   # The watcher notes its own pid: $! would name the subshell running in_box, and stop would leave the watcher behind.
   in_box sh -c 'echo $$ >"$1"; exec nohup "$2" app install --watch --from "$3"' sh "$box/watch.pid" "$bin" "$repo/app" >"$box/watch.log" 2>&1 &
   app "do" overlay.close >/dev/null 2>&1 || true
-  app "do" layout.switch '{"name": "cockpit"}' >/dev/null
+  app "do" layout.switch '{"name": "flightdeck"}' >/dev/null
   echo "sandbox: $box (HOME $fake_home, HERDR_APP_HOME $app_home)"
 }
 
 case "${1:-}" in
   start) start ;;
   do) shift; app "do" "$@" ;;
-  show) app "do" "cockpit.go:$2" ;;
-  kit) app "do" "cockpit.kit${2:+:$2}" ;;
+  show) app "do" "flightdeck.go:$2" ;;
+  kit) app "do" "flightdeck.kit${2:+:$2}" ;;
   light | dark)
     python3 -c "import json,sys; p=sys.argv[1]; d=json.load(open(p)); d['appearance']=sys.argv[2]; json.dump(d, open(p, 'w'), indent=2)" \
       "$app_home/settings.json" "$1"
     ;;
-  key) app "do" "cockpit.key:$2" >/dev/null ;;
+  key) app "do" "flightdeck.key:$2" >/dev/null ;;
   shot) sleep "${SETTLE:-1}"; app shot "${2:-$box/shot.png}" ;;
-  check) app check "$app_home/mods/cockpit" ;;
+  check) app check "$app_home/mods/flightdeck" ;;
   status) app status ;;
   notify) shift; in_box "$bin" notify "$@" ;;
   hc-wrapper) hc_wrapper "$2" ;;
-  env) echo "HOME=$fake_home HERDR_APP_HOME=$app_home COCKPIT_FRONTEND=app" ;;
+  env) echo "HOME=$fake_home HERDR_APP_HOME=$app_home FLIGHTDECK_FRONTEND=app" ;;
   stop)
     [ -f "$box/watch.pid" ] && kill "$(cat "$box/watch.pid")" 2>/dev/null || true
     in_box "$bin" hub stop >/dev/null 2>&1 || true

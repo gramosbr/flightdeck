@@ -2,9 +2,9 @@
 //! read through the hub's own mail server (else by a Claude Code session), or answered by an agent that drafts the reply
 //! for me to review.
 
-use cockpit_connectors::mail;
-use cockpit_connectors::tools::Mapped;
-use cockpit_core::files;
+use flightdeck_connectors::mail;
+use flightdeck_connectors::tools::Mapped;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use super::{Ctx, arg, inbox};
@@ -16,9 +16,9 @@ use crate::value::{Res, text};
 const ASK_AGAIN_MS: u64 = 3 * 60_000;
 
 /// The hub's mail server and the mail mapping.
-fn served() -> Res<(cockpit_connectors::Server, Value)> {
+fn served() -> Res<(flightdeck_connectors::Server, Value)> {
     let raw = files::load(&files::config_dir().join("config.json")).unwrap_or(Value::Null);
-    let server = crate::feed::mcp::server(&raw, &config::load().0, "mail").ok_or("no mail server cockpit reaches: map one with cockpit setup")?;
+    let server = crate::feed::mcp::server(&raw, &config::load().0, "mail").ok_or("no mail server flightdeck reaches: map one with flightdeck setup")?;
     Ok((server, mail::mapping(&raw["mail"])))
 }
 
@@ -111,7 +111,7 @@ pub fn read(ctx: &mut Ctx, args: &[Value]) -> Res {
     Ok(())
 }
 
-/// `mail_thread [message]`: the message's whole thread read into ~/.cache/cockpit/mail/<id>.json, through the hub's
+/// `mail_thread [message]`: the message's whole thread read into ~/.cache/flightdeck/mail/<id>.json, through the hub's
 /// mail server at once, else asked of a Claude Code session; the `mail-thread` view shows it once there.
 pub fn thread(ctx: &mut Ctx, args: &[Value]) -> Res {
     let message = message(args)?;

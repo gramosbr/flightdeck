@@ -40,7 +40,7 @@ const NOTE = { choice: ["Decision", "flag"], upkeep: ["Upkeep", "wrench"], gap: 
 function shown() {
   const walk = (node, ok) => {
     if (!node || typeof node !== "object") return null;
-    if (node.content?.mod === "cockpit" && node.content?.props?.app === "review") return ok && !node.hidden;
+    if (node.content?.mod === "flightdeck" && node.content?.props?.app === "review") return ok && !node.hidden;
     for (const child of node.children ?? []) {
       const visible = ok && !node.hidden && !child.hidden && (node.type !== "stack" || (node.active ?? node.children?.[0]?.id) === child.id);
       const found = walk(child, visible);
@@ -52,7 +52,7 @@ function shown() {
 }
 
 export default class Review {
-  /** A file of the diff opens beside the agent, in cockpit's editor; a large file's lines are read once asked for. */
+  /** A file of the diff opens beside the agent, in flightdeck's editor; a large file's lines are read once asked for. */
   withOpen(diff) {
     diff.onOpen = (path) => this.repo && openCode(`${this.repo}/${path}`, { terminal: this.terminal ?? undefined });
     diff.onLoad = (path) => {
@@ -508,8 +508,8 @@ export default class Review {
     const short = to.kind === "gone" ? `${cut(to.name, max - 6)} (gone)` : cut(who, max);
     const none = to.kind === "new" && !agentsIn(this.rows, this.here()).length;
     const hints = this.diff.composer ? [["⏎", "add"], ["esc", "cancel"]] : [["j/k", "line"], ["c", "comment"], ["e", "edit file"], ["s", "split"], ["w", "walkthrough"]];
-    // Cockpit puts its keys on the buttons; Cockpit Chat keeps them in the tooltips alone.
-    const chat = layoutName() === "cockpit-chat";
+    // Flightdeck puts its keys on the buttons; Flightdeck Chat keeps them in the tooltips alone.
+    const chat = layoutName() === "flightdeck-chat";
     const withKey = (text, key) => (chat ? `${text}  ${key}` : text);
     return h_flex().h(48).flex_none().px(12).gap(10).items_center().border_t_1().border_color(k.border)
       .when(!narrow && !chat, (e) => e.children(hints.map(([key, what]) => h_flex().flex_none().gap(4).items_center().text_size(TEXT.xs).text_color(k.mutedFg).child(Kbd(key)).child(what))))

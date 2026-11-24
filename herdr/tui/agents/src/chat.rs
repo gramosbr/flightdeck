@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, SystemTime};
 
-use cockpit_core::transcripts::{self, Detail, Follow, Role, Transcripts, Usage};
+use flightdeck_core::transcripts::{self, Detail, Follow, Role, Transcripts, Usage};
 use serde_json::{Value, json};
 
 /// The most recent messages a chat holds unless it is asked for more; `more` says there are older ones.
@@ -86,14 +86,14 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     let found = (!session.is_empty()).then(|| transcripts::locate(session, cwd, None)).flatten();
     let window = args["limit"].as_u64().map(|n| (n as usize).clamp(1, CEILING)).unwrap_or(WINDOW);
     let (messages, more, usage, ran) = found.and_then(|(kind, path)| latest(kind, &path, window)).unwrap_or_default();
-    let next = crate::next::of(row, &messages, &cockpit_core::files::config(), ran.model.as_deref(), GROWN.get().copied());
+    let next = crate::next::of(row, &messages, &flightdeck_core::files::config(), ran.model.as_deref(), GROWN.get().copied());
     // What its terminal shows now: the step it is on while it works, and its mode, which the transcript says a turn late.
     let screen = row["terminal"].as_str().filter(|_| row["driven"] != true).and_then(|t| crate::term::screen(t, 0));
     let shown = screen.map(|s| crate::prompt::activity(&s, &crate::prompt::Shapes::of(row["agent"].as_str().unwrap_or_default()))).unwrap_or_default();
     let working = row["status"] == "working";
     // What a click in the chat may change in its terminal: the agent's mode cycle and focus view, where measured.
     let program = row["program"].as_str().unwrap_or_default();
-    let known = cockpit_core::agent::of_program(program).or_else(|| cockpit_core::agent::get(row["agent"].as_str().unwrap_or_default()));
+    let known = flightdeck_core::agent::of_program(program).or_else(|| flightdeck_core::agent::get(row["agent"].as_str().unwrap_or_default()));
     let switch = json!({
         "mode": row["driven"] != true && known.as_ref().is_some_and(|a| a.cycle.is_some()),
         "focus": row["driven"] != true && known.as_ref().is_some_and(|a| a.focus.is_some()),
@@ -237,7 +237,7 @@ pub fn act(_action: &str, _args: &[Value]) -> Option<Result<String, String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cockpit_core::transcripts::{Message, Tool};
+    use flightdeck_core::transcripts::{Message, Tool};
 
     #[test]
     fn a_message_carries_its_words_or_the_call_that_stood_there() {
@@ -257,7 +257,7 @@ mod tests {
     }
 
     /// The view's build on a 5,000-message transcript: a whole read as it was, then a followed one, untouched and
-    /// after a turn more. `cargo test -p cockpit-agents --release chat::tests::measure -- --ignored --nocapture`.
+    /// after a turn more. `cargo test -p flightdeck-agents --release chat::tests::measure -- --ignored --nocapture`.
     #[test]
     #[ignore]
     fn measure_a_5000_message_chat() {

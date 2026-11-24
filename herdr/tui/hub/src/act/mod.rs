@@ -170,7 +170,7 @@ fn action(app: &str, name: &str) -> Option<Action> {
 /// `update check`: a look at the published version now, its answer the note ("Up to date", "0.41.0 is out") or why it
 /// failed. Anyone may ask: it reads what is published and writes update.json, and installs nothing.
 fn check_update(ctx: &mut Ctx, _args: &[Value]) -> Res {
-    ctx.note(crate::feed::upgrade::check_now(cockpit_core::seen::now_ms())?);
+    ctx.note(crate::feed::upgrade::check_now(flightdeck_core::seen::now_ms())?);
     Ok(())
 }
 
@@ -283,13 +283,13 @@ fn needs_a_person(app: &str, name: &str, armed: bool, args: &[Value]) -> bool {
 }
 
 /// Runs one action: its reply {note, pending, refreshing, error}, or {"unknown": true} when the hub has no such action.
-/// What only a person does is refused to an agent's own tools and to a sender cockpit cannot place.
+/// What only a person does is refused to an agent's own tools and to a sender flightdeck cannot place.
 pub fn act(app: &str, name: &str, args: Vec<Value>, armed: Option<String>, env: HashMap<String, String>) -> Value {
     let Some(run) = action(app, name) else {
         return json!({"unknown": true});
     };
     if needs_a_person(app, name, armed.is_some(), &args)
-        && let Err(why) = cockpit_core::peer::person(&format!("{name} is done by a person, not by an agent's tools"))
+        && let Err(why) = flightdeck_core::peer::person(&format!("{name} is done by a person, not by an agent's tools"))
     {
         return json!({"note": "", "pending": {}, "refreshing": {}, "error": format!("{name}: {why}")});
     }
@@ -304,7 +304,7 @@ pub fn act(app: &str, name: &str, args: Vec<Value>, armed: Option<String>, env: 
     let error = run(&mut ctx, &args).err().or_else(|| ctx.refused.take());
     // The person reads the error as it is; the log keeps which action said it.
     if let Some(err) = &error {
-        eprintln!("cockpit hub: {app} {name}: {err}");
+        eprintln!("flightdeck hub: {app} {name}: {err}");
     }
     json!({"note": ctx.note, "pending": ctx.pending, "refreshing": ctx.refreshing, "error": error})
 }

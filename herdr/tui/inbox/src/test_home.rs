@@ -1,4 +1,4 @@
-//! A HOME of its own for the unit tests that read cockpit's cache, set once for the whole test process.
+//! A HOME of its own for the unit tests that read flightdeck's cache, set once for the whole test process.
 
 use std::path::PathBuf;
 use std::sync::OnceLock;
@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 pub fn home() -> PathBuf {
     static HOME: OnceLock<PathBuf> = OnceLock::new();
     HOME.get_or_init(|| {
-        let home = std::env::temp_dir().join(format!("cockpit-inbox-tests-{}", std::process::id()));
+        let home = std::env::temp_dir().join(format!("flightdeck-inbox-tests-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(&home).expect("a temp folder");
         // SAFETY: only this call sets the variable, once, in the test binary; other threads at most read it.

@@ -1,7 +1,7 @@
 //! The pinned apps' order, dragged in the Herdr app's sidebar: the config's `spaces` list follows it, and herdr's pinned
 //! spaces are moved to match.
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use super::{Ctx, arg};

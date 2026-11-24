@@ -1,4 +1,4 @@
-// Which copy of the mod is in front, so a key pressed from outside the window (`cockpit.key:<k>`) reaches that view and
+// Which copy of the mod is in front, so a key pressed from outside the window (`flightdeck.key:<k>`) reaches that view and
 // no other, and a hidden view's keys stay with it. Every copy of the window shares the list, on globalThis.
 
 import { shared, layout } from "herdr";
@@ -7,7 +7,7 @@ import { screens } from "./screens.js";
 /** The apps that are screens of a layout's stack: one of them is in front at a time. */
 const SCREENS = new Set(["home", "inbox", "runbook", "todo", "meetings", "monitor", "routines", "mail", "chat", "needs"]);
 
-const copies = () => (globalThis.cockpitCopies ??= new Set());
+const copies = () => (globalThis.flightdeckCopies ??= new Set());
 
 /** How long a copy counts as alive after its last beat: a switched layout or a reloaded mod drops copies unannounced. */
 const ALIVE_MS = 3000;
@@ -54,7 +54,7 @@ export function shownScreen() {
   const tree = layout();
   let shown = active(node(tree, s.stack));
   if (shown && s.inner && shown === s.inner.screen) shown = active(node(tree, s.inner.stack)) ?? s.inner.children[0];
-  return shown ?? shared("cockpit.app") ?? s.first;
+  return shown ?? shared("flightdeck.app") ?? s.first;
 }
 
 /** Whether the screen `app` is the one shown, so its keys are the person's. */

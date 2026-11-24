@@ -1,11 +1,11 @@
 # Getting started
 
-Ten minutes from nothing to a cockpit showing your own work.
+Ten minutes from nothing to a flightdeck showing your own work.
 
 ## 1. What you need
 
 - macOS or Linux (x86_64 or arm64).
-- [herdr](https://herdr.dev) 0.9 or later with a Nerd Font, the Herdr desktop app, or both. cockpit draws its
+- [herdr](https://herdr.dev) 0.9 or later with a Nerd Font, the Herdr desktop app, or both. flightdeck draws its
   spaces inside one of them, so this is the one thing you cannot skip.
 - `gh`, signed in (`gh auth login`), and `jq`.
 
@@ -17,32 +17,32 @@ servers you already use. The first setup can leave all of them out.
 In Claude Code:
 
 ```
-/plugin install cockpit --marketplace quaresc/cockpit
-/cockpit:setup
+/plugin install flightdeck --marketplace gramosbr/flightdeck
+/flightdeck:setup
 ```
 
 With any other agent, in a shell:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh
-cockpit setup
+curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh
+flightdeck setup
 ```
 
 The shell installer checks the three things above before it downloads anything, and says what is missing.
 
-Setup asks what you want and wires herdr, the Herdr app, or both. What cockpit asks an agent to do (recaps, routines,
+Setup asks what you want and wires herdr, the Herdr app, or both. What flightdeck asks an agent to do (recaps, routines,
 meeting briefs) runs on the agent you pick there. Notifications use a small notifier app on macOS, `notify-send` on
 Linux.
 
 ## 3. Connect your work
 
 ```sh
-cockpit setup
+flightdeck setup
 ```
 
 Setup asks how far to go. **Just my pull requests, to-do and runbooks** needs nothing connected — GitHub comes
 through `gh` — and is done in about a minute. The other answer walks through tickets, CI, meetings, mail, deploys
-and the monitor, connecting each to a server you already use. Run `cockpit setup` again whenever you want to add
+and the monitor, connecting each to a server you already use. Run `flightdeck setup` again whenever you want to add
 a source.
 
 Your work fills the spaces within a minute.
@@ -67,12 +67,12 @@ In the Herdr app the same spaces are `⌘⌥1` to `⌘⌥7`, and Home shows whic
 
 ## 5. Day to day
 
-- `cockpit doctor` checks every part and names the fix for anything wrong.
-- `/cockpit` in Claude Code flips the settings worth changing often; everything else is in
+- `flightdeck doctor` checks every part and names the fix for anything wrong.
+- `/flightdeck` in Claude Code flips the settings worth changing often; everything else is in
   [configuration.md](configuration.md).
-- In the Herdr app, **Cockpit settings** at the foot of the sidebar has every option with a switch, a choice or a
-  field, the same checks as `cockpit doctor` under Health, and the version you run beside the published one, with a
+- In the Herdr app, **Flightdeck settings** at the foot of the sidebar has every option with a switch, a choice or a
+  field, the same checks as `flightdeck doctor` under Health, and the version you run beside the published one, with a
   button that checks for a new one.
-- cockpit tells you when a new version is out; `cockpit update` updates every part, then restarts the apps. In
-  Claude Code alone, `/plugin update cockpit@cockpit` updates the plugin.
+- flightdeck tells you when a new version is out; `flightdeck update` updates every part, then restarts the apps. In
+  Claude Code alone, `/plugin update flightdeck@flightdeck` updates the plugin.
 - Something not working? [troubleshooting.md](troubleshooting.md).

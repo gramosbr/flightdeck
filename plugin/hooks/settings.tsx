@@ -6,10 +6,10 @@ import type { Config } from './config'
 
 type $ = EngineInterface
 
-// /cockpit: a pane of the settings worth flipping day to day, written to ~/.config/cockpit/config.json.
-// `/cockpit e2e chrome` and the like set one without opening it.
-const PANE = 'cockpit-settings'
-const shown = atom({ plugin: 'cockpit', key: 'settings' } as const, null)
+// /flightdeck: a pane of the settings worth flipping day to day, written to ~/.config/flightdeck/config.json.
+// `/flightdeck e2e chrome` and the like set one without opening it.
+const PANE = 'flightdeck-settings'
+const shown = atom({ plugin: 'flightdeck', key: 'settings' } as const, null)
 
 type Setting = {
   key: string
@@ -40,7 +40,7 @@ function valueOf(config: Config, setting: Setting) {
 }
 
 async function configPath($: $) {
-  return `${await home($)}/.config/cockpit/config.json`
+  return `${await home($)}/.config/flightdeck/config.json`
 }
 
 // Writes one value into the file as it is, keeping every other key.
@@ -52,8 +52,8 @@ async function write($: $, setting: Setting, value: string | boolean | number) {
   node[setting.path.at(-1)!] = value
   await $.fs.write(path, `${JSON.stringify(raw, null, 2)}\n`)
   forgetConfig()
-  // The space apps stop, and `cockpit space` starts them again in the new density; an open show pane keeps its own until it reopens.
-  if (setting.key === 'density') await $.process.run(['pkill', '-f', 'cockpit (inbox|todo|runbook|meetings) cockpit-space']).catch(() => undefined)
+  // The space apps stop, and `flightdeck space` starts them again in the new density; an open show pane keeps its own until it reopens.
+  if (setting.key === 'density') await $.process.run(['pkill', '-f', 'flightdeck (inbox|todo|runbook|meetings) flightdeck-space']).catch(() => undefined)
   await update($, shown, () => Date.now())
 }
 
@@ -71,7 +71,7 @@ async function terminalBrowserVersion($: $) {
 // Whether the apps are there: the release's binary in bin/, or a dev build.
 async function hasApps($: $) {
   const root = (await loadConfig($)).herdrPluginRoot
-  for (const dir of ['bin', 'tui/target/release']) if (await $.fs.exists(`${root}/${dir}/cockpit`)) return true
+  for (const dir of ['bin', 'tui/target/release']) if (await $.fs.exists(`${root}/${dir}/flightdeck`)) return true
   return false
 }
 
@@ -80,23 +80,23 @@ let installed = true
 
 // Called from the mod's session.start: one hook per event and matcher.
 export async function registerSettingsCommand($: $) {
-  await $.command.register({ name: 'cockpit', description: 'Cockpit settings; `/cockpit e2e chrome` and the like set one directly', argumentHint: '[setting value]' })
+  await $.command.register({ name: 'flightdeck', description: 'Flightdeck settings; `/flightdeck e2e chrome` and the like set one directly', argumentHint: '[setting value]' })
 }
 
 export function registerSettings(on: On) {
-  on('command.run', { command: 'cockpit' }, async ($, e) => {
+  on('command.run', { command: 'flightdeck' }, async ($, e) => {
     const [name, word] = e.args.trim().toLowerCase().split(/\s+/)
     if (!name) {
       version = (await terminalBrowserVersion($)) ?? null
       installed = await hasApps($)
-      await $.ui.open({ id: PANE, title: 'Cockpit' })
-      return { text: 'Cockpit settings opened.' }
+      await $.ui.open({ id: PANE, title: 'Flightdeck' })
+      return { text: 'Flightdeck settings opened.' }
     }
     const setting = SETTINGS.find(s => s.key === name)
     const value = word === undefined ? undefined : ALIASES[word]
     if (!setting || value === undefined || !setting.values.includes(value)) {
       const usage = SETTINGS.map(s => `${s.key} ${s.values.map(v => Object.entries(ALIASES).find(([, a]) => a === v)?.[0] ?? String(v)).join('|')}`)
-      return { text: `Usage: /cockpit [setting value]\n${usage.join('\n')}` }
+      return { text: `Usage: /flightdeck [setting value]\n${usage.join('\n')}` }
     }
     await write($, setting, value)
     return { text: `${setting.label}: ${setting.names[String(value)]}.` }
@@ -110,7 +110,7 @@ export function registerSettings(on: On) {
     const missing = version === null
     return (
       <Box flexDirection="column">
-        <Text bold>Cockpit settings</Text>
+        <Text bold>Flightdeck settings</Text>
         <Text> </Text>
         {SETTINGS.map(s => {
           const value = valueOf(config, s)
@@ -126,7 +126,7 @@ export function registerSettings(on: On) {
         <Text dimColor>
           {missing
             ? 'terminal-browser is not installed: E2E tests run in Claude in Chrome.'
-            : `terminal-browser ${version ?? ''} · press a value to change it · /cockpit <setting> <value> from any session`}
+            : `terminal-browser ${version ?? ''} · press a value to change it · /flightdeck <setting> <value> from any session`}
         </Text>
         {installed ? null : <Text color="yellow">{`The space apps are not installed for this machine yet: sh ${config.herdrPluginRoot}/fetch-apps.sh`}</Text>}
       </Box>

@@ -10,9 +10,9 @@ pub const ICON_EDIT: &str = "\u{f040}";
 pub const ICON_FOLD: &str = "\u{f44a}";
 pub const ICON_UNFOLD: &str = "\u{f47c}";
 
-/// Run by `cockpit space todo` in the to-do space: the sidebar count is this app's then.
+/// Run by `flightdeck space todo` in the to-do space: the sidebar count is this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 /// The sidebar text for this many open items.
@@ -25,6 +25,7 @@ pub fn report(text: String) {
     let Ok(workspace) = std::env::var("HERDR_WORKSPACE_ID") else { return };
     let bin = std::env::var("HERDR_BIN_PATH").unwrap_or_else(|_| "herdr".into());
     std::thread::spawn(move || {
-        let _ = Command::new(bin).args(["workspace", "report-metadata", &workspace, "--source", "cockpit-todo", "--token", &format!("todo={text}")]).output();
+        let _ =
+            Command::new(bin).args(["workspace", "report-metadata", &workspace, "--source", "flightdeck-todo", "--token", &format!("todo={text}")]).output();
     });
 }

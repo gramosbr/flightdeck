@@ -1,6 +1,6 @@
 //! Which process sent the request the hub is serving, and where it stands: what only a person may do (answer a
 //! question or a permission, turn on a mode that runs tools unasked, start an agent) is refused to an agent's own tools,
-//! to work cockpit runs on someone's behalf, and to a sender cockpit cannot place.
+//! to work flightdeck runs on someone's behalf, and to a sender flightdeck cannot place.
 
 use std::cell::RefCell;
 use std::sync::RwLock;
@@ -19,7 +19,7 @@ pub enum Peer {
 /// Who sent a request, as far as the system says.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Sender {
-    /// Cockpit's own code acting for the person, said so with `trusted`.
+    /// Flightdeck's own code acting for the person, said so with `trusted`.
     InProcess,
     Process(u32),
     /// A connection whose process the system does not name.
@@ -33,9 +33,9 @@ pub enum Sender {
 pub enum Who {
     /// A process whose parents reach a window or terminal the person uses, past no agent.
     Person,
-    /// A process in an agent's tree: its handle, or an empty one for an agent cockpit does not watch.
+    /// A process in an agent's tree: its handle, or an empty one for an agent flightdeck does not watch.
     Agent(String),
-    /// Refused whatever it asks of a person: why cockpit cannot tell who sent it.
+    /// Refused whatever it asks of a person: why flightdeck cannot tell who sent it.
     Unplaced(String),
 }
 
@@ -66,7 +66,7 @@ pub fn set_tcp(port: u16, hub: u16) {
     PEER.with(|p| *p.borrow_mut() = Some(Peer::Tcp { port, hub }));
 }
 
-/// This thread acts for the person by cockpit's own decision (a test, or hub work the person's checked request
+/// This thread acts for the person by flightdeck's own decision (a test, or hub work the person's checked request
 /// started): only code that says so is taken for them.
 pub fn trusted() {
     adopt(Sender::InProcess);
@@ -85,7 +85,7 @@ pub fn with<T>(sender: Sender, f: impl FnOnce() -> T) -> T {
     out
 }
 
-/// Whether this thread runs cockpit's own work: it serves no connection and carries no sender, or said it acts for the
+/// Whether this thread runs flightdeck's own work: it serves no connection and carries no sender, or said it acts for the
 /// person (`trusted`). What a client asks for never reads so.
 pub fn in_process() -> bool {
     PEER.with(|p| matches!(*p.borrow(), None | Some(Peer::Resolved(Sender::InProcess))))
@@ -109,7 +109,7 @@ pub fn current() -> Sender {
 }
 
 /// What cannot be placed for want of a process is told.
-pub const UNNAMED: &str = "cockpit cannot tell which process sent this, so it takes no answer from it";
+pub const UNNAMED: &str = "flightdeck cannot tell which process sent this, so it takes no answer from it";
 
 /// Where the sender of the request being served stands, placed now.
 pub fn who() -> Who {
@@ -119,7 +119,7 @@ pub fn who() -> Who {
         Sender::Placed(who) => who,
         Sender::Process(pid) => match *PLACE.read().unwrap_or_else(|e| e.into_inner()) {
             Some(place) => place(pid),
-            None => Who::Unplaced("cockpit cannot read where this process comes from here".into()),
+            None => Who::Unplaced("flightdeck cannot read where this process comes from here".into()),
         },
     }
 }
@@ -132,7 +132,7 @@ pub fn carry() -> Sender {
     }
 }
 
-/// What only a person does: refused to an agent's tools (with `refused`) and to a sender cockpit cannot place.
+/// What only a person does: refused to an agent's tools (with `refused`) and to a sender flightdeck cannot place.
 pub fn person(refused: &str) -> Result<(), String> {
     match who() {
         Who::Person => Ok(()),
@@ -144,7 +144,7 @@ pub fn person(refused: &str) -> Result<(), String> {
 /// What a request from an agent's tools that targets another agent is told.
 pub const NOT_YOURS: &str = "an agent's tools act on their own agent only, never on another";
 
-/// What an agent's own tools may do through cockpit: act on their own agent (a `show` view's answer reaches it), never
+/// What an agent's own tools may do through flightdeck: act on their own agent (a `show` view's answer reaches it), never
 /// on another; a person may act on any.
 pub fn may_touch(target: &str) -> Result<(), String> {
     match who() {
@@ -257,7 +257,7 @@ mod tests {
         assert_eq!(carried.join().unwrap(), Sender::Process(42));
         trusted();
         assert_eq!(current(), Sender::InProcess);
-        // Cockpit's own work is a thread that serves nobody or said so; any connection's, or a sender carried, is not.
+        // Flightdeck's own work is a thread that serves nobody or said so; any connection's, or a sender carried, is not.
         assert!(in_process());
         assert!(std::thread::spawn(in_process).join().unwrap(), "a thread of the hub's own");
         for peer in [Peer::Unix(Some(42)), Peer::Unix(None), Peer::Resolved(Sender::Placed(Who::Person))] {
@@ -286,7 +286,7 @@ mod tests {
         assert_eq!(on(Who::Person), (Ok(()), Ok(()), Ok(())));
         assert_eq!(on(Who::Agent("app:t3".into())), (Err("not yours".into()), Ok(()), Err(NOT_YOURS.into())), "its own agent only");
         let unwatched = on(Who::Agent(String::new()));
-        assert_eq!(unwatched, (Err("not yours".into()), Err(NOT_YOURS.into()), Err(NOT_YOURS.into())), "an agent cockpit does not watch owns nothing");
+        assert_eq!(unwatched, (Err("not yours".into()), Err(NOT_YOURS.into()), Err(NOT_YOURS.into())), "an agent flightdeck does not watch owns nothing");
         let unplaced = on(Who::Unplaced("no idea".into()));
         assert_eq!((unplaced.0, unplaced.1), (Err("no idea".into()), Err("no idea".into())));
         // Nothing said, nothing served: refused.

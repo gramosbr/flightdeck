@@ -1,25 +1,25 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/browser-grab-screenshot.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { GRAB_BUDGET } from "./types.js";
 
 /** Hides the picker and the note badges in the page, so a capture shows the page alone. */
 export const HIDE_GRAB_OVERLAY_SCRIPT = `(function(){
-  var g = window.__cockpitGrab;
+  var g = window.__flightdeckGrab;
   if (g && g.host) g.host.style.display = 'none';
-  document.querySelectorAll('[data-cockpit-annotation-overlay]').forEach(function(el) {
-    el.setAttribute('data-cockpit-previous-display', el.style.display || '');
+  document.querySelectorAll('[data-flightdeck-annotation-overlay]').forEach(function(el) {
+    el.setAttribute('data-flightdeck-previous-display', el.style.display || '');
     el.style.display = 'none';
   });
 })()`;
 
 /** Shows the picker and the note badges again after a capture. */
 export const RESTORE_GRAB_OVERLAY_SCRIPT = `(function(){
-  var g = window.__cockpitGrab;
+  var g = window.__flightdeckGrab;
   if (g && g.host) g.host.style.display = '';
-  document.querySelectorAll('[data-cockpit-annotation-overlay]').forEach(function(el) {
-    el.style.display = el.getAttribute('data-cockpit-previous-display') || '';
-    el.removeAttribute('data-cockpit-previous-display');
+  document.querySelectorAll('[data-flightdeck-annotation-overlay]').forEach(function(el) {
+    el.style.display = el.getAttribute('data-flightdeck-previous-display') || '';
+    el.removeAttribute('data-flightdeck-previous-display');
   });
 })()`;
 

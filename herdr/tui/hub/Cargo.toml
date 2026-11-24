@@ -1,5 +1,5 @@
 [package]
-name = "cockpit-hub"
+name = "flightdeck-hub"
 description = "The background process the space apps share: actions, search across apps, details on demand, history, and the binary kept on the plugin's version."
 version.workspace = true
 edition.workspace = true
@@ -9,9 +9,9 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-core.workspace = true
-cockpit-update.workspace = true
-cockpit-connectors = { path = "../connectors" }
+flightdeck-core.workspace = true
+flightdeck-update.workspace = true
+flightdeck-connectors = { path = "../connectors" }
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
@@ -40,4 +40,4 @@ sha2 = "0.10.9"
 [dev-dependencies]
 tempfile = "3"
 # The placement of real processes, for the tests of who may ask what.
-cockpit-agents = { path = "../agents" }
+flightdeck-agents = { path = "../agents" }

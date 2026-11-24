@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
 
-use cockpit_core::agent::{self, Agent, Headless};
-use cockpit_core::files;
+use flightdeck_core::agent::{self, Agent, Headless};
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::gui::{fnv, hunk_ids};
@@ -546,7 +546,7 @@ mod tests {
     }
 
     /// Times the state of a done walkthrough over a 1 MB diff, read again with nothing changed. Run with
-    /// `cargo test -p cockpit-show --lib large_walkthrough -- --ignored --nocapture`.
+    /// `cargo test -p flightdeck-show --lib large_walkthrough -- --ignored --nocapture`.
     #[test]
     #[ignore]
     fn large_walkthrough_costs() {

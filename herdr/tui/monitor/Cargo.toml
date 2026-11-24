@@ -1,5 +1,5 @@
 [package]
-name = "cockpit-monitor"
+name = "flightdeck-monitor"
 description = "The monitor space: how production does after each release, every app's new releases, and what to do about them."
 version.workspace = true
 edition.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-core.workspace = true
+flightdeck-core.workspace = true
 chrono.workspace = true
 crossterm.workspace = true
 ratatui.workspace = true

@@ -1,11 +1,11 @@
 //! The step list: the rows the filter lets through, scrolled; the cursor's row on the panel colour, picked rows tinted,
 //! status animations painted over their rows, and in compact density the cursor row's actions at its end.
 
-use cockpit_core::acts;
-use cockpit_core::anim::Kind;
-use cockpit_core::files::Density;
-use cockpit_core::text::width;
-use cockpit_core::theme::{BG, LINE, PANEL, dim, fg};
+use flightdeck_core::acts;
+use flightdeck_core::anim::Kind;
+use flightdeck_core::files::Density;
+use flightdeck_core::text::width;
+use flightdeck_core::theme::{BG, LINE, PANEL, dim, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
@@ -69,7 +69,7 @@ impl App {
             (lines, placed) = self.layout(book, area.width.saturating_sub(SCROLLBAR) as usize);
         }
         let (total, height) = (lines.len() as f32, area.height as f32);
-        let scroll = self.scroll.entry(book.slug.clone()).or_insert_with(|| cockpit_core::anim::Glide::new(0.0, 0.25));
+        let scroll = self.scroll.entry(book.slug.clone()).or_insert_with(|| flightdeck_core::anim::Glide::new(0.0, 0.25));
         let find = |step: usize| placed.iter().find(|p| p.step == step);
         let reveal = self.reveal.take().and_then(|(first, last)| Some((find(first)?, find(last)?)));
         if let Some((first, last)) = reveal {

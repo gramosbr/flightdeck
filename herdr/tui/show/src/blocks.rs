@@ -11,7 +11,7 @@ use ratatui_image::picker::Picker;
 use ratatui_image::sliced::SlicedProtocol;
 use serde_json::Value;
 
-use cockpit_core::theme::{RED, dim, fg};
+use flightdeck_core::theme::{RED, dim, fg};
 
 use crate::diff::{Diff, Source, hash};
 use crate::log::{Log, run};
@@ -54,7 +54,7 @@ impl Ctx {
         self.running.set(self.running.get() + 1);
         std::thread::spawn(move || {
             let _ = tx.send(Msg { uid, payload: work() });
-            cockpit_core::term::wake();
+            flightdeck_core::term::wake();
         });
     }
 
@@ -97,12 +97,12 @@ pub struct View {
 
 /// When the caches a CI block is drawn from last changed.
 fn ci_caches() -> Vec<Option<SystemTime>> {
-    ["ci.json", "inbox.json"].iter().map(|f| std::fs::metadata(cockpit_core::files::cache().join(f)).and_then(|m| m.modified()).ok()).collect()
+    ["ci.json", "inbox.json"].iter().map(|f| std::fs::metadata(flightdeck_core::files::cache().join(f)).and_then(|m| m.modified()).ok()).collect()
 }
 
 /// Lines of text wrapped to the pane, each a row in `style`.
 pub fn wrapped(text: &str, cols: usize, style: ratatui::style::Style) -> Vec<Row> {
-    cockpit_core::text::wrap(text, cols).into_iter().map(|line| Row::text(line, style)).collect()
+    flightdeck_core::text::wrap(text, cols).into_iter().map(|line| Row::text(line, style)).collect()
 }
 
 /// A long error (git's usage text) shows its first lines only.
@@ -117,7 +117,7 @@ pub fn error_rows(text: &str, cols: usize) -> Vec<Row> {
 
 /// A line drawn as text at the pane's width; a longer one (a CI run's PR title, a crowded diagram) wraps between words.
 fn fitted(line: &[crate::markdown::Segment], cols: usize) -> Vec<Row> {
-    let shown: usize = line.iter().map(|(t, _, _)| cockpit_core::text::width(t)).sum();
+    let shown: usize = line.iter().map(|(t, _, _)| flightdeck_core::text::width(t)).sum();
     let rows = if shown <= cols { vec![line.to_vec()] } else { crate::markdown::wrap(line.to_vec(), cols) };
     rows.into_iter().map(|row| crate::markdown::add_segments(Row::new(), row)).collect()
 }

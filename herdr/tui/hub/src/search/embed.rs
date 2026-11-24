@@ -1,11 +1,11 @@
 //! Sentences as vectors that sit close when they mean the same, for finding past sessions by meaning rather than by
 //! their words: model2vec's potion-base-8M, a static model (a vector per token, averaged), downloaded once into
-//! ~/.cache/cockpit/models and kept in memory as bytes, a quarter of its size.
+//! ~/.cache/flightdeck/models and kept in memory as bytes, a quarter of its size.
 
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use sha2::{Digest, Sha256};
 use tokenizers::Tokenizer;
 
@@ -33,9 +33,9 @@ fn dir() -> PathBuf {
     files::cache().join("models").join(MODEL)
 }
 
-/// Whether the model is used at all: COCKPIT_EMBED=off leaves it out (the hub's tests).
+/// Whether the model is used at all: FLIGHTDECK_EMBED=off leaves it out (the hub's tests).
 fn is_on() -> bool {
-    std::env::var("COCKPIT_EMBED").map_or(true, |v| v != "off")
+    std::env::var("FLIGHTDECK_EMBED").map_or(true, |v| v != "off")
 }
 
 /// The model's files, downloaded when missing or not the pinned ones; false when they could not be.

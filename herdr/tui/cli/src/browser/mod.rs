@@ -1,4 +1,4 @@
-//! `cockpit browser`: the Chromium side browser's own commands. It runs on macOS and shows in the Herdr app.
+//! `flightdeck browser`: the Chromium side browser's own commands. It runs on macOS and shows in the Herdr app.
 
 pub mod agent;
 pub mod hub;
@@ -9,26 +9,26 @@ pub mod track;
 
 use std::time::Duration;
 
-use cockpit_core::browser;
+use flightdeck_core::browser;
 use serde_json::{Value, json};
 
 use crate::proc::fail;
 
-const USAGE: &str = "The Chromium side browser: cockpit's own Chromium window, docked in the Herdr app's side panel (macOS).
+const USAGE: &str = "The Chromium side browser: flightdeck's own Chromium window, docked in the Herdr app's side panel (macOS).
 
-    cockpit browser install                                 downloads Electron and agent-browser at their pinned versions, checked
-    cockpit browser status [--json]                         what is installed, whether it runs, what it shows
-    cockpit browser quit                                    ends it; the next page opened starts it again
-    cockpit browser refresh                                 after an update: installs what the new pins ask for and ends the running one
-    cockpit browser profiles                                the profiles, as JSON
-    cockpit browser import-cookies <profile> --from <browser>[:<its profile>] | --file <path>
+    flightdeck browser install                                 downloads Electron and agent-browser at their pinned versions, checked
+    flightdeck browser status [--json]                         what is installed, whether it runs, what it shows
+    flightdeck browser quit                                    ends it; the next page opened starts it again
+    flightdeck browser refresh                                 after an update: installs what the new pins ask for and ends the running one
+    flightdeck browser profiles                                the profiles, as JSON
+    flightdeck browser import-cookies <profile> --from <browser>[:<its profile>] | --file <path>
                                                             copies another browser's cookies into a profile; you confirm it
-    cockpit browser track --host <pid> [--once]             follows a window on screen, a reading per line, for the docked browser
+    flightdeck browser track --host <pid> [--once]             follows a window on screen, a reading per line, for the docked browser
 
-Turn it on with `cockpit options set sideBrowser chromium`; `cockpit browse <url>` then opens pages in it.";
+Turn it on with `flightdeck options set sideBrowser chromium`; `flightdeck browse <url>` then opens pages in it.";
 
 pub fn main(args: &[String]) {
-    if !cockpit_core::options::CHROMIUM_HERE {
+    if !flightdeck_core::options::CHROMIUM_HERE {
         eprintln!("{}", browser::MAC_ONLY);
         std::process::exit(2);
     }
@@ -57,7 +57,7 @@ pub fn main(args: &[String]) {
         }
         // update.sh runs this: nothing to do unless Chromium is the side browser here.
         ["refresh"] => {
-            if cockpit_core::files::config()["sideBrowser"] != cockpit_core::options::CHROMIUM {
+            if flightdeck_core::files::config()["sideBrowser"] != flightdeck_core::options::CHROMIUM {
                 return;
             }
             let pins = install::pins().unwrap_or_else(|why| fail(&format!("browser refresh: {why}")));
@@ -93,7 +93,7 @@ pub fn main(args: &[String]) {
 /// What only a person asks, through the hub, which checks who is asking.
 fn person(action: &str, arg: Value) {
     let request = json!({"op": "act", "app": "browser", "action": action, "args": [arg]});
-    match cockpit_core::hub::request(&request, Duration::from_secs(120)) {
+    match flightdeck_core::hub::request(&request, Duration::from_secs(120)) {
         Ok(answer) if answer["error"].is_null() => println!("{}", answer["note"].as_str().unwrap_or_default()),
         Ok(answer) => fail(&format!("browser: {}", answer["error"].as_str().unwrap_or_default())),
         Err(why) => fail(&format!("browser: {why}")),
@@ -102,7 +102,7 @@ fn person(action: &str, arg: Value) {
 
 /// What is installed and what runs: `{enabled, installed: {electron, agentBrowser}, versions, running, shell}`.
 pub fn status() -> Value {
-    let (engine, why) = browser::engine_for(&cockpit_core::files::config(), cockpit_core::frontend::current(), true);
+    let (engine, why) = browser::engine_for(&flightdeck_core::files::config(), flightdeck_core::frontend::current(), true);
     let pins = install::pins();
     let installed = pins.as_ref().map(install::installed).unwrap_or((false, false));
     let shell = browser::request(&json!({"op": "status"}), Duration::from_secs(5)).ok();
@@ -122,17 +122,17 @@ fn status_lines(status: &Value) -> Vec<String> {
     let mut lines = vec![
         format!(
             "side browser: {}",
-            yes(&status["enabled"], "Chromium", status["why"].as_str().unwrap_or("terminal-browser (cockpit options set sideBrowser chromium)"))
+            yes(&status["enabled"], "Chromium", status["why"].as_str().unwrap_or("terminal-browser (flightdeck options set sideBrowser chromium)"))
         ),
         format!(
             "Electron {}: {}",
             status["versions"]["electron"].as_str().unwrap_or("?"),
-            yes(&status["installed"]["electron"], "installed", "missing (cockpit browser install)")
+            yes(&status["installed"]["electron"], "installed", "missing (flightdeck browser install)")
         ),
         format!(
             "agent-browser {}: {}",
             status["versions"]["agentBrowser"].as_str().unwrap_or("?"),
-            yes(&status["installed"]["agentBrowser"], "installed", "missing (cockpit browser install)")
+            yes(&status["installed"]["agentBrowser"], "installed", "missing (flightdeck browser install)")
         ),
     ];
     match status["shell"].as_object() {
@@ -165,7 +165,7 @@ mod tests {
             [
                 "side browser: Chromium",
                 "Electron 44.5.1: installed",
-                "agent-browser 0.38.1: missing (cockpit browser install)",
+                "agent-browser 0.38.1: missing (flightdeck browser install)",
                 "running: pid 4242, docked, 3 tabs for 2 sessions"
             ]
         );

@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/grab-guest-overlay-script.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { GRAB_SELECTED_ATTRIBUTE } from "./types.js";
 
@@ -8,7 +8,7 @@ import { GRAB_SELECTED_ATTRIBUTE } from "./types.js";
  * hit-testing through open shadow roots, press capture, and the outline that follows the picked element.
  */
 export const GRAB_OVERLAY_SCRIPT = `  var host = document.createElement('div');
-  host.id = '__cockpit-grab-host';
+  host.id = '__flightdeck-grab-host';
   host.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:2147483647;pointer-events:all;cursor:crosshair;';
   document.documentElement.appendChild(host);
 
@@ -160,7 +160,7 @@ export const GRAB_OVERLAY_SCRIPT = `  var host = document.createElement('div');
     previousSelectedValue = null;
   }
 
-  var grab = window.__cockpitGrab = {
+  var grab = window.__flightdeckGrab = {
     host: host,
     extractPayload: extractPayload,
     getCurrentElement: function() { return currentEl; },
@@ -200,7 +200,7 @@ export const GRAB_OVERLAY_SCRIPT = `  var host = document.createElement('div');
       window.removeEventListener('fullscreenchange', raiseOverlay, true);
       stopTrackingSelection();
       try { host.remove(); } catch(e) {}
-      delete window.__cockpitGrab;
+      delete window.__flightdeckGrab;
     }
   };
 

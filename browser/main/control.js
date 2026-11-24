@@ -1,4 +1,4 @@
-// The control socket: the hub and `cockpit browse` reach the shell here, one JSON request per line.
+// The control socket: the hub and `flightdeck browse` reach the shell here, one JSON request per line.
 
 import fs from "node:fs";
 import net from "node:net";

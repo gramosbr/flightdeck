@@ -907,7 +907,7 @@ export default class Meetings {
     if (m.waiting) {
       const why = m?.connected
         ? "The hub fetches this week from your calendar, within a few minutes."
-        : "No calendar is connected. cockpit setup adds one, or give the config the calendar's secret iCal address.";
+        : "No calendar is connected. flightdeck setup adds one, or give the config the calendar's secret iCal address.";
       return this.overlays(root.child(Empty({ icon: "calendar", title: "No calendar yet", description: why })), k, cx);
     }
     const sel = this.selected();

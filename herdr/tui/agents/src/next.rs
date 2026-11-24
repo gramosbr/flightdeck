@@ -7,9 +7,9 @@ use std::process::Command;
 use std::sync::{LazyLock, Mutex, MutexGuard};
 use std::time::Duration;
 
-use cockpit_core::agent::{self, Headless};
-use cockpit_core::files;
-use cockpit_core::run::{self, Group};
+use flightdeck_core::agent::{self, Headless};
+use flightdeck_core::files;
+use flightdeck_core::run::{self, Group};
 use serde_json::{Value, json};
 
 /// The shortest answer worth suggesting after, in characters.
@@ -161,7 +161,7 @@ pub fn of(row: &Value, messages: &[Value], config: &Value, model: Option<&str>, 
         }
         Step::Show => with_by(shown(entry)),
         // A run is billed to the person: only their own window's look starts one.
-        Step::Start if !matches!(cockpit_core::peer::who(), cockpit_core::peer::Who::Person) => Value::Null,
+        Step::Start if !matches!(flightdeck_core::peer::who(), flightdeck_core::peer::Who::Person) => Value::Null,
         Step::Start => {
             entry.group.stop();
             let turn = turn.unwrap_or_default();
@@ -171,7 +171,7 @@ pub fn of(row: &Value, messages: &[Value], config: &Value, model: Option<&str>, 
             let (row, messages, config, model) = (row.clone(), messages.to_vec(), config.clone(), model.map(str::to_string));
             std::thread::spawn(move || {
                 let (items, commands) = ask(&group, &row, &messages, &config, model.as_deref()).unwrap_or_else(|e| {
-                    eprintln!("cockpit hub: next steps for {}: {e}", row["terminal"].as_str().unwrap_or_default());
+                    eprintln!("flightdeck hub: next steps for {}: {e}", row["terminal"].as_str().unwrap_or_default());
                     (Vec::new(), false)
                 });
                 let mut all = kept();
@@ -211,7 +211,7 @@ fn load(dir: &Path, id: &str) -> Kept {
 fn save(dir: &Path, id: &str, turn: &str, items: &[Item], commands: bool) {
     let _ = std::fs::create_dir_all(dir);
     let list: Vec<Value> = items.iter().map(|i| json!({"label": i.label, "prompt": i.prompt})).collect();
-    let at = cockpit_core::seen::now_ms();
+    let at = flightdeck_core::seen::now_ms();
     let _ = files::write(&dir.join(format!("{id}.json")), &json!({"turn": turn, "at": at, "items": list, "commands": commands}));
 }
 
@@ -311,7 +311,7 @@ fn digest(messages: &[Value]) -> Option<String> {
     (!lines.is_empty()).then(|| lines.join("\n\n"))
 }
 
-/// The commands a driven session's agent published; None for a terminal, whose commands cockpit does not know.
+/// The commands a driven session's agent published; None for a terminal, whose commands flightdeck does not know.
 fn commands_of(row: &Value) -> Option<Vec<(String, String)>> {
     if row["driven"] != true {
         return None;
@@ -349,7 +349,7 @@ fn answerer(row: &Value, config: &Value) -> Result<(agent::Agent, bool), String>
 /// conversation's last turns; kept aside either way.
 fn command(row: &Value, messages: &[Value], config: &Value, session_model: Option<&str>) -> Result<Vec<String>, String> {
     let (agent, own) = answerer(row, config)?;
-    // Another agent reads the conversation as cockpit read it: not the followed session's fork or commands.
+    // Another agent reads the conversation as flightdeck read it: not the followed session's fork or commands.
     let model = run_model(config, &agent, own, session_model);
     let commands = if own { commands_of(row) } else { None };
     let fork = row["session"].as_str().filter(|s| own && !s.is_empty() && !agent.run_fork.is_empty());
@@ -373,7 +373,7 @@ fn ask(group: &Group, row: &Value, messages: &[Value], config: &Value, model: Op
     Ok((parse(&text, known.as_deref()), known.is_some()))
 }
 
-/// Runs the command in the agent's folder, apart from any terminal or session (`cockpit_core::run`), and gives what it
+/// Runs the command in the agent's folder, apart from any terminal or session (`flightdeck_core::run`), and gives what it
 /// printed; a new turn stops it through `group`.
 fn run(group: &Group, argv: &[String], cwd: &str) -> Result<String, String> {
     let mut cmd = Command::new(&argv[0]);
@@ -424,7 +424,7 @@ pub fn parse(reply: &str, known: Option<&[String]>) -> Vec<Item> {
     out
 }
 
-pub use cockpit_core::text::clean;
+pub use flightdeck_core::text::clean;
 
 #[cfg(test)]
 mod tests {

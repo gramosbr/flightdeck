@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/grab-guest-foundation-script.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { GRAB_BUDGET, GRAB_SAFE_ATTRIBUTE_NAMES, GRAB_SECRET_PATTERNS } from "./types.js";
 
@@ -8,13 +8,13 @@ export const GRAB_FOUNDATION_SCRIPT = `(function() {
   'use strict';
 
   // Replace page-supplied grab state so extraction uses the newly installed implementation.
-  if (window.__cockpitGrab) {
+  if (window.__flightdeckGrab) {
     try {
-      if (typeof window.__cockpitGrab.cleanup === 'function') {
-        window.__cockpitGrab.cleanup();
+      if (typeof window.__flightdeckGrab.cleanup === 'function') {
+        window.__flightdeckGrab.cleanup();
       }
     } catch(e) {}
-    delete window.__cockpitGrab;
+    delete window.__flightdeckGrab;
   }
 
   var BUDGET = ${JSON.stringify(GRAB_BUDGET)};

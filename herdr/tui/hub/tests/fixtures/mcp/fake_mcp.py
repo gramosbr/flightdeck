@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A fake MCP server over stdio for cockpit's tests: answers each tool from a JSON file of canned answers.
+"""A fake MCP server over stdio for flightdeck's tests: answers each tool from a JSON file of canned answers.
 
 An answer {"_list": [...]} is that list; {"_range": true} answers a Prometheus-style range query over the asked window.
 A "_versions" list makes `initialize` refuse any other protocol version with -32601, as Google's servers do. Every call

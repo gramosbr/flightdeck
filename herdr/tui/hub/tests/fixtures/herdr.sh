@@ -1,7 +1,7 @@
 #!/bin/sh
-# A fake herdr: logs each call to calls.log and answers plausible JSON; $COCKPIT_TEST_DIR/herdr.json overrides an
+# A fake herdr: logs each call to calls.log and answers plausible JSON; $FLIGHTDECK_TEST_DIR/herdr.json overrides an
 # answer by the longest command prefix, {"fail": "message"} making that call fail.
-box=$COCKPIT_TEST_DIR
+box=$FLIGHTDECK_TEST_DIR
 args=""
 for arg do args="$args${args:+,}$(jq -n --arg v "$arg" '$v')"; done
 printf '{"cmd":"herdr","args":[%s]}\n' "$args" >>"$box/calls.log"

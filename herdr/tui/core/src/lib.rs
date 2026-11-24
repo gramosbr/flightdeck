@@ -46,7 +46,7 @@ pub mod transcripts;
 pub mod usage;
 pub mod widgets;
 
-/// The apps that run in a pinned space of their own, by the name `cockpit <app>` runs them under.
+/// The apps that run in a pinned space of their own, by the name `flightdeck <app>` runs them under.
 pub const SPACE_APPS: [&str; 8] = ["inbox", "todo", "runbook", "meetings", "monitor", "routines", "review", "mail"];
 
 /// The pinned space an app of `SPACE_APPS` runs in: its own name, but the to-do space for `todo`.

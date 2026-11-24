@@ -8,12 +8,12 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 use std::time::Duration;
 
-use cockpit_core::agent::Setting;
-use cockpit_core::frontend::{self, APP};
-use cockpit_core::peer::Who;
-use cockpit_core::seen::now_ms;
-use cockpit_core::transcripts::Turn;
-use cockpit_core::{files, names};
+use flightdeck_core::agent::Setting;
+use flightdeck_core::frontend::{self, APP};
+use flightdeck_core::peer::Who;
+use flightdeck_core::seen::now_ms;
+use flightdeck_core::transcripts::Turn;
+use flightdeck_core::{files, names};
 use regex::Regex;
 use serde_json::{Value, json};
 
@@ -109,7 +109,7 @@ pub fn turn_end(before: Option<&str>, now: &str) -> Option<&'static str> {
     }
 }
 
-/// What a pane shows after a stop from cockpit `held` ms ago, and whether the stop still holds: the frontend's own `raw`
+/// What a pane shows after a stop from flightdeck `held` ms ago, and whether the stop still holds: the frontend's own `raw`
 /// status out of the turn ends it; still shown working past STOP_PENDING_MS, the pane rests while its transcript's last
 /// turn is the stopped one (`marker`), and a new turn there ends the hold.
 pub fn after_stop(raw: &str, held: Option<u64>, marker: impl FnOnce() -> Option<bool>) -> (String, bool) {
@@ -126,7 +126,7 @@ pub fn after_stop(raw: &str, held: Option<u64>, marker: impl FnOnce() -> Option<
 }
 
 /// A turn that ended at rest was stopped when its transcript says so (`marker`); with no transcript to read, when it was
-/// stopped from cockpit (`by_hand`).
+/// stopped from flightdeck (`by_hand`).
 pub fn ended_as(outcome: &'static str, by_hand: bool, marker: Option<bool>) -> &'static str {
     match (outcome, marker) {
         ("done", Some(true)) => "interrupted",
@@ -135,15 +135,15 @@ pub fn ended_as(outcome: &'static str, by_hand: bool, marker: Option<bool>) -> &
     }
 }
 
-/// The terminals stopped from cockpit, by when: the turn that ends next for each is an interrupted one.
+/// The terminals stopped from flightdeck, by when: the turn that ends next for each is an interrupted one.
 fn stops() -> MutexGuard<'static, HashMap<String, u64>> {
     static STOPS: OnceLock<Mutex<HashMap<String, u64>>> = OnceLock::new();
     STOPS.get_or_init(Default::default).lock().unwrap_or_else(|e| e.into_inner())
 }
 
-/// How long a stop from cockpit names the turn end that follows it.
+/// How long a stop from flightdeck names the turn end that follows it.
 const STOP_HOLDS_MS: u64 = 60_000;
-/// How long a stop from cockpit refuses another, and after which a pane still shown working is read from its transcript.
+/// How long a stop from flightdeck refuses another, and after which a pane still shown working is read from its transcript.
 const STOP_PENDING_MS: u64 = 5_000;
 
 /// How long an agent rests before a queued prompt goes to it on its own: a turn's end settles first.
@@ -151,11 +151,11 @@ pub const SETTLE_MS: u64 = 1_500;
 
 /// The keys the agent table says stop an agent's turn (`["esc"]`), null where none was measured.
 pub fn interrupt_of(agent: &str) -> Value {
-    cockpit_core::agent::get(agent).and_then(|a| a.interrupt).map_or(Value::Null, |keys| json!(keys))
+    flightdeck_core::agent::get(agent).and_then(|a| a.interrupt).map_or(Value::Null, |keys| json!(keys))
 }
 
 /// The keys that stop the turn of an agent at `status`: its agent's measured `interrupt`, and only while it works.
-pub fn stop_keys(agent: Option<&cockpit_core::agent::Agent>, status: &str) -> Result<Vec<String>, String> {
+pub fn stop_keys(agent: Option<&flightdeck_core::agent::Agent>, status: &str) -> Result<Vec<String>, String> {
     let keys = agent.and_then(|a| a.interrupt.clone()).ok_or("this agent has no known key to stop its turn")?;
     if status != "working" {
         return Err("it is not working: there is no turn to stop".into());
@@ -274,7 +274,7 @@ pub fn poll() -> bool {
     let now = now_ms();
     let lives = term::list(None);
     if let Some((spaces, panes)) = term::take_tui_listing() {
-        crate::spaces::report(&spaces, &panes, &cockpit_core::actions::pinned());
+        crate::spaces::report(&spaces, &panes, &flightdeck_core::actions::pinned());
     }
     let before: HashMap<String, Agent> = snap().agents.iter().map(|a| (a.live.handle.clone(), a.clone())).collect();
     let first = !snap().polled;
@@ -428,30 +428,30 @@ pub fn past_prompt(q: &Question, menu: bool, turn: impl FnOnce() -> Option<Turn>
 
 /// Where the agent stands in its session, from its transcript's end: None when it has none to read.
 fn turn_of(live: &Live) -> Option<Turn> {
-    let agent = cockpit_core::agent::of_program(&live.agent).or_else(|| cockpit_core::agent::of_program(&live.program))?;
-    cockpit_core::transcripts::turn(agent.transcripts, std::path::Path::new(live.transcript.as_deref()?))
+    let agent = flightdeck_core::agent::of_program(&live.agent).or_else(|| flightdeck_core::agent::of_program(&live.program))?;
+    flightdeck_core::transcripts::turn(agent.transcripts, std::path::Path::new(live.transcript.as_deref()?))
 }
 
 /// The plan the agent asks to carry out, whole, from its transcript, where its agent's table says it is kept; with the
 /// session it belongs to (the transcript's own name when the session's id is not known).
 fn plan_of(live: &Live, facts: &Value) -> Option<(String, String)> {
-    let agent = cockpit_core::agent::of_program(&live.agent).or_else(|| cockpit_core::agent::of_program(&live.program))?;
+    let agent = flightdeck_core::agent::of_program(&live.agent).or_else(|| flightdeck_core::agent::of_program(&live.program))?;
     let session = session_of(live, facts);
     let transcript = live.transcript.as_ref().map(PathBuf::from).or_else(|| transcript_of(live, facts, session.as_deref()?))?;
-    let plan = cockpit_core::transcripts::plan(agent.plan?, agent.transcripts, &transcript)?;
+    let plan = flightdeck_core::transcripts::plan(agent.plan?, agent.transcripts, &transcript)?;
     let session = session.or_else(|| transcript.file_stem().map(|s| s.to_string_lossy().into_owned()))?;
     Some((plan, session))
 }
 
 /// The argument of the tool `agent` asks through before it carries a plan out, when `tool` is that one.
-fn plan_arg(agent: Option<&cockpit_core::agent::Agent>, tool: &str) -> Option<&'static str> {
+fn plan_arg(agent: Option<&flightdeck_core::agent::Agent>, tool: &str) -> Option<&'static str> {
     match agent?.plan? {
-        cockpit_core::agent::Plan::Argument { tool: t, arg } if t == tool => Some(arg),
+        flightdeck_core::agent::Plan::Argument { tool: t, arg } if t == tool => Some(arg),
         _ => None,
     }
 }
 
-/// What a blocked agent waits on when it asks nothing cockpit can read: a limit it reached, else its terminal. When the
+/// What a blocked agent waits on when it asks nothing flightdeck can read: a limit it reached, else its terminal. When the
 /// limit ends comes from its usage windows (`says`) when they speak, else from its screen.
 pub fn waits_json(limit: Option<&prompt::Limit>, says: &Says, zone: Option<&str>) -> Value {
     let Some(limit) = limit else { return json!({"kind": "terminal", "text": WAITS_AT_TERMINAL, "resets": null}) };
@@ -484,7 +484,7 @@ pub enum Says {
 
 /// What `agent`'s usage windows say of its limit: the last reset among the full ones, as "08:00" today and
 /// "12 Oct 08:00" another day, as the screen's are written.
-pub fn limit_says(providers: &[cockpit_core::usage::Provider], agent: &str, now: u64) -> Says {
+pub fn limit_says(providers: &[flightdeck_core::usage::Provider], agent: &str, now: u64) -> Says {
     use chrono::{Local, TimeZone};
     let Some(windows) = providers.iter().find(|p| p.agent == agent).map(|p| &p.windows).filter(|w| !w.is_empty()) else { return Says::Nothing };
     let Some(at) = windows.iter().filter(|w| w.tightness() >= 100.0).filter_map(|w| w.resets_at).filter(|at| *at > now).max() else { return Says::Clear };
@@ -533,8 +533,8 @@ fn driven_transcript(agent: &str, session: &str, cwd: &str) -> Option<PathBuf> {
     {
         return path.clone();
     }
-    let kind = cockpit_core::agent::get(agent).map(|a| a.transcripts)?;
-    let path = cockpit_core::transcripts::find(kind, session, cwd);
+    let kind = flightdeck_core::agent::get(agent).map(|a| a.transcripts)?;
+    let path = flightdeck_core::transcripts::find(kind, session, cwd);
     if found.len() > 200 {
         found.clear();
     }
@@ -800,10 +800,10 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     let totals = ledger::totals(&stretches(now), now);
     let demo = term::demo().map(|w| w.clone());
     // Read once for every row: the agent table (the config laid over it) and the views `show` keeps.
-    let table = cockpit_core::agent::in_config(&config);
+    let table = flightdeck_core::agent::in_config(&config);
     let shown = crate::links::shown();
     let (auto, given) = (names::on(&config), names::given());
-    let usage = cockpit_core::usage::providers(&cockpit_core::usage::read(now), now);
+    let usage = flightdeck_core::usage::providers(&flightdeck_core::usage::read(now), now);
     let zone = prompt::local_zone();
     let s = snap();
     let st = states();
@@ -877,17 +877,17 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
             "terminal": l.handle, "address": l.address, "frontend": l.frontend,
             "space": {"id": l.space_id, "name": l.space_name}, "tab": {"id": l.tab_id, "name": l.tab_name},
             "title": title, "title_source": named_by.word(), "program": l.program, "agent": l.agent, "status": l.status,
-            // Herdr's logo and the name people read, from the agent cockpit knows it as, else what the frontend reports.
-            "icon": cockpit_core::agent::icon_in(&table, if l.agent.is_empty() { &l.program } else { &l.agent }),
-            "agent_name": cockpit_core::agent::display_name_in(&table, if l.agent.is_empty() { &l.program } else { &l.agent }),
-            "reports_limits": cockpit_core::agent::reports(if l.agent.is_empty() { &l.program } else { &l.agent }).is_some(),
+            // Herdr's logo and the name people read, from the agent flightdeck knows it as, else what the frontend reports.
+            "icon": flightdeck_core::agent::icon_in(&table, if l.agent.is_empty() { &l.program } else { &l.agent }),
+            "agent_name": flightdeck_core::agent::display_name_in(&table, if l.agent.is_empty() { &l.program } else { &l.agent }),
+            "reports_limits": flightdeck_core::agent::reports(if l.agent.is_empty() { &l.program } else { &l.agent }).is_some(),
             "since": entry.since, "waiting_since": if l.status == "blocked" { json!(entry.since) } else { Value::Null },
             "question": question, "waits": waits, "said": a.said,
             "identity": if blocked { a.question.as_ref().map_or(json!("terminal"), |q| json!(q.identity())) } else { Value::Null }, "recap": recap, "stage": stage,
             "repo": repo, "branch": branch, "cwd": l.cwd, "ticket": ticket, "pr": pr, "ci": ci, "changes": changes,
-            // What the session cost so far as cockpit estimates it everywhere, never the figure the agent reports.
+            // What the session cost so far as flightdeck estimates it everywhere, never the figure the agent reports.
             "context": f["context"].as_f64().or(l.context),
-            "cost": session.as_deref().and_then(cockpit_core::usage::session_estimate).or(mock["cost"].as_f64()),
+            "cost": session.as_deref().and_then(flightdeck_core::usage::session_estimate).or(mock["cost"].as_f64()),
             "page": f["page"].as_str().or(mock["page"].as_str()),
             "time": time(totals.agents.get(&l.handle).copied().unwrap_or(0), ticket_secs),
             "snoozed": snoozed, "dismissed": Value::Null, "seen": seen, "unread": unread, "session": session, "interrupted": interrupted,
@@ -910,7 +910,7 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     // Whether each row's agent reports its limits here, as the usage sources read now say.
     for r in rows.iter_mut() {
         let agent = r["agent"].as_str().filter(|a| !a.is_empty()).or(r["program"].as_str()).unwrap_or_default().to_string();
-        let limits = cockpit_core::usage::limits_of(&usage, &agent, now);
+        let limits = flightdeck_core::usage::limits_of(&usage, &agent, now);
         (r["limits"], r["reports_limits"]) = (json!(limits), json!(limits != "unreported"));
     }
     let rank = |stage: &str| STAGES.iter().position(|(id, _)| *id == stage).unwrap_or(99);
@@ -946,7 +946,7 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
         "stages": stages,
         "counts": counts,
         "next": next,
-        "quota": cockpit_core::usage::quota(&usage, now),
+        "quota": flightdeck_core::usage::quota(&usage, now),
         "tickets": tickets,
         "week": {"days": totals.days, "rows": week_rows},
     })
@@ -964,8 +964,8 @@ fn stopped(agent: &str, path: &std::path::Path) -> bool {
     {
         return *v;
     }
-    let Some(kind) = cockpit_core::agent::get(agent).map(|a| a.transcripts) else { return false };
-    let v = cockpit_core::transcripts::turn(kind, path) == Some(cockpit_core::transcripts::Turn::Interrupted);
+    let Some(kind) = flightdeck_core::agent::get(agent).map(|a| a.transcripts) else { return false };
+    let v = flightdeck_core::transcripts::turn(kind, path) == Some(flightdeck_core::transcripts::Turn::Interrupted);
     if seen.len() > 200 {
         seen.clear();
     }
@@ -984,14 +984,14 @@ fn tell_failed(before: &HashMap<String, Agent>, agents: &[Agent], first: bool) {
     let mut told = TOLD.lock().unwrap_or_else(|e| e.into_inner());
     let since = |handle: &str| st.agents.get(handle).map(|e| e.since).unwrap_or(0);
     for a in failures_to_tell(before, agents, &since, &mut told, first) {
-        let agent = cockpit_core::agent::of_program(&a.live.program);
+        let agent = flightdeck_core::agent::of_program(&a.live.program);
         let words = names::agent_names(&a.live.program, agent.as_ref());
         let known: Vec<&str> = words.iter().map(String::as_str).collect();
         let name = agent.map(|x| x.name).unwrap_or_else(|| "The agent".into());
         // A tab labelled only with what runs there says less than its space.
         let place = if names::default_label(&a.live.tab_name, &known) { &a.live.space_name } else { &a.live.tab_name };
         let target = if a.live.tab_id.is_empty() { String::new() } else { format!("tab:{}", a.live.tab_id) };
-        cockpit_core::notify::post(&format!("✗ {place}"), &format!("{name} stopped with an error"), &target, &[]);
+        flightdeck_core::notify::post(&format!("✗ {place}"), &format!("{name} stopped with an error"), &target, &[]);
     }
 }
 
@@ -1036,10 +1036,10 @@ fn driven_status(s: &Value) -> (&'static str, Option<u64>) {
     (status, asking.and_then(|a| a["at"].as_u64()).or(s["since"].as_u64().filter(|t| *t > 0)).or(s["started"].as_u64()))
 }
 
-/// A session cockpit drives as a row of the agents view, from its summary and the git of its folder: a permission it
+/// A session flightdeck drives as a row of the agents view, from its summary and the git of its folder: a permission it
 /// waits on reads as its question, and its repo, branch, ticket, PR and CI are found as a terminal's are.
 pub fn driven_row(s: &Value, git: Option<&Git>, inbox: &Value, ci: &Value, pattern: Option<&Regex>, config: &Value) -> Value {
-    let table = cockpit_core::agent::in_config(config);
+    let table = flightdeck_core::agent::in_config(config);
     let cwd = s["cwd"].as_str().unwrap_or_default().to_string();
     let asking = s["pending"].as_array().and_then(|p| p.first()).cloned();
     let session = s["session"].as_str().unwrap_or_default();
@@ -1048,7 +1048,7 @@ pub fn driven_row(s: &Value, git: Option<&Git>, inbox: &Value, ci: &Value, patte
     let recap = if session.is_empty() { Value::Null } else { recap::shown(session, transcript.as_deref()) };
     let failed = s["ended"].as_str().or(s["failed"].as_str()).map(str::to_string);
     let (status, since) = driven_status(s);
-    let agent = cockpit_core::agent::of_program(s["agent"].as_str().unwrap_or_default());
+    let agent = flightdeck_core::agent::of_program(s["agent"].as_str().unwrap_or_default());
     let mut question = asking.clone().map(|a| permission_question(a, agent.as_ref())).unwrap_or(Value::Null);
     // A plan asked about is kept as a view of the session, as a terminal's is.
     if question["markdown"] == true {
@@ -1069,9 +1069,9 @@ pub fn driven_row(s: &Value, git: Option<&Git>, inbox: &Value, ci: &Value, patte
         "terminal": s["key"], "address": s["key"], "frontend": "app", "driven": true,
         "space": {"id": "", "name": "In chat"}, "tab": {"id": "", "name": title},
         "title": title, "title_source": named_by.word(), "program": s["agent"], "agent": s["agent"], "status": status,
-        "icon": cockpit_core::agent::icon_in(&table, s["agent"].as_str().unwrap_or_default()),
-        "agent_name": cockpit_core::agent::display_name_in(&table, s["agent"].as_str().unwrap_or_default()),
-        "reports_limits": cockpit_core::agent::reports(s["agent"].as_str().unwrap_or_default()).is_some(),
+        "icon": flightdeck_core::agent::icon_in(&table, s["agent"].as_str().unwrap_or_default()),
+        "agent_name": flightdeck_core::agent::display_name_in(&table, s["agent"].as_str().unwrap_or_default()),
+        "reports_limits": flightdeck_core::agent::reports(s["agent"].as_str().unwrap_or_default()).is_some(),
         "since": since, "waiting_since": if asking.is_some() { json!(since) } else { Value::Null },
         // A stopped turn waits for a look as done; at rest, its PR says whose move it is.
         "stage": stage(status, false, status != "done", &pr, &ci, &changes),
@@ -1080,7 +1080,7 @@ pub fn driven_row(s: &Value, git: Option<&Git>, inbox: &Value, ci: &Value, patte
         "question": question, "waits": Value::Null,
         "said": "", "recap": recap, "paused": s["paused"], "cwd": cwd, "branch": branch, "repo": repo,
         "ticket": ticket, "pr": pr, "ci": ci, "changes": changes,
-        "cost": s["session"].as_str().and_then(cockpit_core::usage::session_estimate), "session": s["session"].clone(), "seen": true,
+        "cost": s["session"].as_str().and_then(flightdeck_core::usage::session_estimate), "session": s["session"].clone(), "seen": true,
         "unread": asking_unread(s) || status == "failed",
         "links": links, "documents": crate::links::documents(&crate::links::shown(), &[s["key"].as_str().unwrap_or_default()]), "snoozed": Value::Null,
         "dismissed": Value::Null,
@@ -1091,7 +1091,7 @@ pub fn driven_row(s: &Value, git: Option<&Git>, inbox: &Value, ci: &Value, patte
 /// What a person picks for a driven session and how each reaches it: its agent's picks, with the models the running
 /// session says it can switch to where it listed them.
 fn driven_picks(s: &Value) -> Value {
-    let Some(agent) = cockpit_core::agent::get(s["agent"].as_str().unwrap_or_default()) else { return Value::Null };
+    let Some(agent) = flightdeck_core::agent::get(s["agent"].as_str().unwrap_or_default()) else { return Value::Null };
     let mut picks = agent.catalog_picks(touch);
     if s["models"].as_array().is_some_and(|m| !m.is_empty()) {
         picks["models"] = s["models"].clone();
@@ -1158,7 +1158,7 @@ fn answered(handle: &str) {
 /// The agent's permission prompt shapes from the table; for a program it does not know, every agent's.
 #[cfg(test)]
 fn shapes_of(agent: &str) -> Vec<String> {
-    let all = cockpit_core::agent::all();
+    let all = flightdeck_core::agent::all();
     match all.iter().find(|a| a.id == agent).map(|a| a.permission.clone()).filter(|p| !p.is_empty()) {
         Some(own) => own,
         None => all.into_iter().flat_map(|a| a.permission).collect(),
@@ -1173,17 +1173,17 @@ fn answering(handle: &str) -> Arc<Mutex<()>> {
 }
 
 /// What only a person does (answering, a mode that runs tools unasked, starting or focusing an agent) is refused to a
-/// request from an agent's process tree, from work cockpit runs for someone, and from one cockpit cannot place.
+/// request from an agent's process tree, from work flightdeck runs for someone, and from one flightdeck cannot place.
 pub fn by_a_person(refused: &str) -> Result<(), String> {
-    cockpit_core::peer::on_place(place);
-    cockpit_core::peer::person(refused)
+    flightdeck_core::peer::on_place(place);
+    flightdeck_core::peer::person(refused)
 }
 
-/// What an agent's own tools may do through cockpit: act on their own agent (a `show` view's answer reaches it), never
+/// What an agent's own tools may do through flightdeck: act on their own agent (a `show` view's answer reaches it), never
 /// on another; a person may act on any.
 pub fn may_touch(target: &str) -> Result<(), String> {
-    cockpit_core::peer::on_place(place);
-    cockpit_core::peer::may_touch(target)
+    flightdeck_core::peer::on_place(place);
+    flightdeck_core::peer::may_touch(target)
 }
 
 /// Where the process `pid` stands, from its whole line of parents (see `place::walk`): the agents are looked at again
@@ -1203,14 +1203,14 @@ pub fn place(pid: u32) -> Who {
         place::Walk::Agent(handle) => Who::Agent(handle),
         place::Walk::Unwatched(_) => Who::Agent(String::new()),
         place::Walk::Front => Who::Person,
-        place::Walk::Cockpit => Who::Unplaced(format!("{UNPLACED}: cockpit runs it for an agent, a routine, a view, a click or a repo's setup")),
+        place::Walk::Flightdeck => Who::Unplaced(format!("{UNPLACED}: flightdeck runs it for an agent, a routine, a view, a click or a repo's setup")),
         place::Walk::Ssh(Some(ip)) if ip.is_loopback() && files::config()["trust_loopback_ssh"] == true => Who::Person,
         place::Walk::Ssh(Some(_)) => {
             Who::Unplaced(format!("{UNPLACED}: it comes through ssh from this machine itself (\"trust_loopback_ssh\": true in the config takes it)"))
         }
-        place::Walk::Ssh(None) => Who::Unplaced(format!("{UNPLACED}: cockpit cannot read where its ssh session comes from")),
-        place::Walk::Detached => Who::Unplaced(format!("{UNPLACED}: it reaches no terminal or window cockpit can check")),
-        place::Walk::Replaced(app) => Who::Unplaced(format!("{UNPLACED}: {app} was updated while it runs, so cockpit cannot check it; restart {app}")),
+        place::Walk::Ssh(None) => Who::Unplaced(format!("{UNPLACED}: flightdeck cannot read where its ssh session comes from")),
+        place::Walk::Detached => Who::Unplaced(format!("{UNPLACED}: it reaches no terminal or window flightdeck can check")),
+        place::Walk::Replaced(app) => Who::Unplaced(format!("{UNPLACED}: {app} was updated while it runs, so flightdeck cannot check it; restart {app}")),
         place::Walk::Unlisted => Who::Unplaced(format!("{UNPLACED}: the process table does not list it")),
     }
 }
@@ -1220,7 +1220,7 @@ pub fn place(pid: u32) -> Who {
 fn walk_now(pid: u32) -> place::Walk {
     let lives: Vec<Live> = snap().agents.iter().map(|a| a.live.clone()).collect();
     let base = |p: &str| std::path::Path::new(p).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-    let mut programs: Vec<String> = cockpit_core::agent::all().into_iter().flat_map(|a| std::iter::once(base(&a.bin)).chain(a.aliases)).collect();
+    let mut programs: Vec<String> = flightdeck_core::agent::all().into_iter().flat_map(|a| std::iter::once(base(&a.bin)).chain(a.aliases)).collect();
     let mut roots: Vec<(String, u32)> = Vec::new();
     for l in &lives {
         roots.extend(l.roots.iter().map(|p| (l.handle.clone(), *p)));
@@ -1236,8 +1236,8 @@ fn walk_now(pid: u32) -> place::Walk {
     place::walk(pid, &place::table(), &roots, &programs, std::process::id(), &place::System::default())
 }
 
-/// What a request cockpit cannot place is told.
-const UNPLACED: &str = "cockpit cannot tell whether a person sent this, so it takes no answer from it";
+/// What a request flightdeck cannot place is told.
+const UNPLACED: &str = "flightdeck cannot tell whether a person sent this, so it takes no answer from it";
 
 /// What an agent asks to be allowed, in full for the card to show: the command, the diff, the file, the plan (where
 /// `plan` names its argument), the arguments of an MCP tool.
@@ -1266,9 +1266,9 @@ pub fn what_it_runs(tool: &str, input: &Value, plan: Option<&str>) -> String {
 
 /// A permission request in the shape the question card draws: what it wants to run, and the two answers, neither of
 /// them picked. A plan, told by `agent`'s table, is drawn as Markdown.
-fn permission_question(ask: Value, agent: Option<&cockpit_core::agent::Agent>) -> Value {
+fn permission_question(ask: Value, agent: Option<&flightdeck_core::agent::Agent>) -> Value {
     let tool = ask["tool_name"].as_str().unwrap_or("A tool");
-    let detail = cockpit_core::transcripts::arg_line(&ask["input"]);
+    let detail = flightdeck_core::transcripts::arg_line(&ask["input"]);
     let text = if detail.is_empty() { format!("May it run {tool}?") } else { format!("May it run {tool}: {detail}?") };
     let plan = plan_arg(agent, tool);
     json!({
@@ -1309,12 +1309,12 @@ pub fn waiting(handle: &str, send: &mut dyn FnMut() -> bool) -> Result<(), Strin
     let menu = screen.is_some_and(|s| prompt::menu_shown(&s));
     let program = known.as_ref().map(|a| a.live.program.clone()).unwrap_or_default();
     let name = known.as_ref().map(title_of).filter(|n| !n.is_empty() && !n.chars().all(|c| c.is_ascii_digit()));
-    let name = name.or_else(|| cockpit_core::agent::of_program(&program).map(|a| a.name)).unwrap_or_else(|| "The agent".into());
-    // Blocked with no question on its screen: a limit it reached, or a prompt cockpit cannot read.
+    let name = name.or_else(|| flightdeck_core::agent::of_program(&program).map(|a| a.name)).unwrap_or_else(|| "The agent".into());
+    // Blocked with no question on its screen: a limit it reached, or a prompt flightdeck cannot read.
     let asks = known.as_ref().and_then(|a| a.question.as_ref()).is_none_or(|q| q.asks());
     match () {
         _ if blocked && !menu && !asks => Err(format!("{name} waits at its terminal: nothing goes to it from here")),
-        _ if blocked || menu => Err(cockpit_core::deliver::waiting_note(&name)),
+        _ if blocked || menu => Err(flightdeck_core::deliver::waiting_note(&name)),
         _ if send() => Ok(()),
         _ => Err(format!("{name} did not take it")),
     }
@@ -1348,7 +1348,7 @@ fn title_of(a: &Agent) -> String {
     let facts = facts_doc();
     let f = &facts[&a.live.handle];
     let transcript = session_of(&a.live, f).and_then(|s| transcript_of(&a.live, f, &s));
-    let agent = cockpit_core::agent::of_program(&a.live.agent).or_else(|| cockpit_core::agent::of_program(&a.live.program));
+    let agent = flightdeck_core::agent::of_program(&a.live.agent).or_else(|| flightdeck_core::agent::of_program(&a.live.program));
     name_of(&a.live, agent.as_ref(), transcript.as_deref(), names::on(&files::config()), &names::given()).0
 }
 
@@ -1356,7 +1356,7 @@ fn title_of(a: &Agent) -> String {
 /// gave it, the session's own names from its transcript, its terminal's title, else its agent's name.
 fn name_of(
     l: &Live,
-    agent: Option<&cockpit_core::agent::Agent>,
+    agent: Option<&flightdeck_core::agent::Agent>,
     transcript: Option<&std::path::Path>,
     auto: bool,
     given: &HashMap<String, String>,
@@ -1380,7 +1380,7 @@ fn name_of(
 
 /// A driven session's name: what its transcript says, else its first prompt, else its agent's name.
 fn driven_name(s: &Value, transcript: Option<&std::path::Path>, auto: bool) -> (String, names::Source) {
-    let agent = cockpit_core::agent::get(s["agent"].as_str().unwrap_or_default());
+    let agent = flightdeck_core::agent::get(s["agent"].as_str().unwrap_or_default());
     let read = transcript.filter(|_| auto).and_then(|p| names::read(transcripts_kind(agent.as_ref(), p), p)).unwrap_or_default();
     let first = s["title"].as_str().filter(|t| !t.trim().is_empty());
     let mut known: Vec<&str> = s["agent"].as_str().into_iter().collect();
@@ -1404,8 +1404,8 @@ fn driven_name(s: &Value, transcript: Option<&std::path::Path>, auto: bool) -> (
 }
 
 /// The format a transcript is in: its path says, else the agent's own.
-fn transcripts_kind(agent: Option<&cockpit_core::agent::Agent>, path: &std::path::Path) -> cockpit_core::transcripts::Transcripts {
-    cockpit_core::transcripts::kind_of(path).or(agent.map(|a| a.transcripts)).unwrap_or_default()
+fn transcripts_kind(agent: Option<&flightdeck_core::agent::Agent>, path: &std::path::Path) -> flightdeck_core::transcripts::Transcripts {
+    flightdeck_core::transcripts::kind_of(path).or(agent.map(|a| a.transcripts)).unwrap_or_default()
 }
 
 /// `text` cut to `max` characters at a word, with "…" when it was longer.
@@ -1462,14 +1462,14 @@ fn answer(handle: &str, arg: &Value) -> Result<String, String> {
         }
     };
     let mut q = reread(handle);
-    // Nothing on its screen reads as a question, and the answer names none it was shown: a menu cockpit could not
+    // Nothing on its screen reads as a question, and the answer names none it was shown: a menu flightdeck could not
     // read, a limit, a prompt of another shape.
     if !q.asks() && asked.is_empty() {
         let menu = term::screen(handle, 0).is_some_and(|s| prompt::menu_shown(&s));
         return Err(if menu {
-            format!("{name} shows a menu cockpit cannot read: answer it in its terminal")
+            format!("{name} shows a menu flightdeck cannot read: answer it in its terminal")
         } else {
-            format!("{name} asks nothing cockpit can read: go to its terminal")
+            format!("{name} asks nothing flightdeck can read: go to its terminal")
         });
     }
     same(&q)?;
@@ -1485,7 +1485,7 @@ fn answer(handle: &str, arg: &Value) -> Result<String, String> {
         let text = text.ok_or("it asks for words: send text")?;
         // A menu it could not read is still a menu: words are not its answer.
         if term::screen(handle, 0).is_some_and(|s| prompt::menu_shown(&s)) {
-            return Err(format!("{name} shows a menu cockpit cannot read: answer it in its terminal"));
+            return Err(format!("{name} shows a menu flightdeck cannot read: answer it in its terminal"));
         }
         term::paste(handle, text, false)?;
         format!("Answered {name}: {text}")
@@ -1587,7 +1587,7 @@ fn unasked(q: &Question, arg: &Value) -> Result<(), String> {
 
 /// Every delivery asked of the hub, taken or refused, with who asked and from where: a line in the answers log.
 fn log_delivery(handle: &str, arg: &Value, done: &Result<(), String>) {
-    let sender = format!("{:?}", cockpit_core::peer::current());
+    let sender = format!("{:?}", flightdeck_core::peer::current());
     let note = match done {
         Ok(()) => Ok(format!("delivered {} chars, asked by {sender}", arg["text"].as_str().unwrap_or_default().chars().count())),
         Err(why) => Err(format!("{why}, asked by {sender}")),
@@ -1662,11 +1662,11 @@ fn interrupt(handle: &str) -> Result<String, String> {
     if stops().get(handle).is_some_and(|at| now_ms().saturating_sub(*at) < STOP_PENDING_MS) {
         return Err("it is being stopped already".into());
     }
-    let keys = stop_keys(cockpit_core::agent::get(&a.live.agent).as_ref(), &a.live.status)?;
+    let keys = stop_keys(flightdeck_core::agent::get(&a.live.agent).as_ref(), &a.live.status)?;
     // Looked at again under the lock: the key that stops a turn would answer a question instead.
     let screen = term::screen(handle, 0).ok_or("its screen cannot be read, so nothing is pressed")?;
     if prompt::menu_shown(&screen) {
-        return Err(cockpit_core::deliver::waiting_note(&title_of(&a)));
+        return Err(flightdeck_core::deliver::waiting_note(&title_of(&a)));
     }
     stops().insert(handle.to_string(), now_ms());
     term::keys(handle, &keys).inspect_err(|_| {
@@ -1678,7 +1678,7 @@ fn interrupt(handle: &str) -> Result<String, String> {
 fn fork(handle: &str, place: &str) -> Result<String, String> {
     let a = find(handle).ok_or("no such agent")?;
     let facts = facts_doc();
-    let agent = cockpit_core::agent::of_program(&a.live.program).ok_or_else(|| format!("cockpit does not know the agent {}", a.live.program))?;
+    let agent = flightdeck_core::agent::of_program(&a.live.program).ok_or_else(|| format!("flightdeck does not know the agent {}", a.live.program))?;
     let session = session_of(&a.live, &facts[handle]).ok_or_else(|| format!("no {} session known for this agent yet", agent.name))?;
     let cwd = if a.live.cwd.is_empty() { files::home().to_string_lossy().into_owned() } else { a.live.cwd.clone() };
     let argv = agent.fork_argv(&session).ok_or_else(|| format!("{} cannot fork a session", agent.name))?;
@@ -1690,7 +1690,7 @@ fn fork(handle: &str, place: &str) -> Result<String, String> {
             frontend::app_do("terminal.open", &json!({"argv": argv, "folder": cwd, "place": place})).is_some()
         }
         None => {
-            let line = cockpit_core::agent::shell_line(&agent.typed(&argv));
+            let line = flightdeck_core::agent::shell_line(&agent.typed(&argv));
             let created = if place == "tab" {
                 frontend::herdr(&["tab", "create", "--workspace", &a.live.space_id, "--cwd", &cwd, "--label", &label, "--focus"])
             } else {
@@ -1719,9 +1719,9 @@ fn pick(handle: &str, arg: &Value) -> Result<String, String> {
         return crate::session::pick(handle, setting, value);
     }
     let a = find(handle).ok_or("no such agent")?;
-    let agent = cockpit_core::agent::of_program(&a.live.program)
-        .or_else(|| cockpit_core::agent::get(&a.live.agent))
-        .ok_or_else(|| format!("cockpit does not know the agent {}", a.live.program))?;
+    let agent = flightdeck_core::agent::of_program(&a.live.program)
+        .or_else(|| flightdeck_core::agent::get(&a.live.agent))
+        .ok_or_else(|| format!("flightdeck does not know the agent {}", a.live.program))?;
     let word = match setting {
         Setting::Fast => match value.as_bool() {
             Some(on) if agent.fast.is_some() => if on { "on" } else { "off" }.to_string(),
@@ -1731,7 +1731,7 @@ fn pick(handle: &str, arg: &Value) -> Result<String, String> {
         // Typed after its command as one word: only a well-formed name gets there.
         Setting::Model => value
             .as_str()
-            .filter(|m| cockpit_core::agent::model_id(m) && agent.takes_model(m))
+            .filter(|m| flightdeck_core::agent::model_id(m) && agent.takes_model(m))
             .ok_or_else(|| format!("{} takes no model {value}", agent.name))?
             .to_string(),
         Setting::Effort => value.as_str().filter(|e| agent.takes_effort(e)).ok_or_else(|| format!("{} takes no effort level {value}", agent.name))?.to_string(),
@@ -1745,20 +1745,20 @@ fn pick(handle: &str, arg: &Value) -> Result<String, String> {
     if !matches!(a.live.status.as_str(), "idle" | "done" | "failed") {
         return Err(format!("{} is {}: change it once it rests", agent.name, if a.live.status == "blocked" { "waiting on a question" } else { "working" }));
     }
-    let done = cockpit_core::deliver::deliver(handle, &line);
+    let done = flightdeck_core::deliver::deliver(handle, &line);
     log_delivery(handle, &json!({"text": line, "source": arg["source"].as_str().unwrap_or("pick")}), &done);
     done.map(|()| format!("typed {line}"))
 }
 
-/// The agent in a terminal, as cockpit knows it, for an action typed into that terminal; never a session cockpit drives.
-fn terminal_agent(handle: &str) -> Result<(Agent, cockpit_core::agent::Agent), String> {
+/// The agent in a terminal, as flightdeck knows it, for an action typed into that terminal; never a session flightdeck drives.
+fn terminal_agent(handle: &str) -> Result<(Agent, flightdeck_core::agent::Agent), String> {
     if crate::session::summary(handle).is_some() {
-        return Err("a session cockpit drives changes it from its chat".into());
+        return Err("a session flightdeck drives changes it from its chat".into());
     }
     let a = find(handle).ok_or("no such agent")?;
-    let agent = cockpit_core::agent::of_program(&a.live.program)
-        .or_else(|| cockpit_core::agent::get(&a.live.agent))
-        .ok_or_else(|| format!("cockpit does not know the agent {}", a.live.program))?;
+    let agent = flightdeck_core::agent::of_program(&a.live.program)
+        .or_else(|| flightdeck_core::agent::get(&a.live.agent))
+        .ok_or_else(|| format!("flightdeck does not know the agent {}", a.live.program))?;
     Ok((a, agent))
 }
 
@@ -1797,7 +1797,7 @@ fn toggle_focus(handle: &str) -> Result<String, String> {
     if !matches!(a.live.status.as_str(), "idle" | "done" | "failed") {
         return Err(format!("{} is {}: change it once it rests", agent.name, if a.live.status == "blocked" { "waiting on a question" } else { "working" }));
     }
-    let done = cockpit_core::deliver::deliver(handle, &line);
+    let done = flightdeck_core::deliver::deliver(handle, &line);
     log_delivery(handle, &json!({"text": line, "source": "focus"}), &done);
     done.map(|()| format!("typed {line}"))
 }
@@ -1921,7 +1921,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
         }
         // Words from a process that is not the hub: the hub looks at the agent and types them, or refuses.
         "deliver" => {
-            let done = may_touch(&handle).and_then(|()| cockpit_core::deliver::deliver(&handle, arg["text"].as_str().unwrap_or_default()));
+            let done = may_touch(&handle).and_then(|()| flightdeck_core::deliver::deliver(&handle, arg["text"].as_str().unwrap_or_default()));
             log_delivery(&handle, &arg, &done);
             done.map(|()| "sent".into())
         }
@@ -2023,7 +2023,7 @@ mod tests {
 
     #[test]
     fn only_a_working_agent_with_a_measured_key_can_be_stopped() {
-        let table = cockpit_core::agent::builtin();
+        let table = flightdeck_core::agent::builtin();
         let get = |id: &str| table.iter().find(|a| a.id == id).cloned();
         let (claude, codex, opencode) = (get("claude"), get("codex"), get("opencode"));
         assert_eq!(stop_keys(claude.as_ref(), "working"), Ok(vec!["esc".to_string()]));
@@ -2047,7 +2047,7 @@ mod tests {
 
     #[test]
     fn a_pane_still_shown_working_after_a_stop_rests_while_its_transcript_says_so() {
-        assert_eq!(after_stop("working", None, || Some(true)), ("working".into(), false), "no stop from cockpit");
+        assert_eq!(after_stop("working", None, || Some(true)), ("working".into(), false), "no stop from flightdeck");
         assert_eq!(after_stop("working", Some(1_000), || Some(true)), ("working".into(), true), "the frontend gets its moment");
         assert_eq!(after_stop("working", Some(9_000), || Some(true)), ("done".into(), true), "and keeps resting on every look");
         assert_eq!(after_stop("working", Some(60_000), || Some(true)), ("done".into(), true), "however long it stays so");
@@ -2066,7 +2066,7 @@ mod tests {
         let asks = prompt::read("⏺ Shall I open the PR now, or wait for the backfill?\n");
         // A menu on its screen is the prompt, whatever its transcript says; so is a limit it reached.
         assert_eq!(past_prompt(&menu, false, || Some(Turn::Done)), None);
-        // A menu cockpit could not read is a prompt too: Esc, a stop or words would land in it.
+        // A menu flightdeck could not read is a prompt too: Esc, a stop or words would land in it.
         assert_eq!(past_prompt(&asks, true, || Some(Turn::Done)), None);
         assert_eq!(past_prompt(&replied, true, || Some(Turn::Working)), None);
         assert_eq!(past_prompt(&limit, false, || Some(Turn::Done)), None, "stopped at its limit: it still waits");
@@ -2106,7 +2106,7 @@ mod tests {
         // Its usage windows give the reset once one is full: the last of the full ones, never one with room left.
         use chrono::{Local, TimeZone};
         let now = Local.with_ymd_and_hms(2026, 11, 2, 15, 0, 0).unwrap().timestamp_millis() as u64;
-        let window = |name: &str, percent: f64, resets_in_min: u64| cockpit_core::usage::Window {
+        let window = |name: &str, percent: f64, resets_in_min: u64| flightdeck_core::usage::Window {
             agent: "claude".into(),
             name: name.into(),
             percent: Some(percent),
@@ -2116,7 +2116,7 @@ mod tests {
             as_of: now,
             source: "statusline",
         };
-        let provider = |windows: Vec<cockpit_core::usage::Window>| cockpit_core::usage::Provider {
+        let provider = |windows: Vec<flightdeck_core::usage::Window>| flightdeck_core::usage::Provider {
             agent: "claude".into(),
             name: "Claude".into(),
             letter: "C".into(),
@@ -2183,10 +2183,10 @@ mod tests {
     }
 
     #[test]
-    fn a_stopped_turn_is_told_by_its_transcript_first_then_by_a_stop_from_cockpit() {
+    fn a_stopped_turn_is_told_by_its_transcript_first_then_by_a_stop_from_flightdeck() {
         assert_eq!(ended_as("done", false, Some(true)), "interrupted", "stopped at its terminal");
         assert_eq!(ended_as("done", true, Some(false)), "done", "the transcript says it finished: the stop came too late");
-        assert_eq!(ended_as("done", true, None), "interrupted", "no transcript: the stop from cockpit tells");
+        assert_eq!(ended_as("done", true, None), "interrupted", "no transcript: the stop from flightdeck tells");
         assert_eq!(ended_as("done", false, None), "done");
         assert_eq!(ended_as("failed", true, Some(true)), "failed", "an error is an error");
     }
@@ -2287,7 +2287,7 @@ mod tests {
 
     #[test]
     fn a_driven_ask_is_drawn_with_nothing_picked_and_all_it_would_do() {
-        let claude = cockpit_core::agent::of_program("claude");
+        let claude = flightdeck_core::agent::of_program("claude");
         let q = permission_question(
             json!({"id": "toolu_a", "tool_name": "Bash", "input": {"command": "mix test", "description": "Run the tests"}}),
             claude.as_ref(),

@@ -261,10 +261,10 @@ test("a disabled bridge removes itself from the page", () => {
   const removed = [];
   const state = { raf: 7, requestUpdate: () => {}, onBeforeUnload: () => {}, targetObserver: { disconnect: () => removed.push("observer") }, targetShadowRoots: [], host: null };
   const listeners = { removeEventListener: (type) => removed.push(type) };
-  const context = { window: listeners, document: listeners, cancelAnimationFrame: (id) => removed.push(`frame ${id}`), __cockpitAnnotationViewportBridge: state };
+  const context = { window: listeners, document: listeners, cancelAnimationFrame: (id) => removed.push(`frame ${id}`), __flightdeckAnnotationViewportBridge: state };
   const script = buildAnnotationViewportBridgeScript({ enabled: false, emitViewport: false, markers: [], token: TOKEN });
   assert.equal(vm.runInNewContext(script, context), true);
-  assert.equal("__cockpitAnnotationViewportBridge" in context, false);
+  assert.equal("__flightdeckAnnotationViewportBridge" in context, false);
   assert.deepEqual(removed, ["frame 7", "scroll", "scroll", "resize", "beforeunload", "observer"]);
   assert.equal(vm.runInNewContext(script, {}), true);
 });

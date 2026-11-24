@@ -1,11 +1,11 @@
 //! What the keys and the palette run: a step's or a runbook's action through the bridge, and in the app itself the
 //! steps marked done, commands copied and cells edited, each written straight into the runbook file.
 
-use cockpit_core::acts::Act;
-use cockpit_core::anim::Kind;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::input::Input;
-use cockpit_core::toast;
+use flightdeck_core::acts::Act;
+use flightdeck_core::anim::Kind;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::input::Input;
+use flightdeck_core::toast;
 use serde_json::{Value, json};
 
 use crate::app::{App, Cmd, key};
@@ -151,7 +151,7 @@ impl App {
             self.toasts.push("no command to copy", toast::Kind::Note);
             return;
         }
-        let note = if !cockpit_core::files::copy(&commands.join("\n")) {
+        let note = if !flightdeck_core::files::copy(&commands.join("\n")) {
             "no clipboard tool: install wl-copy or xclip".to_string()
         } else if commands.len() == 1 {
             format!("copied: {}", commands[0])

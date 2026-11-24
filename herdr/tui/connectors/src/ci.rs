@@ -188,10 +188,10 @@ fn logs_hint(ci: &Value, job: &str) -> String {
     let tools: Vec<&str> = ["getJob", "listTests", "logs"].iter().filter_map(|c| ci["tools"][c]["tool"].as_str().filter(|t| !t.is_empty())).collect();
     let name = text(Some(&ci["name"])).unwrap_or_default();
     let list = if tools.is_empty() { String::new() } else { format!(" ({}; keep log tails small)", tools.join(", ")) };
-    format!("cockpit's cockpit_read tool (source ci, verb logs or getJob, values {{\"job\": \"{job}\"}}), else the {name} MCP{list}, job id {job}")
+    format!("flightdeck's flightdeck_read tool (source ci, verb logs or getJob, values {{\"job\": \"{job}\"}}), else the {name} MCP{list}, job id {job}")
 }
 
-/// A connector's outcome as cockpit's, through the mapping's outcomes.
+/// A connector's outcome as flightdeck's, through the mapping's outcomes.
 fn outcome_of(ci: &Value, value: Option<&Value>) -> String {
     let raw = text(value).unwrap_or_default();
     ci["outcomes"][&raw].as_str().map(str::to_string).unwrap_or(raw)
@@ -329,7 +329,7 @@ mod tests {
             runs[0]["failed"],
             json!({
                 "job": "test", "jobId": "j1", "step": "mix test", "tests": ["quota test", "QuotaTest", "c"],
-                "logs": "cockpit's cockpit_read tool (source ci, verb logs or getJob, values {\"job\": \"j1\"}), else the CircleCI MCP (get_job, list_job_tests, get_job_logs; keep log tails small), job id j1"
+                "logs": "flightdeck's flightdeck_read tool (source ci, verb logs or getJob, values {\"job\": \"j1\"}), else the CircleCI MCP (get_job, list_job_tests, get_job_logs; keep log tails small), job id j1"
             })
         );
         assert_eq!(calls(&fake, "getJob")[0], json!({"job": "j1"}));
@@ -364,7 +364,7 @@ mod tests {
         assert_eq!(runs[0]["dockerTag"], "succeeded");
         assert_eq!(
             runs[0]["failed"],
-            json!({"job": "rspec", "jobId": "1", "tests": [], "logs": "cockpit's cockpit_read tool (source ci, verb logs or getJob, values {\"job\": \"1\"}), else the GitLab MCP, job id 1"})
+            json!({"job": "rspec", "jobId": "1", "tests": [], "logs": "flightdeck's flightdeck_read tool (source ci, verb logs or getJob, values {\"job\": \"1\"}), else the GitLab MCP, job id 1"})
         );
         assert_eq!(calls(&fake, "listJobs")[0], json!({"run": "7", "workflow": "7"}));
     }

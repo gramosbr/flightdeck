@@ -11,7 +11,7 @@ type $ = EngineInterface
 // as they were (`keep`, for a tool that replaces a whole setup).
 export type Recipe = { tool: string; args?: Record<string, unknown>; keep?: string[] }
 
-// Where each value cockpit reads sits in the platform tools' answers, as dotted paths ("status.health"; "a|b" for
+// Where each value flightdeck reads sits in the platform tools' answers, as dotted paths ("status.health"; "a|b" for
 // the first that has one).
 export type PlatformFields = Partial<Record<
   | 'apps' | 'appId' | 'appRepo' | 'appLink' | 'appTag' | 'appSha' | 'appKind'
@@ -77,7 +77,7 @@ export type Ci = {
   imageJob: string
   tools: Partial<Record<CiCapability, Recipe>>
   fields: CiFields
-  // How the connector's outcomes read as cockpit's (succeeded, failed, canceled), and the phases that mean ended.
+  // How the connector's outcomes read as flightdeck's (succeeded, failed, canceled), and the phases that mean ended.
   outcomes: Record<string, string>
   endedPhases: string[]
 }
@@ -106,7 +106,7 @@ export type Calendar = {
   // those (regular meetings, not out of office or focus time); a missing field reads as "".
   skip: Record<string, string[]>
   only: Record<string, string[]>
-  // How the connector's answers to an invite read as cockpit's: accepted, tentative, declined, needsAction.
+  // How the connector's answers to an invite read as flightdeck's: accepted, tentative, declined, needsAction.
   responses: Record<string, string>
 }
 
@@ -130,13 +130,13 @@ export type Platform = {
   fields: PlatformFields
 }
 
-// ~/.config/cockpit/config.json, written by /cockpit:setup and shared with the herdr apps.
+// ~/.config/flightdeck/config.json, written by /flightdeck:setup and shared with the herdr apps.
 export type Config = {
   reposDir: string
   github: { enabled: boolean; org: string }
   tickets: Tickets
   ci: Ci
-  // The connector whose tools deploy apps and run preview environments, mapped by /cockpit:setup.
+  // The connector whose tools deploy apps and run preview environments, mapped by /flightdeck:setup.
   platform: Platform
   deployWatch: { enabled: boolean; afterMinutes: number; tools: string[] }
   recap: { enabled: boolean; awayMinutes: number }
@@ -165,7 +165,7 @@ export type Config = {
   notifications: boolean
   // Where an agent runs its E2E tests of a front change: terminal-browser beside it, or Claude in Chrome.
   e2eBrowser: 'terminal-browser' | 'chrome'
-  // The browser beside an agent: terminal-browser in a pane, or cockpit's Chromium window docked in the Herdr app (macOS).
+  // The browser beside an agent: terminal-browser in a pane, or flightdeck's Chromium window docked in the Herdr app (macOS).
   sideBrowser: 'terminal-browser' | 'chromium'
   // Whether a new claude.ai artifact waits for show to be tried, or for the person to ask for one; off lets every publish through.
   artifactGuard: boolean
@@ -181,7 +181,7 @@ export type Config = {
   density: 'comfortable' | 'compact'
 }
 
-// A pinned space of your own: where it opens, its sidebar glyph, and the herdr key /cockpit:setup binds to it.
+// A pinned space of your own: where it opens, its sidebar glyph, and the herdr key /flightdeck:setup binds to it.
 export type PinnedSpace = { name: string; cwd?: string; icon?: string; key?: string }
 
 // The Linear connector's mapping, the default for a config that names no other.
@@ -211,7 +211,7 @@ const LINEAR: Tickets = {
 }
 
 // The GitHub Issues connector's mapping. An issue is owner, repo and number, which idPattern and idTemplate carry
-// through cockpit's one id as owner/repo#number.
+// through flightdeck's one id as owner/repo#number.
 const GITHUB_ISSUES: Tickets = {
   enabled: false,
   name: 'GitHub Issues',
@@ -357,20 +357,20 @@ export async function home($: $) {
 }
 
 export async function cacheDir($: $) {
-  return `${await home($)}/.cache/cockpit`
+  return `${await home($)}/.cache/flightdeck`
 }
 
-// The cockpit command: the herdr plugin's cockpit.sh through its link, else the binary `cockpit app install` noted in
+// The flightdeck command: the herdr plugin's flightdeck.sh through its link, else the binary `flightdeck app install` noted in
 // the Herdr app's home, else the copy of the herdr folder the Claude plugin's marketplace holds.
-export async function cockpitCommand($: $): Promise<string[] | undefined> {
+export async function flightdeckCommand($: $): Promise<string[] | undefined> {
   const dir = await home($)
   const exists = (path: string) => $.fs.stat(path).then(() => true, () => false)
-  const linked = `${dir}/.config/cockpit/herdr/cockpit.sh`
+  const linked = `${dir}/.config/flightdeck/herdr/flightdeck.sh`
   if (await exists(linked)) return ['sh', linked]
   const appHome = (await $.env.get('HERDR_APP_HOME')) || `${dir}/.config/herdr-app`
-  const bin = (JSON.parse(await $.fs.read(`${appHome}/cockpit.json`).catch(() => '{}')) as { bin?: string }).bin
+  const bin = (JSON.parse(await $.fs.read(`${appHome}/flightdeck.json`).catch(() => '{}')) as { bin?: string }).bin
   if (bin && (await exists(bin))) return [bin]
-  const shipped = `${dir}/.claude/plugins/marketplaces/cockpit/herdr/cockpit.sh`
+  const shipped = `${dir}/.claude/plugins/marketplaces/flightdeck/herdr/flightdeck.sh`
   return (await exists(shipped)) ? ['sh', shipped] : undefined
 }
 
@@ -383,7 +383,7 @@ export async function loadConfig($: $): Promise<Config> {
     checksBrowser?: 'terminal' | 'chrome'
   } = {}
   try {
-    raw = JSON.parse(await $.fs.read(`${await home($)}/.config/cockpit/config.json`)) as typeof raw
+    raw = JSON.parse(await $.fs.read(`${await home($)}/.config/flightdeck/config.json`)) as typeof raw
   } catch {
     // Not set up yet: defaults only.
   }
@@ -450,18 +450,18 @@ async function shareConfig($: $, config: Config) {
   shared = body
 }
 
-// Where herdr keeps the cockpit herdr plugin, as its plugin registry says.
+// Where herdr keeps the flightdeck herdr plugin, as its plugin registry says.
 async function herdrPluginRoot($: $) {
   try {
     const plugins = JSON.parse(await $.fs.read(`${await home($)}/.config/herdr/plugins.json`)) as { plugin_id: string; plugin_root: string }[]
-    const root = plugins.find(p => p.plugin_id === 'cockpit')?.plugin_root
+    const root = plugins.find(p => p.plugin_id === 'flightdeck')?.plugin_root
     if (root) return root
   } catch {
     // No herdr: the Herdr app alone.
   }
   // Without the herdr plugin, its scripts come from the Claude plugin's marketplace, which holds the whole repo.
-  const shipped = `${await home($)}/.claude/plugins/marketplaces/cockpit/herdr`
-  return (await $.fs.stat(`${shipped}/cockpit.sh`).then(() => true, () => false)) ? shipped : ''
+  const shipped = `${await home($)}/.claude/plugins/marketplaces/flightdeck/herdr`
+  return (await $.fs.stat(`${shipped}/flightdeck.sh`).then(() => true, () => false)) ? shipped : ''
 }
 
 // Fills `{name}` placeholders of a URL template; an empty template gives no URL.

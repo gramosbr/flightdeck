@@ -1,11 +1,11 @@
-// The agent the Cockpit layout's status bar describes, its documents at the bar's right end: the agent in view, never
+// The agent the Flightdeck layout's status bar describes, its documents at the bar's right end: the agent in view, never
 // the first agent Herdr names for its agent blocks when the tab in front runs none.
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 function find(node, id) {
   if (!node || typeof node !== "object") return null;
@@ -40,9 +40,9 @@ const ROWS = {
   ],
 };
 
-async function fixture({ layoutName = "cockpit" } = {}) {
+async function fixture({ layoutName = "flightdeck" } = {}) {
   const tree = JSON.parse(await readFile(new URL(`../layouts/${layoutName}.json`, import.meta.url), "utf8"));
-  const state = new Map(Object.entries({ layout: layoutName, "cockpit.app": "work" }));
+  const state = new Map(Object.entries({ layout: layoutName, "flightdeck.app": "work" }));
   const focus = { value: null };
   const element = () => {
     const made = [];
@@ -194,10 +194,10 @@ test("the side panel lists the documents of the session in view: its agent's, a 
   assert.equal(f.followed(), "t9", "the agent of a tab whose shell is focused, as the status bar names it");
   f.focus.value = { tab: "tC", pane: "p6", terminal: "t6", agent: "t1", shown: null };
   assert.equal(f.followed(), "t6", "a tab no agent runs in: the shell's own views, never Herdr's first agent's");
-  const chat = await fixture({ layoutName: "cockpit-chat" });
+  const chat = await fixture({ layoutName: "flightdeck-chat" });
   chat.focus.value = { tab: "tC", pane: "p6", terminal: "t6", agent: "t1", shown: null };
-  chat.state.set("cockpit.chat.subject", "t4");
-  assert.equal(chat.followed(), "t4", "Cockpit Chat: the documents of the agent the chat reads");
-  chat.state.set("cockpit.chat.subject", null);
+  chat.state.set("flightdeck.chat.subject", "t4");
+  assert.equal(chat.followed(), "t4", "Flightdeck Chat: the documents of the agent the chat reads");
+  chat.state.set("flightdeck.chat.subject", null);
   assert.equal(chat.followed(), "t6");
 });

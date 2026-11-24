@@ -2,11 +2,11 @@
 //! words as you type, with its next three runs) and in which time zone, the prompt or script, the folder, the precheck,
 //! an installed agent or the shell, its model, whether each run gets a worktree, and a template's tools.
 
-use cockpit_core::input::Input;
-use cockpit_core::routines::{TEMPLATES, Template, When, Zone};
-use cockpit_core::text::wrap;
-use cockpit_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::input::Input;
+use flightdeck_core::routines::{TEMPLATES, Template, When, Zone};
+use flightdeck_core::text::wrap;
+use flightdeck_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
@@ -88,10 +88,12 @@ impl Picker {
             let mark = if on { "▸ " } else { "  " };
             let head = format!("{mark}{} {name:<24}", n + 1);
             let rest = if when.is_empty() { about.to_string() } else { format!("{when} · {about}") };
-            let room = inner.saturating_sub(cockpit_core::text::width(&head));
+            let room = inner.saturating_sub(flightdeck_core::text::width(&head));
             let style = if on { Style::new().fg(BG).bg(ORANGE).add_modifier(Modifier::BOLD) } else { fg(FG) };
-            lines
-                .push(Line::from(vec![Span::styled(head, style), Span::styled(format!(" {}", cockpit_core::text::fit(&rest, room.saturating_sub(1))), dim())]));
+            lines.push(Line::from(vec![
+                Span::styled(head, style),
+                Span::styled(format!(" {}", flightdeck_core::text::fit(&rest, room.saturating_sub(1))), dim()),
+            ]));
         }
         lines.push(Line::raw(""));
         for part in wrap("j k move · enter or 1–5 picks · esc cancels · nothing is saved until you add the routine", inner) {

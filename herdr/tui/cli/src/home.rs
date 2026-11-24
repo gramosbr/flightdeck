@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate};
-use cockpit_core::{files, resume};
+use flightdeck_core::{files, resume};
 use serde_json::{Value, json};
 
 pub fn dirs() -> Vec<PathBuf> {
@@ -18,9 +18,9 @@ pub fn view(_args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     };
     let mut model = model(&or_file("inbox"), &or_file("ci"), Local::now());
     model["lost"] = json!(resume::lost());
-    let agent = cockpit_core::agent::default();
+    let agent = flightdeck_core::agent::default();
     model["agent"] = json!({"id": agent.id, "name": agent.name});
-    model["spend"] = cockpit_core::usage::spend();
+    model["spend"] = flightdeck_core::usage::spend();
     model
 }
 
@@ -172,7 +172,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     let handle = args.first().and_then(Value::as_str).unwrap_or_default();
     // A resume starts agents again: the person's to do.
     if action == "resume"
-        && let Err(why) = cockpit_agents::gui::by_a_person("an agent is resumed by a person, not by an agent's tools")
+        && let Err(why) = flightdeck_agents::gui::by_a_person("an agent is resumed by a person, not by an agent's tools")
     {
         return Some(Err(why));
     }

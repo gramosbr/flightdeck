@@ -8,9 +8,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.join(HERE, "home")
 APPS = os.path.join(HERE, "..", "..", "herdr")
 OUT = os.path.join(HERE, "..")
-COCKPIT = os.path.join(APPS, "tui", "target", "release", "cockpit")
-env = {"HOME": HOME, "TERM": "xterm-256color", "HERDR_BIN_PATH": "/usr/bin/true", "COCKPIT_HERDR_DIR": APPS,
-       "COCKPIT_HUB_IDLE_SECS": "120", "COCKPIT_HUB_FEED": "off", "COCKPIT_HUB_MODELS": "off"}
+FLIGHTDECK = os.path.join(APPS, "tui", "target", "release", "flightdeck")
+env = {"HOME": HOME, "TERM": "xterm-256color", "HERDR_BIN_PATH": "/usr/bin/true", "FLIGHTDECK_HERDR_DIR": APPS,
+       "FLIGHTDECK_HUB_IDLE_SECS": "120", "FLIGHTDECK_HUB_FEED": "off", "FLIGHTDECK_HUB_MODELS": "off"}
 # app: (columns, rows, keys, seconds per step). The inbox: down the tree, a filter typed and kept, then the palette
 # searching every app through the hub.
 SHOTS = {
@@ -34,7 +34,7 @@ def cropped(screen, rows):
 
 for name in sys.argv[1:] or SHOTS:
     cols, rows, keys, step = SHOTS[name]
-    argv = [COCKPIT, name]
+    argv = [FLIGHTDECK, name]
     shots = [screen_of(t, cols, rows) for t in run_steps(argv, cols, rows, env, keys, cwd=APPS, settle=4.0, gap=0.6)]
     used = min(rows, max(last_used_row(s) for s in shots) + 1)
     frames = [(step * (2 if i in (0, len(shots) - 1) else 1), cropped(s, used)) for i, s in enumerate(shots)]

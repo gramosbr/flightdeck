@@ -76,7 +76,7 @@ test('a release is watched, then ok or moved by its error rate, p95 or new error
 // One refresh, the platform connector and Datadog answering as they do
 
 const HOME = '/home/me'
-const CACHE = `${HOME}/.cache/cockpit`
+const CACHE = `${HOME}/.cache/flightdeck`
 const NOW = Date.now()
 const iso = (ago: number) => new Date(NOW - ago).toISOString()
 const MIN = 60_000
@@ -110,7 +110,7 @@ const deployments = {
 const wrap = (data: unknown) => `<METADATA>\n  <is_truncated>false</is_truncated>\n</METADATA>\n<JSON_DATA>\n${JSON.stringify(data)}\n</JSON_DATA>`
 
 function engine(stored: unknown, config: object = CONFIG) {
-  const files = new Map<string, string>([[`${HOME}/.config/cockpit/config.json`, JSON.stringify(config)], [`${CACHE}/inbox.json`, JSON.stringify({ deploys: { 'ENG-412': [{ repo: 'api', number: 2219, tag: 'v2', isLive: true }] }, tickets: [{ id: 'ENG-412', url: 'https://linear.app/acme/issue/ENG-412' }] })]])
+  const files = new Map<string, string>([[`${HOME}/.config/flightdeck/config.json`, JSON.stringify(config)], [`${CACHE}/inbox.json`, JSON.stringify({ deploys: { 'ENG-412': [{ repo: 'api', number: 2219, tag: 'v2', isLive: true }] }, tickets: [{ id: 'ENG-412', url: 'https://linear.app/acme/issue/ENG-412' }] })]])
   if (stored) files.set(`${CACHE}/monitor.json`, JSON.stringify(stored))
   const calls: string[] = []
   const notified: string[] = []
@@ -128,7 +128,7 @@ function engine(stored: unknown, config: object = CONFIG) {
       },
       write: async (path: string, body: string) => void files.set(path, body),
       stat: async (path: string) => {
-        if (!files.has(path) && !path.endsWith('cockpit.sh')) throw new Error('ENOENT')
+        if (!files.has(path) && !path.endsWith('flightdeck.sh')) throw new Error('ENOENT')
         return { mtimeMs: 1 }
       },
     },

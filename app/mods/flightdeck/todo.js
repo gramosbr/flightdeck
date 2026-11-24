@@ -72,7 +72,7 @@ export default class Todo {
     this.sub?.stop();
   }
 
-  /** Keyboard commands from keys.json (`cockpit.<command>`) and pane.go's "focus". */
+  /** Keyboard commands from keys.json (`flightdeck.<command>`) and pane.go's "focus". */
   command(c, cx, key = null) {
     if (c === "focus" || c === "show:todo") this.handle.focus();
     // A right-click menu's choice, todo:<action>:<item>, by its menu's key: a window command does nothing here.
@@ -530,7 +530,7 @@ export default class Todo {
             .text_color(item.done ? k.mutedFg : k.info)
             .cursor_pointer()
             .hover((s) => s.underline())
-            .tooltip(p.url ?? "no URL known: set tickets.urlTemplate in the cockpit config")
+            .tooltip(p.url ?? "no URL known: set tickets.urlTemplate in the flightdeck config")
             .on_click((_e, cx) => {
               cx.stop_propagation();
               cx.spawn(async (cx) => this.act(cx, "open_link", [p.text]));

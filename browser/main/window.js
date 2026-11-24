@@ -23,14 +23,14 @@ export class Window {
       height: 800,
       minWidth: 320,
       minHeight: 240,
-      title: "Cockpit Browser",
+      title: "Flightdeck Browser",
       backgroundColor: this.backdrop(),
       roundedCorners: !docked,
     });
     // A panel is made floating: at the normal level it stays one step above the host and under every other app.
     if (docked) this.win.setAlwaysOnTop(false);
     this.toolbar = new WebContentsView({
-      webPreferences: { preload: path.join(here, "..", "ui", "preload.cjs"), sandbox: true, contextIsolation: true, nodeIntegration: false, partition: "cockpit-internal" },
+      webPreferences: { preload: path.join(here, "..", "ui", "preload.cjs"), sandbox: true, contextIsolation: true, nodeIntegration: false, partition: "flightdeck-internal" },
     });
     this.toolbar.setBackgroundColor("#00000000");
     this.toolbar.webContents.loadFile(path.join(here, "..", "ui", "toolbar.html"));

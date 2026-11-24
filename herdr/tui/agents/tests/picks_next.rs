@@ -4,7 +4,7 @@
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-use cockpit_agents::session::{self, NEXT, Picks};
+use flightdeck_agents::session::{self, NEXT, Picks};
 use serde_json::{Value, json};
 
 fn wait_for(key: &str, what: &str, done: impl Fn(&Value) -> bool) -> Value {
@@ -32,7 +32,7 @@ fn a_setting_taken_only_at_a_start_waits_for_the_next_message() {
     let home = tempfile::tempdir().unwrap();
     let work = home.path().join("api");
     std::fs::create_dir_all(&work).unwrap();
-    let config = home.path().join(".config/cockpit");
+    let config = home.path().join(".config/flightdeck");
     std::fs::create_dir_all(&config).unwrap();
     std::fs::write(config.join("config.json"), json!({"agents": {"commands": {"claude": {"live": []}}}}).to_string()).unwrap();
     let args = home.path().join("args.jsonl");
@@ -40,10 +40,10 @@ fn a_setting_taken_only_at_a_start_waits_for_the_next_message() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_CLAUDE", &stub);
+        std::env::set_var("FLIGHTDECK_CLAUDE", &stub);
         std::env::set_var("STUB_ARGS", &args);
     }
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
     let key = session::start("claude", &work.to_string_lossy(), "default", &Picks::default()).expect("the stub starts");
     session::send(&key, "what resets the quota?").unwrap();
     let rested = wait_for(&key, "the turn to end", |s| s["working"] == false && s["count"].as_u64() >= Some(2));

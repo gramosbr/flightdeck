@@ -27,7 +27,7 @@ const PLACES = 6;
 export const MAX_H = 620;
 /** What peeks at the edge: a bar of colour, no content. */
 export const BAR = 10;
-/** The hub's stages in Cockpit's order and words (agentsui.js), each dot in its stage's colour. */
+/** The hub's stages in Flightdeck's order and words (agentsui.js), each dot in its stage's colour. */
 const STAGES = Object.entries(AGENT_STAGES).map(([id, s]) => ({ id, label: s.label }));
 
 /** The bar on the edge side of a drawer. */
@@ -76,7 +76,7 @@ export default class SidePeek {
         await hub.sleep(cx, 500);
       }
     });
-    // A newer cockpit shows here as it does in the sidebar this drawer stands in for (update.json, every five minutes).
+    // A newer flightdeck shows here as it does in the sidebar this drawer stands in for (update.json, every five minutes).
     cx.spawn(async (cx) => {
       for (;;) {
         try {
@@ -136,7 +136,7 @@ export default class SidePeek {
       .font_medium()
       .text_color(waiting ? k.blocked : k.dim)
       .hover((s) => s.bg(k.accent).text_color(waiting ? k.blocked : k.foreground))
-      .tooltip(hint("Needs you", "cockpit.go:needs"))
+      .tooltip(hint("Needs you", "flightdeck.go:needs"))
       .on_click((_e, cx) => {
         show("needs");
         cx.notify();
@@ -147,7 +147,7 @@ export default class SidePeek {
 
   /** What the sidebar's search box and app strip lead to, as one row of icons: the palette, then each app's screen. */
   apps(k) {
-    const here = shared("cockpit.app");
+    const here = shared("flightdeck.app");
     const items = [
       { child: null, label: "Search or run a command", icon: "search" },
       ...screens().list.filter((s) => !["chat", "needs", "tab"].includes(s.child)),
@@ -172,10 +172,10 @@ export default class SidePeek {
             .text_color(s.child && s.child === here ? k.foreground : k.mutedFg)
             .when(Boolean(s.child) && s.child === here, (e) => e.bg(k.selected))
             .hover((st) => st.bg(k.accent).text_color(k.foreground))
-            .tooltip(hint(s.label, s.command ?? "cockpit.palette"))
+            .tooltip(hint(s.label, s.command ?? "flightdeck.palette"))
             .on_click((_e, cx) => {
               if (s.child) show(s.child);
-              else run("cockpit.palette");
+              else run("flightdeck.palette");
               cx.notify();
             })
             .child(Icon(s.icon, { size: 13 })),
@@ -197,8 +197,8 @@ export default class SidePeek {
       .when(a.address === here, (e) => e.bg(k.selected))
       .when(a.address !== here, (e) => e.hover((s) => s.bg(k.accent)))
       .on_click((_e, cx) => {
-        // A session cockpit drives has no terminal to focus: the chat opens on it.
-        if (a.driven) run(keyed(`cockpit.via:chat|chat:open:${a.terminal}`));
+        // A session flightdeck drives has no terminal to focus: the chat opens on it.
+        if (a.driven) run(keyed(`flightdeck.via:chat|chat:open:${a.terminal}`));
         else {
           goToAgent({ address: a.address });
           show("chat");
@@ -236,7 +236,7 @@ export default class SidePeek {
         .pb(2)
         .gap(6)
         .items_center()
-        .tooltip(hint("Every place, by name: the palette", "cockpit.palette"))
+        .tooltip(hint("Every place, by name: the palette", "flightdeck.palette"))
         .child(div().flex_1().text_size(11.5).font_medium().text_color(k.mutedFg).child("Places"))
         .child(div().text_size(TEXT.xs).text_color(k.dim).child(String(all.length))),
       ...shown.map((sp) =>
@@ -270,8 +270,8 @@ export default class SidePeek {
             .text_size(TEXT.xs)
             .text_color(k.dim)
             .hover((s) => s.text_color(k.foreground))
-            .tooltip(hint("Search them in the palette", "cockpit.palette"))
-            .on_click((_e, cx) => (run("cockpit.palette"), cx.notify()))
+            .tooltip(hint("Search them in the palette", "flightdeck.palette"))
+            .on_click((_e, cx) => (run("flightdeck.palette"), cx.notify()))
             .child(`${all.length - shown.length} more in the palette`)
         : null,
     ].filter(Boolean);
@@ -302,7 +302,7 @@ export default class SidePeek {
       .pb(6)
       .gap(1)
       .text_color(k.foreground)
-      .child(peekHead(k, "Agents", rows.length, { tooltip: hint("Keep the sidebar open", "cockpit.sidebar"), onPin: () => showSidebar(true), extra: this.needsButton(k, needing(rows).length) }))
+      .child(peekHead(k, "Agents", rows.length, { tooltip: hint("Keep the sidebar open", "flightdeck.sidebar"), onPin: () => showSidebar(true), extra: this.needsButton(k, needing(rows).length) }))
       .child(this.apps(k))
       .when(rows.length === 0, (e) => e.child(div().px(8).py(6).text_size(TEXT.sm).text_color(k.dim).child("No agent yet.")))
       // Each provider's tightest limit beside its logo, in the drawer's text tint, its windows in the tooltip; a click
@@ -327,7 +327,7 @@ export default class SidePeek {
             .when(s.id === "needs_you", (e) =>
               e
                 .cursor_pointer()
-                .tooltip(hint("Answer them on Needs you", "cockpit.go:needs"))
+                .tooltip(hint("Answer them on Needs you", "flightdeck.go:needs"))
                 .on_click((_e, cx) => {
                   show("needs");
                   cx.notify();
