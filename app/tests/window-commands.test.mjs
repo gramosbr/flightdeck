@@ -606,7 +606,7 @@ test("x in the recap dismisses only the row the person moved to; the palette's c
     assert.equal(overlays.length, had.overlays + 1, "it opens a menu the person picks from");
     assert.equal(overlays.at(-1).props.items[0].command.replace(/~[0-9a-f]{32}$/, ""), undo ? "dismiss:back:app:t52" : "dismiss:at:app:t52|", "naming the agent, and the wait it shows");
     const { command: named, key } = mod.unkey(mod.keyed(`flightdeck.${command}`));
-    mod.runCommand(named.slice(8), cx, "flightdeck", { key });
+    mod.runCommand(named.slice("flightdeck.".length),cx, "flightdeck", { key });
     await settled();
     assert.deepEqual(dismissals(acts).at(-1), { terminal: "app:t52", undo });
   }
@@ -698,9 +698,9 @@ async function registered(mod) {
     for (const m of text.matchAll(/command: c\("([a-z]+)"(?:, "([^"]*)")?\)/g)) shapes.add(`agents|${m[1]}|*|${m[2] ?? ""}`);
   }
   shapes.delete("Command");
-  for (const e of mod.CATALOGUE) shapes.add(e.command.slice(8));
+  for (const e of mod.CATALOGUE) shapes.add(e.command.slice("flightdeck.".length));
   const keys = JSON.parse(await readFile(new URL("keys.json", app), "utf8"));
-  for (const map of Object.values(keys)) for (const a of Object.values(map)) if (a.startsWith("flightdeck.")) shapes.add(a.slice(8));
+  for (const map of Object.values(keys)) for (const a of Object.values(map)) if (a.startsWith("flightdeck.")) shapes.add(a.slice("flightdeck.".length));
   for (const layout of ["flightdeck", "flightdeck-chat"]) for (const n of mod.runnerCommands(layout)) shapes.add(n);
   return shapes;
 }
