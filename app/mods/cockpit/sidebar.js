@@ -245,7 +245,11 @@ export default class Sidebar {
         )
         .when(Boolean(count) && rail, (e) => e.child(div().absolute().top(4).right(6).size(7).rounded(4).bg(tone ?? k.ring)));
     };
-    const apps = this.spaces.filter((s) => APPS[s]).map((s) => ({ ...APPS[s], child: APPS[s].child ?? s, command: `cockpit.go:${APPS[s].child ?? s}` }));
+    const apps = [
+      ...this.spaces.filter((s) => APPS[s]).map((s) => ({ ...APPS[s], child: APPS[s].child ?? s, command: `cockpit.go:${APPS[s].child ?? s}` })),
+      // The screens the shown layout adds, after the pinned apps.
+      ...screens().list.filter((s) => s.added),
+    ];
     const badge = (child) => this.counts[child] ?? shared(`badge.${child}`) ?? null;
     const tone = (child) => { const t = badge(child)?.tone; return t ? k[t] ?? t : null; };
     const counts = countsOf(model.value);
@@ -337,7 +341,7 @@ export default class Sidebar {
         items.map((a) => {
           const on = active === a.child;
           // Home (and Needs) stay first; the pinned apps move by drag and drop, the config's order following.
-          const movable = a.child !== "home" && a.child !== "needs";
+          const movable = a.child !== "home" && a.child !== "needs" && !a.added;
           const d = this.appDrag;
           const dragging = d && d.from === a.child && d.over !== a.child;
           const over = d && d.over === a.child && d.from !== a.child;
