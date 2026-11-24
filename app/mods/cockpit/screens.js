@@ -65,14 +65,37 @@ export function shownLayout() {
   return shared("layout") ?? "cockpit";
 }
 
-/** The shown layout's screens; the cockpit layout's when it is some other layout. */
-export function screens() {
-  return LAYOUTS[layoutName()];
+/**
+ * The screens a layout adds after cockpit's own: children of its screens' stack whose block props carry
+ * `screen: {label, icon}`. A mod draws each one and can post its count as `badge.<child>`, as cockpit's apps do.
+ */
+export function addedScreens(base, tree) {
+  const known = new Set(base.list.map((s) => s.child));
+  return (nodeOf(base.stack, tree)?.children ?? [])
+    .filter((c) => c?.id && !known.has(c.id) && typeof c.content?.props?.screen?.label === "string")
+    .map((c) => ({ ...screen([c.id, c.content.props.screen.label, c.content.props.screen.icon ?? "layout"]), added: true }));
 }
 
-/** A named layout's screens, or null when cockpit has no such layout. */
+/** A cockpit layout's screens with the ones the shown layout adds. */
+function withAdded(base) {
+  let tree = null;
+  try {
+    tree = layout();
+  } catch {}
+  const added = tree ? addedScreens(base, tree) : [];
+  return added.length ? { ...base, list: [...base.list, ...added] } : base;
+}
+
+/** The shown layout's screens, the ones it adds last; the cockpit layout's when it is some other layout. */
+export function screens() {
+  return withAdded(LAYOUTS[layoutName()]);
+}
+
+/** A named layout's screens, or null when cockpit has no such layout; the shown one's include the screens it adds. */
 export function screensOf(name) {
-  return LAYOUTS[name] ?? null;
+  const base = LAYOUTS[name];
+  if (!base) return null;
+  return name === layoutName() ? withAdded(base) : base;
 }
 
 /** Shows a screen of the shown layout and gives that app the keyboard. */
