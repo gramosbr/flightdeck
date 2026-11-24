@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::time::Instant;
 
-use cockpit_agents::gui;
+use flightdeck_agents::gui;
 use serde_json::{Value, json};
 
 #[test]
@@ -32,7 +32,7 @@ fn a_build_of_fifty_agents_runs_no_process_for_each_row() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_AGENTS_DEMO", &world);
+        std::env::set_var("FLIGHTDECK_AGENTS_DEMO", &world);
         std::env::set_var("HC_BIN", &hc);
     }
     let calls = || std::fs::read_to_string(&asked).map(|t| t.lines().filter(|l| l.starts_with("get ")).count()).unwrap_or(0);

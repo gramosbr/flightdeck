@@ -3,12 +3,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use cockpit_core::theme::{DIM, GREEN, ORANGE, RED, dim, fg};
+use flightdeck_core::theme::{DIM, GREEN, ORANGE, RED, dim, fg};
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use serde_json::{Value, json};
 
-use cockpit_core::widgets::sparkline;
+use flightdeck_core::widgets::sparkline;
 
 use crate::facts::{
     self, Config, STALE_PR_DAYS, age_days, ago, ci_glyph, dashboard_name, flag, has_ticket, is_deploying, is_failing, list, needs_me, reference, review_glyph,

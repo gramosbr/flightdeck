@@ -5,6 +5,11 @@ Each version is tagged `v<version>` and has a GitHub release with these notes, b
 plugin, share the version with the apps (`herdr/tui/Cargo.toml`), whose binaries the release builds; the section for it
 must be here first.
 
+## Unreleased
+
+- Note: renamed from cockpit to flightdeck, a fork of quaresc/cockpit; the binary, the config and cache folders (`~/.config/flightdeck`, `~/.cache/flightdeck`), the `FLIGHTDECK_*` variables, the hub files, the Herdr mod, layouts, keys and the plugin namespace (`/flightdeck:setup`) are all renamed, so it installs and runs beside cockpit
+- New: on first run, when `~/.config/flightdeck` does not exist and `~/.config/cockpit/config.json` does, that config is copied once into `~/.config/flightdeck`; cockpit's own files and its cache are never touched
+
 ## 1.5.2 (2026-11-23)
 
 - New: a show table's columns resize by dragging the edge of their header, so truncated text can be read; a table wider than its card scrolls sideways, and a double-click on an edge fits the columns again (#100)

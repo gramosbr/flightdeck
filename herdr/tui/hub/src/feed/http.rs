@@ -30,7 +30,7 @@ pub fn base(var: &str, default: &str) -> String {
 }
 
 static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
-    ureq::Agent::config_builder().timeout_global(Some(Duration::from_secs(30))).http_status_as_error(false).user_agent("cockpit-hub").build().into()
+    ureq::Agent::config_builder().timeout_global(Some(Duration::from_secs(30))).http_status_as_error(false).user_agent("flightdeck-hub").build().into()
 });
 
 pub fn get(url: &str, headers: &[(&str, &str)]) -> Fetched {

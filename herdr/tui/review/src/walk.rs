@@ -4,9 +4,9 @@
 
 use std::collections::HashSet;
 
-use cockpit_core::text::wrap;
-use cockpit_core::theme::{BG, DIM, FG, GREEN, ORANGE, RED, bold, dim, fg};
-use cockpit_show::row::{Act, Row};
+use flightdeck_core::text::wrap;
+use flightdeck_core::theme::{BG, DIM, FG, GREEN, ORANGE, RED, bold, dim, fg};
+use flightdeck_show::row::{Act, Row};
 use ratatui::style::{Modifier, Style};
 use serde_json::Value;
 
@@ -172,7 +172,7 @@ fn done_rows(w: &Value, step: usize, cols: usize, out: &mut Vec<Row>) {
     }
     let Some(s) = steps.get(step) else { return };
     out.push(Row::new());
-    out.push(Row::text("─".repeat(cols), fg(cockpit_core::theme::LINE)));
+    out.push(Row::text("─".repeat(cols), fg(flightdeck_core::theme::LINE)));
     let kind = if s.weight == "skim" && !s.uncovered { "   context" } else { "" };
     out.push(Row::text(format!("‹ {} / {} ›  ", step + 1, steps.len()), fg(ORANGE)).add(s.title.clone(), bold(FG)).add(kind, dim()).add("   h l steps", dim()));
     if !s.text.is_empty() {

@@ -3,8 +3,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use cockpit_core::theme::{DIM, GREEN, ORANGE, RED, bold, dim, fg};
-use cockpit_core::{header, sources};
+use flightdeck_core::theme::{DIM, GREEN, ORANGE, RED, bold, dim, fg};
+use flightdeck_core::{header, sources};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use serde_json::{Value, json};
@@ -30,8 +30,8 @@ pub struct Ctx<'a> {
 
 pub const INBOX_VERSION: i64 = 1;
 
-/// What the inbox says of a cache another version of cockpit wrote, which this one does not read.
-pub const OTHER_VERSION: &str = "Written by another version of cockpit · this one reads it once its own hub writes it.";
+/// What the inbox says of a cache another version of flightdeck wrote, which this one does not read.
+pub const OTHER_VERSION: &str = "Written by another version of flightdeck · this one reads it once its own hub writes it.";
 
 pub fn heading(name: &str, title: &str, extra: &str) -> Line<'static> {
     Line::from(vec![
@@ -58,7 +58,7 @@ pub fn model(inputs: &Inputs, ctx: &Ctx, local: &mut Local) -> (Vec<Line<'static
             &[sources::Source::Github, sources::Source::Tickets, sources::Source::Ci],
             "No data yet",
             "the hub fills this within a minute.",
-            "nothing is connected · cockpit setup wires your PRs, tickets and CI.",
+            "nothing is connected · flightdeck setup wires your PRs, tickets and CI.",
         );
         return (vec![Line::styled(waiting, dim())], Vec::new());
     };
@@ -100,7 +100,7 @@ pub fn model(inputs: &Inputs, ctx: &Ctx, local: &mut Local) -> (Vec<Line<'static
 /// The morning brief when it is today's and not dismissed, then the routine runs that need a look.
 fn today(brief: Option<&Value>, routines: Option<&Value>) -> Option<Row> {
     let brief = brief.filter(|b| s(b, "date") == facts::today() && !flag(b, "dismissed") && !list(b, "lines").is_empty());
-    let look = routines.map(cockpit_core::routines::needing_look).unwrap_or_default();
+    let look = routines.map(flightdeck_core::routines::needing_look).unwrap_or_default();
     let mut today = match brief {
         Some(brief) => Row::text("today", heading("today", "Today", &format!("morning brief, {}", facts::clock(&brief["at"]))))
             .acts(vec![RowAct::new("dismiss", 'x', call("dismiss_brief", vec![])).main()]),
@@ -144,8 +144,8 @@ fn routine_row(item: &Value) -> Row {
     let says_it = s(item, "reason").to_lowercase().starts_with(word);
     let text =
         if says_it { format!("{} · {}", s(item, "name"), s(item, "reason")) } else { format!("{} · {word}{at} · {}", s(item, "name"), s(item, "reason")) };
-    let cockpit = std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "cockpit".into());
-    let go = call("run", vec![json!([cockpit, "focus", format!("routine:{}", s(item, "key"))])]);
+    let flightdeck = std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "flightdeck".into());
+    let go = call("run", vec![json!([flightdeck, "focus", format!("routine:{}", s(item, "key"))])]);
     let mut info = vec![Line::styled(s(item, "reason").to_string(), style)];
     if s(item, "summary") != s(item, "reason") {
         info.push(Line::raw(s(item, "summary").to_string()));
@@ -288,7 +288,7 @@ fn alerts(data: &Value, ci: &Value, config: &Config, local: &mut Local) -> Row {
 }
 
 /// The worktrees to clean up: those of merged branches with no open PR, and those holding work, each saying what keeps
-/// it (`cockpit_core::cleanup`'s words). One a live session works on is the Alerts' to say; removing is refused while
+/// it (`flightdeck_core::cleanup`'s words). One a live session works on is the Alerts' to say; removing is refused while
 /// anything keeps it.
 fn cleanup(worktrees: &[Value], merged: &HashSet<(String, String)>, mine: &[Value], local: &mut Local) -> Row {
     let mut section = Row::text("cleanup", heading("worktree", "To clean up", ""));

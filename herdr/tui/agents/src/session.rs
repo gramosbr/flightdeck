@@ -1,4 +1,4 @@
-//! Agent sessions cockpit drives itself. The agent runs under `--input-format stream-json`, so what it says, the tools
+//! Agent sessions flightdeck drives itself. The agent runs under `--input-format stream-json`, so what it says, the tools
 //! it calls and the permissions it asks for arrive as events instead of as a screen to read, and the person's words go
 //! back the same way. A permission is a `can_use_tool` control request on that pipe, answered by a `control_response`
 //! that names it.
@@ -11,9 +11,9 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 
-use cockpit_core::agent::{self, Agent, Picked, Setting};
-use cockpit_core::seen::now_ms;
-use cockpit_core::transcripts::{self, Detail, Transcripts, arg_line};
+use flightdeck_core::agent::{self, Agent, Picked, Setting};
+use flightdeck_core::seen::now_ms;
+use flightdeck_core::transcripts::{self, Detail, Transcripts, arg_line};
 use serde_json::{Value, json};
 
 /// What an answer is told when the question it names is not the one asked now.
@@ -86,7 +86,7 @@ pub struct State {
     asked: HashMap<String, Asked>,
 }
 
-/// What a control request cockpit sent asks for, so its answer is read for it.
+/// What a control request flightdeck sent asks for, so its answer is read for it.
 #[derive(Clone, Debug, PartialEq)]
 enum Asked {
     /// A setting, to this value.
@@ -164,7 +164,7 @@ fn moved() {
 
 /// Where the sessions' logs go.
 pub fn dir() -> PathBuf {
-    cockpit_core::files::cache().join("driven")
+    flightdeck_core::files::cache().join("driven")
 }
 
 /// A line in the session's own log: what it asked, what it was answered and from where.
@@ -249,7 +249,7 @@ impl Picks {
 pub fn start(agent_id: &str, cwd: &str, mode: &str, picks: &Picks) -> Result<String, String> {
     let found = agent::all().into_iter().find(|a| a.id == agent_id).ok_or_else(|| format!("no agent {agent_id:?}"))?;
     if found.stream.is_none() {
-        return Err(format!("{} has no streaming protocol cockpit speaks yet", found.name));
+        return Err(format!("{} has no streaming protocol flightdeck speaks yet", found.name));
     }
     picks.check(&found)?;
     // Two started in the same instant still get keys of their own.
@@ -290,7 +290,7 @@ fn launch(found: &Agent, key: &str, session: &Arc<Session>, resume: bool) -> Res
     command.args(&argv).current_dir(&cwd).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).process_group(0);
     // A hub started from inside an agent's terminal must not make the session think it is nested in it or that terminal's;
     // its key says whose the views it shows are.
-    cockpit_core::run::untie(&mut command).env(cockpit_core::run::DRIVEN_KEY, key);
+    flightdeck_core::run::untie(&mut command).env(flightdeck_core::run::DRIVEN_KEY, key);
     let mut child = command.spawn().map_err(|e| format!("{}: {e}", found.path()))?;
     let pid = child.id();
     // An End while it started wins: the session is gone, and so is this process.
@@ -422,7 +422,7 @@ fn tell_asked(key: &str, state: &Mutex<State>, tool: &str) {
     }
     told.push((key.to_string(), now));
     let (title, name) = named(&state.lock().unwrap_or_else(|e| e.into_inner()));
-    cockpit_core::notify::post(&format!("⏸ {title}"), &format!("{name} asks to run {tool}"), "", &[]);
+    flightdeck_core::notify::post(&format!("⏸ {title}"), &format!("{name} asks to run {tool}"), "", &[]);
 }
 
 /// The session's title (its first prompt's first line) and its agent's name, as its notifications say them.
@@ -451,7 +451,7 @@ fn tell_failed(state: &Mutex<State>) {
     }
     let (title, name) = named(&s);
     drop(s);
-    cockpit_core::notify::post(&format!("✗ {title}"), &format!("{name} stopped with an error"), "", &[]);
+    flightdeck_core::notify::post(&format!("✗ {title}"), &format!("{name} stopped with an error"), "", &[]);
 }
 
 /// Every line the agent writes, read as bytes: one that is not UTF-8 is read lossily rather than ending the session.
@@ -478,7 +478,7 @@ fn prune_logs() {
     }
 }
 
-/// Whether a session cockpit drives is in a turn or waits on an answer: the hub stays up for it. One at rest does not hold
+/// Whether a session flightdeck drives is in a turn or waits on an answer: the hub stays up for it. One at rest does not hold
 /// it, since a hub that starts again brings it back paused.
 pub fn driving() -> bool {
     live().values().any(|s| {
@@ -488,7 +488,7 @@ pub fn driving() -> bool {
     })
 }
 
-/// The sessions cockpit drives that still run, each with its process: whose tools a request comes from.
+/// The sessions flightdeck drives that still run, each with its process: whose tools a request comes from.
 pub fn keyed_pids() -> Vec<(String, u32)> {
     let sessions: Vec<(String, Arc<Session>)> = live().iter().map(|(k, s)| (k.clone(), Arc::clone(s))).collect();
     sessions
@@ -630,9 +630,9 @@ fn take(state: &mut State, event: &Value) -> Taken {
                 }
                 // Anything else it could ask is refused at once rather than left hanging.
                 other => {
-                    taken.note = Some(format!("refused a control request {other:?} cockpit does not answer"));
+                    taken.note = Some(format!("refused a control request {other:?} flightdeck does not answer"));
                     taken.reply = Some(json!({"type": "control_response", "response": {
-                        "subtype": "error", "request_id": request_id, "error": format!("cockpit does not answer {other}")}}));
+                        "subtype": "error", "request_id": request_id, "error": format!("flightdeck does not answer {other}")}}));
                 }
             }
         }
@@ -845,7 +845,7 @@ pub fn control(key: &str, request: Value) -> Result<(), String> {
         if request["subtype"] == "interrupt" {
             return Err("it is not running: there is no turn to stop".into());
         }
-        let found = agent::get(&state.agent).ok_or("an agent cockpit does not know")?;
+        let found = agent::get(&state.agent).ok_or("an agent flightdeck does not know")?;
         if let Some(mode) = request["mode"].as_str() {
             found.mode_argv(mode).ok_or_else(|| format!("{} takes no mode {mode}", found.name))?;
             state.mode = mode.to_string();
@@ -880,7 +880,7 @@ pub fn pick(key: &str, setting: Setting, value: &Value) -> Result<String, String
     let lock = launching(key);
     let _one = lock.lock().unwrap_or_else(|e| e.into_inner());
     let agent_id = session.state.lock().unwrap_or_else(|e| e.into_inner()).agent.clone();
-    let found = agent::get(&agent_id).ok_or("an agent cockpit does not know")?;
+    let found = agent::get(&agent_id).ok_or("an agent flightdeck does not know")?;
     let word = taken_value(&found, setting, value)?;
     let runs = !session.demo && session.child.lock().unwrap_or_else(|e| e.into_inner()).as_mut().is_some_and(|c| c.try_wait().is_ok_and(|s| s.is_none()));
     if session.demo || !runs || !found.live.contains(&setting) {
@@ -1059,7 +1059,7 @@ fn relaunch(key: &str, session: &Arc<Session>) -> Result<(), String> {
     resume(key, session)
 }
 
-/// Words for a session cockpit drives, as `deliver` hands them over: None when `handle` names none. In the hub the
+/// Words for a session flightdeck drives, as `deliver` hands them over: None when `handle` names none. In the hub the
 /// session takes them, unless it waits on a permission; elsewhere the hub is asked to.
 pub fn deliver_to(handle: &str, text: &str) -> Option<Result<(), String>> {
     // Taken out first: the lock on the sessions must be let go before `send` takes it again.
@@ -1069,13 +1069,13 @@ pub fn deliver_to(handle: &str, text: &str) -> Option<Result<(), String>> {
         let name = agent::get(&state.agent).map(|a| a.name).unwrap_or_else(|| "The agent".into());
         let asking = !state.pending.is_empty();
         drop(state);
-        return Some(if asking { Err(cockpit_core::deliver::waiting_note(&name)) } else { send(handle, text) });
+        return Some(if asking { Err(flightdeck_core::deliver::waiting_note(&name)) } else { send(handle, text) });
     }
     if !driven_key(handle) {
         return None;
     }
     let call = json!({"op": "act", "app": "session", "action": "deliver", "args": [{"key": handle, "text": text}]});
-    Some(cockpit_core::hub::request(&call, std::time::Duration::from_secs(20)).and_then(|answer| match answer["error"].as_str().filter(|e| !e.is_empty()) {
+    Some(flightdeck_core::hub::request(&call, std::time::Duration::from_secs(20)).and_then(|answer| match answer["error"].as_str().filter(|e| !e.is_empty()) {
         Some(why) => Err(why.trim_start_matches("deliver: ").to_string()),
         None => Ok(()),
     }))
@@ -1083,7 +1083,7 @@ pub fn deliver_to(handle: &str, text: &str) -> Option<Result<(), String>> {
 
 /// A session key: an agent's id, a colon, then its start (`claude:1794…`); a herdr pane id (`w9:p1`) is not one.
 fn driven_key(handle: &str) -> bool {
-    handle.split_once(':').is_some_and(|(id, rest)| !rest.is_empty() && !handle.starts_with(cockpit_core::frontend::APP) && agent::get(id).is_some())
+    handle.split_once(':').is_some_and(|(id, rest)| !rest.is_empty() && !handle.starts_with(flightdeck_core::frontend::APP) && agent::get(id).is_some())
 }
 
 /// Ends a session and forgets it: its stdin closes, its process group is told to stop and killed after a grace period,
@@ -1170,27 +1170,27 @@ pub fn keys() -> Vec<String> {
 
 /// The session handed over to a terminal of its own: stopped here first, so one process writes it, then resumed with
 /// its agent's own command line in a space of its folder (the one open under its name, else a new one).
-pub fn open_in_terminal(key: &str, confirmed: bool, frontend: Option<cockpit_core::frontend::Frontend>) -> Result<String, String> {
+pub fn open_in_terminal(key: &str, confirmed: bool, frontend: Option<flightdeck_core::frontend::Frontend>) -> Result<String, String> {
     // Looked at and ended under its launch lock, so no turn starts between.
     let lock = launching(key);
     let _one = lock.lock().unwrap_or_else(|e| e.into_inner());
     let s = summary(key).ok_or("no such session")?;
     at_rest(key, &s)?;
     let cwd = s["cwd"].as_str().filter(|c| !c.is_empty()).ok_or("the session has no folder to open it in")?;
-    let found = agent::get(s["agent"].as_str().unwrap_or("claude")).ok_or("an agent cockpit does not know")?;
+    let found = agent::get(s["agent"].as_str().unwrap_or("claude")).ok_or("an agent flightdeck does not know")?;
     let id = s["session"].as_str().unwrap_or_default();
-    let line = cockpit_core::resume::resume_line(cwd, &found, id).ok_or_else(|| format!("{} cannot resume a session", found.name))?;
+    let line = flightdeck_core::resume::resume_line(cwd, &found, id).ok_or_else(|| format!("{} cannot resume a session", found.name))?;
     if !confirmed {
-        return Err("it leaves cockpit's chat for a terminal: pass {confirm: true}".into());
+        return Err("it leaves flightdeck's chat for a terminal: pass {confirm: true}".into());
     }
     let label = format!("↩ {}", s["title"].as_str().map(|t| crate::gui::short(t, 40)).unwrap_or_else(|| found.name.clone()));
-    cockpit_core::frontend::with(frontend, || {
+    flightdeck_core::frontend::with(frontend, || {
         // Its terminal first, then the session ended here, then the line: never a session ended with nowhere to go on.
         // The line runs from a script file, so whichever shell the terminal opens reads it the same.
         let script = handover_script(key, &line).ok_or("its resume line could not be written down: it goes on here")?;
-        let pane = cockpit_core::frontend::new_space(cwd, &label).ok_or("no terminal opened for it: it goes on here")?;
+        let pane = flightdeck_core::frontend::new_space(cwd, &label).ok_or("no terminal opened for it: it goes on here")?;
         stop_and_wait(key);
-        if !cockpit_core::frontend::run_in(&pane, &format!("sh '{}'", script.display())) {
+        if !flightdeck_core::frontend::run_in(&pane, &format!("sh '{}'", script.display())) {
             return Err(format!("it was ended here, but its terminal took no command: run `{line}` there"));
         }
         note(key, "handed over to a terminal");
@@ -1201,7 +1201,7 @@ pub fn open_in_terminal(key: &str, confirmed: bool, frontend: Option<cockpit_cor
 /// The resume line in a script of its own under the cache, its path free of quotes: a new file of a name no other
 /// process could have made first (never one already there, nor a link), the person's alone; a week's are kept.
 fn handover_script(key: &str, line: &str) -> Option<std::path::PathBuf> {
-    handover_script_in(&cockpit_core::files::cache().join("handover"), key, line)
+    handover_script_in(&flightdeck_core::files::cache().join("handover"), key, line)
 }
 
 fn handover_script_in(dir: &std::path::Path, key: &str, line: &str) -> Option<std::path::PathBuf> {
@@ -1226,7 +1226,7 @@ fn handover_script_in(dir: &std::path::Path, key: &str, line: &str) -> Option<st
     Some(path)
 }
 
-/// Whether the session can leave cockpit now: no turn running or being stopped, no ask waiting, no prompt queued, and
+/// Whether the session can leave flightdeck now: no turn running or being stopped, no ask waiting, no prompt queued, and
 /// something said, so its agent has a conversation to go on with.
 fn at_rest(key: &str, s: &Value) -> Result<(), String> {
     let stopping = live().get(key).is_some_and(|x| x.state.lock().unwrap_or_else(|e| e.into_inner()).interrupted);
@@ -1321,9 +1321,9 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     }
     Some(match action {
         "start" => {
-            // The first agent of the table cockpit can drive, unless one is named.
+            // The first agent of the table flightdeck can drive, unless one is named.
             let streaming = || agent::all().into_iter().find(|a| a.stream.is_some()).map(|a| a.id);
-            let Some(agent) = arg["agent"].as_str().map(str::to_string).or_else(streaming) else { return Some(Err("no agent cockpit can drive".into())) };
+            let Some(agent) = arg["agent"].as_str().map(str::to_string).or_else(streaming) else { return Some(Err("no agent flightdeck can drive".into())) };
             let agent = agent.as_str();
             let cwd = arg["cwd"].as_str().unwrap_or_default();
             let mode = arg["mode"].as_str().unwrap_or("default");
@@ -1366,8 +1366,8 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
         "interrupt" => interrupt(&key).map(|()| "asked it to stop".into()),
         "terminal" => {
             let frontend = match arg["frontend"].as_str() {
-                Some("tui") => Some(cockpit_core::frontend::Frontend::Tui),
-                Some("app") => Some(cockpit_core::frontend::Frontend::App),
+                Some("tui") => Some(flightdeck_core::frontend::Frontend::Tui),
+                Some("app") => Some(flightdeck_core::frontend::Frontend::App),
                 _ => None,
             };
             open_in_terminal(&key, arg["confirm"] == true, frontend)
@@ -1411,7 +1411,7 @@ fn new_session_id() -> String {
     format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32])
 }
 
-/// Where the sessions cockpit drives are noted, so a hub that starts again brings them back.
+/// Where the sessions flightdeck drives are noted, so a hub that starts again brings them back.
 pub fn registry() -> PathBuf {
     dir().join("registry.json")
 }
@@ -1450,7 +1450,7 @@ fn remember() {
         return;
     }
     let _ = std::fs::create_dir_all(dir());
-    if cockpit_core::files::write(&registry(), &doc).is_ok() {
+    if flightdeck_core::files::write(&registry(), &doc).is_ok() {
         *written = text;
     }
 }
@@ -1460,7 +1460,7 @@ fn remember() {
 /// history is read again after. One never prompted comes back empty; one whose transcript is gone or older than its log
 /// is kept is dropped, and the person is told.
 pub fn restore() {
-    let Some(doc) = cockpit_core::files::load(&registry()) else { return };
+    let Some(doc) = flightdeck_core::files::load(&registry()) else { return };
     let mut dropped = 0;
     let mut left: Vec<(String, u32, Option<u32>)> = Vec::new();
     for e in doc["sessions"].as_array().into_iter().flatten() {
@@ -1522,7 +1522,7 @@ pub fn restore() {
         } else {
             format!("{dropped} old conversations were not brought back: their transcripts are gone")
         };
-        cockpit_core::notify::post("Sessions in chat", &what, "", &[]);
+        flightdeck_core::notify::post("Sessions in chat", &what, "", &[]);
     }
     moved();
 }
@@ -1680,7 +1680,7 @@ pub fn orphan(command: &str, parent: u32, hub: Option<u32>, id: &str, stream: &[
 // ---------------------------------------------------------------------------------------------------------------------
 // The demo world
 
-/// The demo world's driven sessions (`driven` in COCKPIT_AGENTS_DEMO's file), answered in memory. Ages are minutes
+/// The demo world's driven sessions (`driven` in FLIGHTDECK_AGENTS_DEMO's file), answered in memory. Ages are minutes
 /// before now.
 fn demo_sessions() -> HashMap<String, Arc<Session>> {
     let Some(world) = crate::term::demo() else { return HashMap::new() };
@@ -1874,7 +1874,7 @@ mod tests {
         assert!(!orphan("/bin/sleep 30", 1, old_hub, id, &stream), "a process that took the pid since");
         assert!(!orphan(&agent, 1, old_hub, "00000000-acme-4000-8000-000000000999", &stream), "another session's agent");
         assert!(!orphan(&format!("vim notes-{id}.md --resume {id}"), 1, old_hub, id, &stream), "the id alone is not enough");
-        assert!(!orphan(&agent, 1, old_hub, id, &[]), "an agent cockpit does not drive");
+        assert!(!orphan(&agent, 1, old_hub, id, &[]), "an agent flightdeck does not drive");
     }
 
     #[test]
@@ -2136,7 +2136,7 @@ mod tests {
     }
 
     #[test]
-    fn a_control_request_cockpit_does_not_answer_is_refused_at_once() {
+    fn a_control_request_flightdeck_does_not_answer_is_refused_at_once() {
         let mut state = State::default();
         let taken = take(&mut state, &json!({"type": "control_request", "request_id": "r9", "request": {"subtype": "hook_callback"}}));
         let reply = taken.reply.expect("an answer, so the agent does not wait");
@@ -2159,7 +2159,7 @@ mod tests {
         for from in ["default", "acceptEdits", "plan", "bypassPermissions", "dontAsk", "auto", ""] {
             assert_ne!(next_mode(from), "bypassPermissions", "the one-key cycle never reaches it from {from:?}");
         }
-        cockpit_core::peer::trusted();
+        flightdeck_core::peer::trusted();
         let refused = |action: &str, arg: Value| act(action, &[arg]).expect("a session action").unwrap_err();
         assert!(refused("mode", json!({"key": "claude:0", "mode": "bypassPermissions"})).contains("confirm"));
         assert!(refused("start", json!({"cwd": "/r/api", "mode": "bypassPermissions"})).contains("confirm"));
@@ -2168,7 +2168,7 @@ mod tests {
 
     #[test]
     fn an_answer_without_its_ask_or_its_verdict_is_refused() {
-        cockpit_core::peer::trusted();
+        flightdeck_core::peer::trusted();
         let refused = |arg: Value| act("answer", &[arg]).expect("a session action").unwrap_err();
         assert_eq!(refused(json!({"allow": true})), CHANGED, "no ask named");
         assert!(refused(json!({"ask": "toolu_a"})).starts_with("allow or deny"), "no verdict is not an allow");

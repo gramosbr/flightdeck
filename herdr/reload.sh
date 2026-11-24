@@ -1,5 +1,5 @@
 #!/bin/sh
-# Hands /reload-plugins to every Claude session running an older cockpit than the one installed, in herdr and in the
+# Hands /reload-plugins to every Claude session running an older flightdeck than the one installed, in herdr and in the
 # Herdr app. A session at its prompt takes it at once; a busy one takes it when it is next free, which is why this
 # exists: each stale session otherwise waits for someone to type the command into it by hand.
 #
@@ -18,7 +18,7 @@ want=$(jq -r .version "$(dirname "$root")/plugin/.claude-plugin/plugin.json" 2>/
 
 # The panes of sessions whose heartbeat says they run something else; with no heartbeat, every Claude pane.
 behind=$(
-  for beat in "$HOME/.cache/cockpit/sessions"/*.json; do
+  for beat in "$HOME/.cache/flightdeck/sessions"/*.json; do
     [ -f "$beat" ] || continue
     jq -r --arg want "$want" 'select((.version // "") != $want) | .pane // empty' "$beat" 2>/dev/null
   done
@@ -43,4 +43,4 @@ if command -v herdr-app >/dev/null 2>&1 && [ -S "$app_home/herdr-app.sock" ]; th
     esac
   done
 fi
-echo "cockpit: /reload-plugins sent to $sent session(s); they pick up $want when they are next free"
+echo "flightdeck: /reload-plugins sent to $sent session(s); they pick up $want when they are next free"

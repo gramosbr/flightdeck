@@ -3,8 +3,8 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-/** Cockpit Chat's top bar, its menus and its side panel's file, on a stand-in Herdr: 12 tabs in one space by default. */
-async function fixture({ tabs = 12, active = 1, settled = [], layoutName = "cockpit-chat", panelBody = "review", panelOpen = false, window = null, agents = null, live = [], focus = { tab: "t1", terminal: "t7" } } = {}) {
+/** Flightdeck Chat's top bar, its menus and its side panel's file, on a stand-in Herdr: 12 tabs in one space by default. */
+async function fixture({ tabs = 12, active = 1, settled = [], layoutName = "flightdeck-chat", panelBody = "review", panelOpen = false, window = null, agents = null, live = [], focus = { tab: "t1", terminal: "t7" } } = {}) {
   const calls = [], notices = [], overlays = [], acts = [];
   // Drawn elements as the calls made on them, so a test reads what a component drew.
   const element = () => {
@@ -12,7 +12,7 @@ async function fixture({ tabs = 12, active = 1, settled = [], layoutName = "cock
     const el = new Proxy({}, { get: (_t, name) => (name === "made" ? made : (...args) => (made.push([name, ...args]), el)) });
     return el;
   };
-  const state = new Map([["layout", layoutName], ["cockpit.app", "chat"]]);
+  const state = new Map([["layout", layoutName], ["flightdeck.app", "chat"]]);
   const space = {
     id: "s1",
     active: true,
@@ -34,7 +34,7 @@ async function fixture({ tabs = 12, active = 1, settled = [], layoutName = "cock
       layout: () => ({ ...tree, traffic_lights: [12, 16] }),
       panes: () => [{ pane: "p1", tab: "t1", terminal: "t7", focused: true }],
       focused: () => focus,
-      keys: () => [{ section: "layout:cockpit-chat", keys: "cmd-shift-a", action: "cockpit.tabs" }],
+      keys: () => [{ section: "layout:flightdeck-chat", keys: "cmd-shift-a", action: "flightdeck.tabs" }],
       exec: async () => ({ code: 1, stdout: "", stderr: "" }),
       appHome: () => "/app",
       home: () => "/home",
@@ -48,15 +48,15 @@ async function fixture({ tabs = 12, active = 1, settled = [], layoutName = "cock
       openUrl: () => {},
       subscribe: () => ({ stop() {}, park() {} }),
       isStoppedOnPurpose: (e) => String(e).includes("stopped on purpose"),
-      downWords: (e, short) => (String(e).includes("stopped on purpose") ? (short ? "Hub stopped" : "The cockpit hub was stopped") : short ? "Hub not running" : "The cockpit hub isn't running"),
-      downTip: (e) => (String(e).includes("stopped on purpose") ? "The cockpit hub was stopped on purpose, with cockpit hub stop" : `The cockpit hub isn't running: ${String(e).replace(/^error:\s*/, "")}`),
+      downWords: (e, short) => (String(e).includes("stopped on purpose") ? (short ? "Hub stopped" : "The flightdeck hub was stopped") : short ? "Hub not running" : "The flightdeck hub isn't running"),
+      downTip: (e) => (String(e).includes("stopped on purpose") ? "The flightdeck hub was stopped on purpose, with flightdeck hub stop" : `The flightdeck hub isn't running: ${String(e).replace(/^error:\s*/, "")}`),
       isNotInstalled: (e) => String(e).includes("not installed"),
       remoteMachine: () => null,
       startHub: async () => {},
     },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -196,12 +196,12 @@ test("a tab with no agent, like Herdr's numbered \"3\", shows its panes; a tab w
   const screens = () => f.calls.filter((c) => c[0] === "layout.select").map((c) => c[1].child);
   const pill = (id) => f.bar.pill(f.space.tabs.find((t) => t.id === id), false, f.ui.tokens(), f.space.tabs);
   const click = (el) => el.made.find((m) => m[0] === "on_click")[1]({}, { notify() {}, stop_propagation() {} });
-  // The chat was pinned on a session cockpit drives: a tab picked on purpose ends that.
-  f.state.set("cockpit.chat.pinned", { key: "claude:1", focus: null, at: 0 });
+  // The chat was pinned on a session flightdeck drives: a tab picked on purpose ends that.
+  f.state.set("flightdeck.chat.pinned", { key: "claude:1", focus: null, at: 0 });
   click(pill("t3"));
   eq(f.calls.filter((c) => c[0] === "tab.select").at(-1), ["tab.select", { id: "t3" }]);
   eq(screens().slice(-2), ["work", "tab"], "the shell's panes on the Tab screen, not the chat of some other agent");
-  assert.equal(f.state.get("cockpit.chat.pinned"), null);
+  assert.equal(f.state.get("flightdeck.chat.pinned"), null);
   assert.ok(!f.calls.some((c) => c[0] === "agent.focus"), "no agent runs there to follow");
   click(pill("t2"));
   eq(f.calls.filter((c) => c[0] === "agent.focus").at(-1), ["agent.focus", { terminal: "t41" }], "the chat is told which agent this tab runs");
@@ -244,19 +244,19 @@ test("the hub's dot says its state without colour, and a hub down on this machin
   const { top } = await fixture();
   assert.equal(top.hubDot("live").kind, "live");
   assert.equal(top.hubDot("connecting").kind, "connecting");
-  const stopped = top.hubDot("error: the cockpit hub was stopped on purpose");
+  const stopped = top.hubDot("error: the flightdeck hub was stopped on purpose");
   eq([stopped.kind, stopped.label, stopped.startable], ["down", "Hub stopped", true]);
   assert.equal(top.hubDot("error: connection refused").label, "Hub not running");
   // The tooltip says why the window could not reach it, in the error's own words.
-  assert.equal(top.hubDot("error: connection refused").tooltip, "The cockpit hub isn't running: connection refused · click to start it");
-  assert.equal(top.hubDot("error: connection refused", { remote: true }).tooltip, "The cockpit hub isn't running: connection refused");
+  assert.equal(top.hubDot("error: connection refused").tooltip, "The flightdeck hub isn't running: connection refused · click to start it");
+  assert.equal(top.hubDot("error: connection refused", { remote: true }).tooltip, "The flightdeck hub isn't running: connection refused");
   assert.equal(top.hubDot("error: connection refused", { remote: true }).startable, false, "a runner's hub is started there");
-  assert.equal(top.hubDot("error: cockpit is not installed").startable, false);
+  assert.equal(top.hubDot("error: flightdeck is not installed").startable, false);
 });
 
-test("in Cockpit Chat a file opens in the side panel beside the chat, and Close gives the panel back", async () => {
+test("in Flightdeck Chat a file opens in the side panel beside the chat, and Close gives the panel back", async () => {
   const f = await fixture({ panelBody: "review", panelOpen: true });
-  f.state.set("cockpit.panel.open", true);
+  f.state.set("flightdeck.panel.open", true);
   await f.code.openCode("/repo/lib/a.ex", { line: 12 });
   const spec = f.state.get(f.code.CODE_PANEL);
   eq([spec.file, spec.line, spec.terminal, spec.back], ["/repo/lib/a.ex", 12, "t7", { open: true, child: "review" }]);
@@ -275,23 +275,23 @@ test("in Cockpit Chat a file opens in the side panel beside the chat, and Close 
   eq(f.calls.filter((c) => c[0] === "layout.select"), [["layout.select", { stack: "panel-body", child: "review" }]]);
 });
 
-test("a file opened while the panel was closed closes it again on Close; the Cockpit layout still splits a pane", async () => {
+test("a file opened while the panel was closed closes it again on Close; the Flightdeck layout still splits a pane", async () => {
   const f = await fixture({ panelBody: "show" });
-  f.state.set("cockpit.panel.open", false);
+  f.state.set("flightdeck.panel.open", false);
   await f.code.openCode("/repo/README.md");
   const view = new f.code.default();
   view.init({ app: "code", panel: true });
   view.follow();
   view.closePane();
   eq(f.calls.at(-1), ["layout.hide", { id: "panel" }]);
-  assert.equal(f.state.get("cockpit.panel.open"), false);
-  const cockpit = await fixture({ layoutName: "cockpit" });
-  await cockpit.code.openCode("/repo/README.md");
-  assert.equal(cockpit.calls.at(-1)[0], "pane.split");
-  assert.equal(cockpit.state.get(cockpit.code.CODE_PANEL), undefined);
+  assert.equal(f.state.get("flightdeck.panel.open"), false);
+  const flightdeck = await fixture({ layoutName: "flightdeck" });
+  await flightdeck.code.openCode("/repo/README.md");
+  assert.equal(flightdeck.calls.at(-1)[0], "pane.split");
+  assert.equal(flightdeck.state.get(flightdeck.code.CODE_PANEL), undefined);
 });
 
-test("a button's key is a Kbd chip in Cockpit, and goes into its tooltip in Cockpit Chat", async () => {
+test("a button's key is a Kbd chip in Flightdeck, and goes into its tooltip in Flightdeck Chat", async () => {
   const said = (el, name) => el.made.filter((c) => c[0] === name).map((c) => c[1]);
   const chat = await fixture();
   const send = chat.ui.Button("code-send", { label: "Send", kbd: "⏎", onClick() {} });
@@ -299,16 +299,16 @@ test("a button's key is a Kbd chip in Cockpit, and goes into its tooltip in Cock
   assert.equal(said(send, "child").length, 1, "the label only: no Kbd chip");
   assert.deepEqual(said(chat.ui.Button("code-save", { label: "Save", kbd: "⌘S", tooltip: "Save  ⌘S" }), "tooltip"), ["Save  ⌘S"], "a tooltip that names its key keeps it once");
   assert.deepEqual(said(chat.ui.Button("form-ok", { label: "Add routine", kbd: "⌘⏎", tooltip: "Add it" }), "tooltip"), ["Add it  ⌘⏎"]);
-  const cockpit = await fixture({ layoutName: "cockpit" });
-  const kept = cockpit.ui.Button("code-send", { label: "Send", kbd: "⏎", onClick() {} });
-  assert.deepEqual(said(kept, "tooltip"), [], "Cockpit keeps its Kbd hint on the button");
+  const flightdeck = await fixture({ layoutName: "flightdeck" });
+  const kept = flightdeck.ui.Button("code-send", { label: "Send", kbd: "⏎", onClick() {} });
+  assert.deepEqual(said(kept, "tooltip"), [], "Flightdeck keeps its Kbd hint on the button");
   assert.equal(said(kept, "child").length, 2, "its label, then its Kbd chip");
 });
 
-test("Ask the agent in Cockpit Chat goes to the chat's subject, a driven session included, and says who took it", async () => {
+test("Ask the agent in Flightdeck Chat goes to the chat's subject, a driven session included, and says who took it", async () => {
   const key = "claude:1793611000000";
   const f = await fixture({ agents: [{ terminal: key, address: key, driven: true, title: "Fix the login redirect" }, { terminal: "app:t7", address: "t7", title: "Quota banner" }] });
-  f.state.set("cockpit.chat.subject", key);
+  f.state.set("flightdeck.chat.subject", key);
   const view = Object.create(f.code.default.prototype);
   Object.assign(view, { file: "/home/acme/api/src/auth.ts", terminal: "t7", line: 3, code: { value: () => "a\nb\nc" }, ask: { value: () => "fix this", set_value() {} }, toasts: { msgs: [], push(_cx, m) { this.msgs.push(m); } } });
   assert.deepEqual({ ...(await view.askTarget()) }, { handle: key, name: "Fix the login redirect" });
@@ -318,10 +318,10 @@ test("Ask the agent in Cockpit Chat goes to the chat's subject, a driven session
   const [app, action, args] = f.acts.at(-1);
   assert.deepEqual([app, action, args[0], args[1].to], ["review", "send", key, "Fix the login redirect"]);
   assert.equal(view.toasts.msgs.at(-1), "Sent to Fix the login redirect");
-  const cockpit = await fixture({ layoutName: "cockpit", agents: [{ terminal: "app:t7", address: "t7", title: "Quota banner" }] });
-  cockpit.state.set("cockpit.chat.subject", key);
-  const beside = Object.assign(Object.create(cockpit.code.default.prototype), { terminal: "t7" });
-  assert.deepEqual({ ...(await beside.askTarget()) }, { handle: "t7", name: "Quota banner" }, "Cockpit asks the agent beside the file");
+  const flightdeck = await fixture({ layoutName: "flightdeck", agents: [{ terminal: "app:t7", address: "t7", title: "Quota banner" }] });
+  flightdeck.state.set("flightdeck.chat.subject", key);
+  const beside = Object.assign(Object.create(flightdeck.code.default.prototype), { terminal: "t7" });
+  assert.deepEqual({ ...(await beside.askTarget()) }, { handle: "t7", name: "Quota banner" }, "Flightdeck asks the agent beside the file");
 });
 
 test("the toggle to the chat agent's terminal shows its provider's logo and names whose terminal it shows", async () => {
@@ -329,13 +329,13 @@ test("the toggle to the chat agent's terminal shows its provider's logo and name
   const claude = { terminal: "app:t41", address: "t41", icon: "claude", agent_name: "Claude Code", tab: { id: "t1" } };
   const driven = { terminal: "claude:demo-421", address: "claude:demo-421", icon: "claude", agent_name: "Claude Code", driven: true };
   f.bar.rows = [claude, driven];
-  f.state.set("cockpit.chat.subject", "app:t41");
+  f.state.set("flightdeck.chat.subject", "app:t41");
   eq(f.bar.subjectAgent()?.terminal, "app:t41", "the chat's subject");
   assert.equal(f.top.terminalWords(f.bar.subjectAgent()), "Show Claude Code's terminal");
   assert.equal(f.ui.iconOf(f.bar.subjectAgent()), "claude", "drawn with Claude Code's logo, not a terminal glyph");
-  f.state.set("cockpit.chat.subject", "claude:demo-421");
-  assert.equal(f.top.terminalWords(f.bar.subjectAgent()), "Open Claude Code's session in a terminal of its own", "a session cockpit drives has no terminal yet");
-  f.state.delete("cockpit.chat.subject");
+  f.state.set("flightdeck.chat.subject", "claude:demo-421");
+  assert.equal(f.top.terminalWords(f.bar.subjectAgent()), "Open Claude Code's session in a terminal of its own", "a session flightdeck drives has no terminal yet");
+  f.state.delete("flightdeck.chat.subject");
   f.bar.rows = [];
   assert.equal(f.top.terminalWords(f.bar.subjectAgent()), "Its terminal", "no agent known: the plain words and glyph");
 });

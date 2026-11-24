@@ -2,9 +2,9 @@
 //! source's `server` gives: `{"servers": {"claude.ai Linear": {"url": "https://mcp.linear.app/mcp"}}}`, or a local
 //! `{"command": "npx", "args": [...]}`. The source's mapping is the one the Claude plugin reads.
 
-use cockpit_connectors::observability::{self, Signals};
-use cockpit_connectors::tools::Mapped;
-use cockpit_connectors::{Connection, Server, block_on, calendar, ci, connect, monitor, platform, tickets};
+use flightdeck_connectors::observability::{self, Signals};
+use flightdeck_connectors::tools::Mapped;
+use flightdeck_connectors::{Connection, Server, block_on, calendar, ci, connect, monitor, platform, tickets};
 use serde_json::Value;
 
 use super::http::{Failure, Fetched};
@@ -25,7 +25,7 @@ pub fn serves(raw: &Value, config: &Value, kind: &str) -> bool {
 
 /// The server the hub reads the monitor's numbers from, and its section (see `observability::server`).
 pub fn observability(raw: &Value) -> Option<(Server, Value)> {
-    cockpit_connectors::observability::server(raw)
+    flightdeck_connectors::observability::server(raw)
 }
 
 /// One connection to the server for the work `f` does with it, closed after.
@@ -46,8 +46,8 @@ pub fn tickets(server: &Server, section: &Value) -> Fetched<Vec<Value>> {
 
 /// The inbox's PR fields (direct, team, botRepos, mine, merged) from a code host's server.
 pub fn code(server: &Server, section: &Value) -> Fetched<[Value; 5]> {
-    let mapping = cockpit_connectors::code::mapping(section);
-    with(server, async |c| cockpit_connectors::code::inbox(&Mapped { connection: c, section: &mapping }, &mapping).await).map_err(Failure::Other)
+    let mapping = flightdeck_connectors::code::mapping(section);
+    with(server, async |c| flightdeck_connectors::code::inbox(&Mapped { connection: c, section: &mapping }, &mapping).await).map_err(Failure::Other)
 }
 
 /// My latest CI runs through the server, the ended ones taken from ci.json as it was.
@@ -74,7 +74,7 @@ fn is_contained(token: &str, slug: &str, sha: &str, reference: &str) -> bool {
     if let Some(hit) = SEEN.get_or_init(Default::default).lock().ok().and_then(|m| m.get(&key).copied()) {
         return hit;
     }
-    let api = super::http::base("COCKPIT_GITHUB_API", "https://api.github.com");
+    let api = super::http::base("FLIGHTDECK_GITHUB_API", "https://api.github.com");
     let url = format!("{api}/repos/{slug}/compare/{sha}...{reference}");
     let Ok(answer) = super::http::get(&url, &[("Authorization", &format!("Bearer {token}")), ("Accept", "application/vnd.github+json")]) else {
         return false;
@@ -93,7 +93,7 @@ pub fn login(token: &str) -> String {
     if let Some(login) = LOGIN.get() {
         return login.clone();
     }
-    let api = super::http::base("COCKPIT_GITHUB_API", "https://api.github.com");
+    let api = super::http::base("FLIGHTDECK_GITHUB_API", "https://api.github.com");
     let login =
         super::http::get(&format!("{api}/user"), &[("Authorization", &format!("Bearer {token}"))]).ok().and_then(|u| u["login"].as_str().map(str::to_string));
     login.map(|l| LOGIN.get_or_init(|| l).clone()).unwrap_or_default()
@@ -135,7 +135,7 @@ pub fn monitor_doc(
     let token = super::github::token().unwrap_or_default();
     let login = if token.is_empty() { String::new() } else { login(&token) };
     let ids = |file: &str| -> Vec<String> {
-        cockpit_core::files::load(&cockpit_core::files::config_dir().join(file))
+        flightdeck_core::files::load(&flightdeck_core::files::config_dir().join(file))
             .and_then(|v| v.as_array().map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect()))
             .unwrap_or_default()
     };

@@ -1,5 +1,5 @@
-//! `cockpit shots`: screenshots of a page at phone, tablet and desktop sizes, taken in the side browser beside a pane
-//! (terminal-browser, or cockpit's Chromium window). Each size gets a tab of its own, closed afterwards, so the
+//! `flightdeck shots`: screenshots of a page at phone, tablet and desktop sizes, taken in the side browser beside a pane
+//! (terminal-browser, or flightdeck's Chromium window). Each size gets a tab of its own, closed afterwards, so the
 //! person's tabs keep their size.
 
 use std::path::PathBuf;
@@ -12,7 +12,7 @@ use crate::proc::{dumps, fail};
 
 const USAGE: &str = "Screenshots of a page at phone, tablet and desktop sizes, taken in the terminal-browser beside a pane.
 
-    cockpit shots <url> <out dir> [--sizes mobile,tablet,desktop] [--full] [--session <session id>]
+    flightdeck shots <url> <out dir> [--sizes mobile,tablet,desktop] [--full] [--session <session id>]
 
 Prints the screenshots as JSON, {size: path}. Without terminal-browser beside a pane in herdr or the Herdr app, it exits 2 and says so.";
 
@@ -64,7 +64,7 @@ pub fn main(args: &[String]) {
     let [url, out] = rest.as_slice() else { fail(USAGE) };
     let out = std::path::absolute(out).unwrap_or_else(|_| PathBuf::from(out));
     let session = session.as_deref();
-    if cockpit_core::browser::engine() == cockpit_core::browser::Engine::Chromium {
+    if flightdeck_core::browser::engine() == flightdeck_core::browser::Engine::Chromium {
         return chromium_shots(url, &out, &sizes, full, session);
     }
     let place = place_of(session).unwrap_or_else(|why| fail(&why));
@@ -111,9 +111,9 @@ pub fn main(args: &[String]) {
     println!("{}", dumps(&shots));
 }
 
-/// The screenshots taken in cockpit's Chromium window: a background tab per size in the session's browser, closed after.
+/// The screenshots taken in flightdeck's Chromium window: a background tab per size in the session's browser, closed after.
 fn chromium_shots(url: &str, out: &std::path::Path, sizes: &[&str], full: bool, session: Option<&str>) {
-    use cockpit_core::browser;
+    use flightdeck_core::browser;
     use serde_json::json;
 
     use crate::browser::{agent, side};

@@ -180,7 +180,7 @@ function openPage({ inShadowRoot = false, marker } = {}) {
     get grab() {
       return window[GRAB_GLOBAL];
     },
-    host: () => html.childNodes.find((node) => node.id === "__cockpit-grab-host"),
+    host: () => html.childNodes.find((node) => node.id === "__flightdeck-grab-host"),
     /** The overlay inside the picker's closed shadow root, then its outline and its label. */
     shadowRootOf: (host) => shadowRoots.find((root) => root.host === host),
     overlay: () => page.shadowRootOf(page.host()).firstElementChild,
@@ -424,7 +424,7 @@ test("arming again replaces the earlier picker", () => {
   page.grab.freezeHighlight("selection-1");
   assert.equal(page.run(grabScript("arm")), true);
   assert.notEqual(page.host(), first);
-  assert.equal(page.html.childNodes.filter((node) => node.id === "__cockpit-grab-host").length, 1);
+  assert.equal(page.html.childNodes.filter((node) => node.id === "__flightdeck-grab-host").length, 1);
   assert.equal(page.window.listeners.length, listeners);
   assert.equal(page.target.getAttribute(GRAB_SELECTED_ATTRIBUTE), null);
   assert.equal(page.grab.getCurrentElement(), null);
@@ -440,7 +440,7 @@ test("the viewport bridge reports the frozen element's box and keeps note badges
   page.flushFrames();
 
   assert.deepEqual(readAnnotationViewportMessage(page.consoleLines.at(-1), TOKEN), { scrollX: 0, scrollY: 0, viewportWidth: 1280, target: { x: 40, y: 300, width: 120, height: 30 } });
-  const badgeHost = page.body.childNodes.find((node) => node.attrs.has("data-cockpit-annotation-overlay"));
+  const badgeHost = page.body.childNodes.find((node) => node.attrs.has("data-flightdeck-annotation-overlay"));
   assert.match(badgeHost.style.cssText, /z-index:2147483646;pointer-events:none/);
   assert.equal(badgeHost.shadowRoot, null);
   const badges = () => page.shadowRootOf(badgeHost).childNodes.filter((node) => node.className === "marker").map((node) => [node.textContent, node.style.transform]);
@@ -461,7 +461,7 @@ test("the viewport bridge reports the frozen element's box and keeps note badges
   assert.deepEqual([page.host().style.display, badgeHost.style.display], ["none", "none"]);
   page.run(RESTORE_GRAB_OVERLAY_SCRIPT);
   assert.deepEqual([page.host().style.display, badgeHost.style.display], ["", ""]);
-  assert.equal(badgeHost.attrs.has("data-cockpit-previous-display"), false);
+  assert.equal(badgeHost.attrs.has("data-flightdeck-previous-display"), false);
 
   assert.equal(page.run(bridge({ enabled: false })), true);
   assert.equal(page.body.childNodes.includes(badgeHost), false);

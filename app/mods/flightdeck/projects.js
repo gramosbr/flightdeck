@@ -5,15 +5,15 @@ import { exec, focused, panes, readTextFile, shared, setShared, spaces } from "h
 import * as hub from "./hub.js";
 
 /** The shared key the chat writes its subject's place to: {cwd, repos: [{path, name}]}, or null for none. */
-export const WHERE = "cockpit.panel.where";
+export const WHERE = "flightdeck.panel.where";
 
 /** Git reads that write nothing under .git (no index refresh or lock, no fsmonitor cookie). */
 export const READ = ["--no-optional-locks", "-c", "core.fsmonitor=false", "-c", "diff.autoRefreshIndex=false"];
 
-/** `chat.projectPanels` as last read, and when: cockpit's Files and Changes stand in for Herdr's unless it is false. */
+/** `chat.projectPanels` as last read, and when: flightdeck's Files and Changes stand in for Herdr's unless it is false. */
 let panels = { on: true, at: 0 };
 
-/** Whether cockpit's Files and Changes show: read from the config again at most every 10 s, true until it says no. */
+/** Whether flightdeck's Files and Changes show: read from the config again at most every 10 s, true until it says no. */
 export function projectPanels() {
   if (Date.now() - panels.at > 10_000) {
     panels.at = Date.now();
@@ -24,7 +24,7 @@ export function projectPanels() {
 
 async function readPanels() {
   const { home, cache } = await (async () => hub.install())().catch(() => ({}));
-  for (const path of [cache && `${cache}/config.json`, home && `${home}/.config/cockpit/config.json`].filter(Boolean)) {
+  for (const path of [cache && `${cache}/config.json`, home && `${home}/.config/flightdeck/config.json`].filter(Boolean)) {
     try {
       const config = JSON.parse((await readTextFile(path)) ?? "null");
       if (config) return void (panels = { on: config.chat?.projectPanels !== false, at: panels.at });

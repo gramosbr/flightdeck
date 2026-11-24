@@ -1,12 +1,12 @@
-//! The monitor for the Herdr app's cockpit mod: the view model the hub pushes (verdict tiles, each app with its meters,
+//! The monitor for the Herdr app's flightdeck mod: the view model the hub pushes (verdict tiles, each app with its meters,
 //! history strips, alerting monitors, new errors and releases judged before and after, the timeline) and the actions
 //! each row offers, the same ones the TUI's rows have, ready to send.
 
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
-use cockpit_core::acts::Act;
-use cockpit_core::files::{self, Density};
+use flightdeck_core::acts::Act;
+use flightdeck_core::files::{self, Density};
 use serde_json::{Value, json};
 
 use crate::app::{App, Cmd};
@@ -211,7 +211,7 @@ fn app_model(tui: &App, clock: &Clock, app: &data::App) -> Value {
 /// The whole view: the headline and tiles, the apps (troubled first), the releases newest first.
 pub fn model(value: &Value, clock: Clock, since: Option<u64>) -> Value {
     let Some(doc) = Doc::parse(value).filter(|_| !value.is_null()) else {
-        return json!({"ready": false, "since": since, "connected": cockpit_core::sources::Source::Platform.connected()});
+        return json!({"ready": false, "since": since, "connected": flightdeck_core::sources::Source::Platform.connected()});
     };
     let mut tui = App::with(Some(clock), Density::Comfortable, false);
     tui.set_doc(value);
@@ -229,8 +229,8 @@ pub fn model(value: &Value, clock: Clock, since: Option<u64>) -> Value {
     let headline = headline.trim_start_matches(|c: char| !c.is_ascii_alphanumeric()).trim().to_string();
     let at = doc.at.and_then(DateTime::<Utc>::from_timestamp_millis);
     json!({
-        "ready": true, "connected": cockpit_core::sources::Source::Platform.connected(), "env": doc.env, "at": doc.at, "ago": ago(&clock, at), "since": since, "errors": doc.error_lines(),
-        "sources": cockpit_core::header::json(&doc.sources, cockpit_core::header::now()),
+        "ready": true, "connected": flightdeck_core::sources::Source::Platform.connected(), "env": doc.env, "at": doc.at, "ago": ago(&clock, at), "since": since, "errors": doc.error_lines(),
+        "sources": flightdeck_core::header::json(&doc.sources, flightdeck_core::header::now()),
         "headline": headline, "bad": bad, "verdict": verdict,
         "tiles": {
             "today": today.len(), "ok": of("ok"), "moved": of("moved"), "failed": of("failed"), "watching": of("watching"),

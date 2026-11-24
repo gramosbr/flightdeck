@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use super::{Ctx, arg, inbox};

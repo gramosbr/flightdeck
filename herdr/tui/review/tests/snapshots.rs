@@ -2,12 +2,12 @@
 //! a pull request, comments, side by side, the walkthrough none, writing, failed and done, the worktree picker, the
 //! keys overlay) and what its keys do (scopes, hunks, the comment sent to the agent, steps, the picker).
 
-use cockpit_core::testing::render;
-use cockpit_review::app::{App, Cmd, Mode, Recipient, Scope, Sent, To};
-use cockpit_show::gui::hunk_ids;
-use cockpit_show::patch::{parse_patch, prepare};
-use cockpit_show::review::Read;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::testing::render;
+use flightdeck_review::app::{App, Cmd, Mode, Recipient, Scope, Sent, To};
+use flightdeck_show::gui::hunk_ids;
+use flightdeck_show::patch::{parse_patch, prepare};
+use flightdeck_show::review::Read;
 use serde_json::{Value, json};
 
 const UNCOMMITTED: &str = include_str!("fixtures/uncommitted.patch");
@@ -41,7 +41,7 @@ fn read(scope: Scope, patch: &str, walkthrough: Value) -> Read {
     Read {
         repo: API.into(),
         scope: scope.id().into(),
-        hash: cockpit_show::diff::hash(patch),
+        hash: flightdeck_show::diff::hash(patch),
         files: Some(prepare(patch)),
         about: about(scope),
         walkthrough,
@@ -143,7 +143,7 @@ fn no_agent_in_a_worktree() {
 #[test]
 fn the_hub_does_not_answer() {
     let mut app = new_app();
-    app.take_agents(Err("the cockpit hub did not start; what it said is in ~/.cache/cockpit/hub.log".into()));
+    app.take_agents(Err("the flightdeck hub did not start; what it said is in ~/.cache/flightdeck/hub.log".into()));
     insta::assert_snapshot!(render(&mut app, 90, 10));
 }
 
@@ -287,7 +287,8 @@ fn the_keys_overlay_lists_the_space_keys() {
     typed(&mut app, "x");
     key(&mut app, KeyCode::Enter);
     let acts: Vec<_> = app.acts().into_iter().map(|(a, _)| a).collect();
-    let text: Vec<String> = cockpit_core::help::lines("review", &acts).iter().map(|l| l.spans.iter().map(|s| s.content.as_ref()).collect::<String>()).collect();
+    let text: Vec<String> =
+        flightdeck_core::help::lines("review", &acts).iter().map(|l| l.spans.iter().map(|s| s.content.as_ref()).collect::<String>()).collect();
     let all = text.join("\n");
     for key in ["c  ", "e  ", "D  ", "S  ", "n  ", "p  ", "s  ", "z  ", "W  ", "1  ", "2  ", "3  ", "w  ", "R  "] {
         assert!(all.contains(&format!("  {key}")), "{key} in\n{all}");
@@ -365,7 +366,7 @@ fn a_review_goes_to_the_agent_as_one_message() {
     assert_eq!(sent.args[0], "w2:p1");
     assert_eq!(sent.args[1]["scope"], "uncommitted");
     assert_eq!(sent.args[1]["repo"], API);
-    let line = cockpit_show::review::message(&sent.args[1]).unwrap();
+    let line = flightdeck_show::review::message(&sent.args[1]).unwrap();
     assert_eq!(
         line,
         "My review of the uncommitted changes (2 comments), please address each: 1) src/quotas.py:21 (removed line) `if remaining(plan, used) == 0:`: keep the old check 2) src/quotas.py:23 `if used >= daily_limit(plan) + GRACE:`: GRACE belongs to the plan"
@@ -458,14 +459,14 @@ fn the_picker_moves_the_review_to_another_agent() {
 #[test]
 fn the_sidebar_says_what_waits() {
     let mut app = app();
-    assert_eq!(cockpit_review::pinned::sidebar_text(&app), "\u{f4af}  api · 2 files +7 −1");
+    assert_eq!(flightdeck_review::pinned::sidebar_text(&app), "\u{f4af}  api · 2 files +7 −1");
     press(&mut app, 'n');
     press(&mut app, 'j');
     press(&mut app, 'c');
     typed(&mut app, "ok");
     key(&mut app, KeyCode::Enter);
-    assert_eq!(cockpit_review::pinned::sidebar_text(&app), "\u{f4af}  1 comment to send");
-    assert_eq!(cockpit_review::pinned::sidebar_text(&App::new(true)), "\u{f4af}  no agent yet");
+    assert_eq!(flightdeck_review::pinned::sidebar_text(&app), "\u{f4af}  1 comment to send");
+    assert_eq!(flightdeck_review::pinned::sidebar_text(&App::new(true)), "\u{f4af}  no agent yet");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

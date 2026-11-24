@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use crate::facts::{flag, s};
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn a_request_no_session_took_is_deleted_and_says_so() {
-        let dir = crate::test_home::home().join(".cache/cockpit/requests");
+        let dir = crate::test_home::home().join(".cache/flightdeck/requests");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("1-rerun.json"), "{}").unwrap();
         let mut requests = Requests::default();

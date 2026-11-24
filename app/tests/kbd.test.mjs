@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-// Cockpit Chat keeps key hints to its tooltips: the views it shares with Cockpit draw no Kbd chip there, and Cockpit
+// Flightdeck Chat keeps key hints to its tooltips: the views it shares with Flightdeck draw no Kbd chip there, and Flightdeck
 // keeps them. The views render on a stand-in GPUI whose elements record every call made on them.
 
 /** An element that records the calls made on it; a call's arguments hold its children. */
@@ -44,7 +44,7 @@ async function fixture(layout) {
     "./hub.js": { subscribe: () => ({ stop() {} }), act: async () => ({}), remoteMachine: () => null, isNotInstalled: () => false, isStoppedOnPurpose: () => false, downWords: () => "", startHub: async () => {} },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -111,16 +111,16 @@ function render(mod) {
   return els;
 }
 
-test("Cockpit Chat draws no Kbd chip in the views it shares, and Cockpit keeps them", async () => {
-  const chat = await fixture("cockpit-chat");
-  assert.equal(render(chat).reduce((n, el) => n + chips(el), 0), 0, "no key cap anywhere in Cockpit Chat");
-  const cockpit = await fixture("cockpit");
-  const each = render(cockpit).map((el) => chips(el));
-  assert.ok(each.every((n) => n > 0), `every piece keeps its key caps in Cockpit: ${each.join(", ")}`);
+test("Flightdeck Chat draws no Kbd chip in the views it shares, and Flightdeck keeps them", async () => {
+  const chat = await fixture("flightdeck-chat");
+  assert.equal(render(chat).reduce((n, el) => n + chips(el), 0), 0, "no key cap anywhere in Flightdeck Chat");
+  const flightdeck = await fixture("flightdeck");
+  const each = render(flightdeck).map((el) => chips(el));
+  assert.ok(each.every((n) => n > 0), `every piece keeps its key caps in Flightdeck: ${each.join(", ")}`);
 });
 
-test("a choice's number stays readable in Cockpit Chat, as text, and its key is in the tooltip", async () => {
-  const chat = await fixture("cockpit-chat");
+test("a choice's number stays readable in Flightdeck Chat, as text, and its key is in the tooltip", async () => {
+  const chat = await fixture("flightdeck-chat");
   const made = chat.ui.ChoiceKey(2).made;
   assert.ok(made.some(([n, v]) => n === "child" && v === "2"), "the number, as quiet text");
   const model = { busy: new Map(), picksOf: () => new Set(), drawn: new Map(), opened: new Set() };
@@ -138,18 +138,18 @@ test("a choice's number stays readable in Cockpit Chat, as text, and its key is 
   assert.ok(tips.includes("Answer “Yes”  1"));
 });
 
-test("the agent head's Stop names the keys its row says stop a turn: a Kbd in Cockpit, the tooltip in Cockpit Chat", async () => {
+test("the agent head's Stop names the keys its row says stop a turn: a Kbd in Flightdeck, the tooltip in Flightdeck Chat", async () => {
   const tipsOf = (el) => el.made.filter(([n]) => n === "tooltip").map(([, t]) => t);
   const a = { handle: "app:t44" };
-  const cockpit = await fixture("cockpit");
-  const kept = cockpit.stopButton(a, "esc");
+  const flightdeck = await fixture("flightdeck");
+  const kept = flightdeck.stopButton(a, "esc");
   assert.equal(chips(kept), 1, "its key on the button");
   assert.deepEqual(tipsOf(kept), ["Stop its turn, also in its terminal"]);
-  const chat = await fixture("cockpit-chat");
+  const chat = await fixture("flightdeck-chat");
   const quiet = chat.stopButton(a, "esc");
   assert.equal(chips(quiet), 0);
   assert.deepEqual(tipsOf(quiet), ["Stop its turn, also in its terminal  esc"], "the key in the tooltip");
-  const none = cockpit.stopButton(a, null);
+  const none = flightdeck.stopButton(a, null);
   assert.equal(chips(none), 0, "no key measured: none shown");
   assert.deepEqual(tipsOf(none), ["Stop its turn"]);
 });

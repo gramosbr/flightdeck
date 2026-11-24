@@ -4,16 +4,16 @@
 use std::process::Command;
 use std::time::SystemTime;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use crate::book::Book;
 
 pub const ICON: &str = "\u{f405}";
 
-/// Run by `cockpit space runbook` in the runbook space: these duties are this app's then.
+/// Run by `flightdeck space runbook` in the runbook space: these duties are this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 fn herdr_bin() -> String {
@@ -27,7 +27,7 @@ pub fn report(books: &[Book]) {
     let text = if books.is_empty() { format!("{ICON}  no runbook") } else { format!("{ICON}  {} runbooks · {left} to do", books.len()) };
     std::thread::spawn(move || {
         let _ = Command::new(herdr_bin())
-            .args(["workspace", "report-metadata", &workspace, "--source", "cockpit-runbook", "--token", &format!("runbook={text}")])
+            .args(["workspace", "report-metadata", &workspace, "--source", "flightdeck-runbook", "--token", &format!("runbook={text}")])
             .output();
     });
 }
@@ -90,6 +90,6 @@ pub fn announce(book: &Book, newly: Vec<String>, reason: String) {
             body = format!("{reason} · {body}");
         }
         let action = if newly.is_empty() { format!("runbook:{slug}") } else { format!("runbook:{slug}:{}", newly.join(",")) };
-        cockpit_core::notify::post(&format!("📋 {title}"), &body, &action, &[]);
+        flightdeck_core::notify::post(&format!("📋 {title}"), &body, &action, &[]);
     });
 }

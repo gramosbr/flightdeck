@@ -3,7 +3,7 @@ import type { EngineInterface } from 'claude-code'
 import type { ViewChip } from '../types'
 
 import { browse } from './browser'
-import { cacheDir, cockpitCommand, loadConfig } from './config'
+import { cacheDir, flightdeckCommand, loadConfig } from './config'
 import { appDo } from './herdr'
 import type { Here } from './herdr'
 import { PAGE_BLOCKS, pageBlocks, pageHtml } from './page'
@@ -12,12 +12,12 @@ import { MCP } from './tools'
 
 type $ = EngineInterface
 
-// The show tool: a view built from a fixed catalog of blocks, drawn in a pane split from the session's: `cockpit show`
-// in herdr, the cockpit mod's show view in the Herdr app.
+// The show tool: a view built from a fixed catalog of blocks, drawn in a pane split from the session's: `flightdeck show`
+// in herdr, the flightdeck mod's show view in the Herdr app.
 // A later call with the same pane name rewrites the view and the open pane redraws.
 const SHOW = MCP.tools.show
 export const SHOW_TOOL = SHOW.name
-export const SHOW_TOOL_FULL = `mcp__cockpit__${SHOW_TOOL}` as const
+export const SHOW_TOOL_FULL = `mcp__flightdeck__${SHOW_TOOL}` as const
 
 const PLACEMENTS = SHOW.inputSchema.properties.placement.enum
 const BLOCKS = SHOW.inputSchema.properties.blocks.items.properties.type.enum
@@ -237,14 +237,14 @@ let shownSeen: { at: number; names: Set<string> } | undefined
 
 async function appShown($: $) {
   if (shownSeen && Date.now() - shownSeen.at < 2_500) return shownSeen.names
-  const cockpit = await cockpitCommand($)
-  const listed = cockpit ? await $.process.run([...cockpit, 'hub', 'shown', 'show'], { timeoutMs: 5_000 }) : undefined
+  const flightdeck = await flightdeckCommand($)
+  const listed = flightdeck ? await $.process.run([...flightdeck, 'hub', 'shown', 'show'], { timeoutMs: 5_000 }) : undefined
   const args = listed?.exitCode === 0 ? (JSON.parse(listed.stdout || '[]') as { name?: string }[]) : []
   shownSeen = { at: Date.now(), names: new Set(args.map(a => a?.name).filter((n): n is string => typeof n === 'string')) }
   return shownSeen.names
 }
 
-// Whether the pane showing this view still runs: `cockpit show` keeps its pid in <name>.pid while it does, the app's
+// Whether the pane showing this view still runs: `flightdeck show` keeps its pid in <name>.pid while it does, the app's
 // view follows the hub while it is drawn.
 async function isOpen($: $, dir: string, name: string) {
   if (await $.fs.stat(`${dir}/${name}.app`).then(() => true, () => false)) return (await appShown($)).has(name)
@@ -265,12 +265,12 @@ async function isOpenSoon($: $, dir: string, name: string, pidMtime: number) {
   return value
 }
 
-// In the app the view is the cockpit mod's, split beside the session's pane; the pane it got is kept in <name>.app.
+// In the app the view is the flightdeck mod's, split beside the session's pane; the pane it got is kept in <name>.app.
 async function openAppPane($: $, here: Here, name: string, placement: Placement) {
   const props = { app: 'show', name, session: await $.session.id() }
-  const made = await appDo($, 'pane.split', { direction: placement === 'down' ? 'down' : 'right', pane: here.paneId, mod: 'cockpit', props })
+  const made = await appDo($, 'pane.split', { direction: placement === 'down' ? 'down' : 'right', pane: here.paneId, mod: 'flightdeck', props })
   const pane = made?.pane as string | undefined
-  if (!pane) return 'herdr-app pane.split failed: is the cockpit mod installed? (cockpit app install)'
+  if (!pane) return 'herdr-app pane.split failed: is the flightdeck mod installed? (flightdeck app install)'
   await $.fs.write(`${await showDir($)}/${name}.app`, JSON.stringify({ pane, terminal: here.terminal }))
   shownSeen = undefined
   if (placement === 'zoomed') await appDo($, 'pane.zoom', { pane })
@@ -283,7 +283,7 @@ async function openPane($: $, here: Here, name: string, placement: Placement) {
   if (here.frontend === 'app') return openAppPane($, here, name, placement)
   await $.process.run(['rm', '-f', `${await showDir($)}/${name}.app`])
   const script = `${(await loadConfig($)).herdrPluginRoot}/app.sh`
-  if (!(await $.fs.stat(script).then(() => true, () => false))) return `the cockpit herdr plugin has no ${script} yet: update it`
+  if (!(await $.fs.stat(script).then(() => true, () => false))) return `the flightdeck herdr plugin has no ${script} yet: update it`
   const split = await $.process.run(['herdr', 'pane', 'split', here.pane, '--direction', placement === 'down' ? 'down' : 'right'], { timeoutMs: 10_000 })
   const pane = (JSON.parse(split.stdout || '{}')?.result?.pane?.pane_id as string | undefined) ?? ''
   if (split.exitCode !== 0 || !pane) return `herdr pane split failed: ${split.stderr.trim()}`
@@ -333,17 +333,17 @@ export function blueprintName(pane: string, session: string) {
   return own ? `${pane.slice(0, 31)}-${own}` : pane
 }
 
-// The blueprint files the show tool hands out: `<name>.mmd` in cockpit's show folder, outside every repo.
+// The blueprint files the show tool hands out: `<name>.mmd` in flightdeck's show folder, outside every repo.
 export async function isBlueprintFile($: $, path: unknown) {
   if (!isText(path) || path.includes('..')) return false
   const dir = await showDir($)
   return path.startsWith(`${dir}/`) && /^[a-z0-9][a-z0-9-]{0,39}\.mmd$/.test(path.slice(dir.length + 1))
 }
 
-/** Whose a view is: the app terminal's, else the key of the session cockpit drives that this one is (it has no terminal). */
+/** Whose a view is: the app terminal's, else the key of the session flightdeck drives that this one is (it has no terminal). */
 export async function viewOwner($: $, here: Here | undefined): Promise<string | undefined> {
   if (here?.terminal) return here.terminal
-  const key = await $.env.get('COCKPIT_SESSION_KEY')
+  const key = await $.env.get('FLIGHTDECK_SESSION_KEY')
   return key && /^[A-Za-z0-9_:-]+$/.test(key) ? key : undefined
 }
 
@@ -363,15 +363,15 @@ export async function show($: $, input: Record<string, unknown>, here: Here | un
     url: input.url as string | undefined,
     terminal: await viewOwner($, here),
   }
-  // A metrics source is read by cockpit itself, through the observability server setup mapped; the others get their
+  // A metrics source is read by flightdeck itself, through the observability server setup mapped; the others get their
   // first rows from this session's connectors before the pane opens.
-  const cockpit = await cockpitCommand($)
+  const flightdeck = await flightdeckCommand($)
   const quote = (text: string) => `'${text.replace(/'/g, `'\\''`)}'`
   spec.blocks = await Promise.all(spec.blocks.map(b => {
     const source = b.source as Block | undefined
-    if (source?.metrics && cockpit) {
+    if (source?.metrics && flightdeck) {
       const { source: _, ...rest } = b
-      return { ...rest, command: [...cockpit.map(quote), 'connector', 'rows', quote(JSON.stringify(source))].join(' '), every: typeof b.every === 'number' ? b.every : 60 }
+      return { ...rest, command: [...flightdeck.map(quote), 'connector', 'rows', quote(JSON.stringify(source))].join(' '), every: typeof b.every === 'number' ? b.every : 60 }
     }
     return source ? refreshed($, b) : b
   }))

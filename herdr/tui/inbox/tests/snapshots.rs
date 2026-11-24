@@ -3,10 +3,10 @@
 
 mod common;
 
-use cockpit_core::term::App as _;
-use cockpit_core::testing::render;
 use common::{app, focus, typed};
 use crossterm::event::Event;
+use flightdeck_core::term::App as _;
+use flightdeck_core::testing::render;
 use serde_json::{Value, json};
 
 const HEIGHT: u16 = 64;
@@ -75,11 +75,16 @@ fn todays_routine_runs_that_need_a_look() {
     inputs.routines = Some(json!({"version": 1, "inboxFrom": 0,
         "routines": [{"slug": "sweep", "name": "Morning sweep"}, {"slug": "digest", "name": "Review digest"}, {"slug": "notes", "name": "Pull my notes"}],
         "runs": {
-            "sweep": [{"id": "1793170800000", "ok": false, "missed": true, "ended": 1793170800000u64, "summary": "Missed Wed 07:00: cockpit was not running then."}],
+            "sweep": [{"id": "1793170800000", "ok": false, "missed": true, "ended": 1793170800000u64, "summary": "Missed Wed 07:00: flightdeck was not running then."}],
             "digest": [{"id": "2", "ok": true, "skipped": "precheck", "ended": 1793175000000u64, "summary": "nothing waits"}],
             "notes": [{"id": "1793174400000", "ok": false, "ended": 1793174402000u64, "summary": "fatal: unable to access github.com", "reason": "Ended with exit 128."}]}}));
-    let mut app =
-        cockpit_inbox::app::App::fixture(inputs, json!({}), false, cockpit_inbox::sessions::Local::fixed(Default::default(), Vec::new()), common::series());
+    let mut app = flightdeck_inbox::app::App::fixture(
+        inputs,
+        json!({}),
+        false,
+        flightdeck_inbox::sessions::Local::fixed(Default::default(), Vec::new()),
+        common::series(),
+    );
     insta::assert_snapshot!(render(&mut app, 100, 16));
 }
 
@@ -128,19 +133,24 @@ fn changes_since_you_last_looked() {
 fn each_source_says_how_fresh_it_is() {
     // The fixtures' 10:00 UTC: GitHub read two minutes ago, Linear refusing its token since 09:35, CI offline since 09:04.
     let now: u64 = 1_793_181_600_000;
-    cockpit_core::header::freeze(now);
+    flightdeck_core::header::freeze(now);
     let mut inputs = common::inputs();
     let data = inputs.data.as_mut().unwrap();
     data["errors"] = json!(["Previews: the preview connector is not connected", "Linear: HTTP 401: token refused"]);
     data["hub"] = json!({"errors": ["Linear: HTTP 401: token refused"], "fresh": {
         "github": {"source": "github", "label": "GitHub", "at": now - 120_000, "every": 60_000, "error": null},
-        "tickets": {"source": "tickets", "label": "Linear", "at": now - 1_800_000, "every": 60_000, "login": "cockpit connector login Linear",
+        "tickets": {"source": "tickets", "label": "Linear", "at": now - 1_800_000, "every": 60_000, "login": "flightdeck connector login Linear",
                     "error": {"kind": "auth", "message": "HTTP 401: token refused", "since": now - 1_500_000}}}});
     inputs.ci["error"] = json!("CI unreachable: io: Connection refused");
     inputs.ci["hub"] = json!({"fresh": {"ci": {"source": "ci", "label": "CI", "at": now - 3_600_000, "every": 30_000,
         "error": {"kind": "network", "message": "unreachable: io: Connection refused", "since": now - 3_360_000}}}});
-    let mut app =
-        cockpit_inbox::app::App::fixture(inputs, json!({}), false, cockpit_inbox::sessions::Local::fixed(Default::default(), Vec::new()), common::series());
+    let mut app = flightdeck_inbox::app::App::fixture(
+        inputs,
+        json!({}),
+        false,
+        flightdeck_inbox::sessions::Local::fixed(Default::default(), Vec::new()),
+        common::series(),
+    );
     for width in [160, 90, 50] {
         let screen = render(&mut app, width, 6);
         insta::assert_snapshot!(format!("sources_{width}"), screen);
@@ -162,8 +172,13 @@ fn worktrees_to_clean_up_say_what_keeps_them_and_a_batch_says_what_goes() {
             true,
         ),
     ];
-    let mut app =
-        cockpit_inbox::app::App::fixture(inputs, json!({}), false, cockpit_inbox::sessions::Local::fixed(Default::default(), Vec::new()), common::series());
+    let mut app = flightdeck_inbox::app::App::fixture(
+        inputs,
+        json!({}),
+        false,
+        flightdeck_inbox::sessions::Local::fixed(Default::default(), Vec::new()),
+        common::series(),
+    );
     focus(&mut app, "worktree:/w/accounts-web/dev/eng-399-bump-ui");
     // Tall enough for the whole tree, so the section is on screen wherever the view scrolled.
     let screen = render(&mut app, 120, 120);
@@ -184,15 +199,20 @@ fn worktrees_to_clean_up_say_what_keeps_them_and_a_batch_says_what_goes() {
 
 #[test]
 fn only_a_removal_leaves_the_kept_worktrees_out_and_a_long_list_stays_short() {
-    use cockpit_inbox::select;
+    use flightdeck_inbox::select;
     let mut inputs = common::inputs();
     let tree = |branch: &str, kept: bool| {
         let blockers = if kept { json!([{"id": "uncommitted", "words": "1 uncommitted change"}]) } else { json!([]) };
         json!({"path": format!("/w/api/{branch}"), "repo": "api", "branch": branch, "changes": u8::from(kept), "merged": true, "blockers": blockers})
     };
     inputs.worktrees = (1..=9).map(|n| tree(&format!("dev/eng-4{n:02}"), n == 9)).collect();
-    let app =
-        cockpit_inbox::app::App::fixture(inputs, json!({}), false, cockpit_inbox::sessions::Local::fixed(Default::default(), Vec::new()), common::series());
+    let app = flightdeck_inbox::app::App::fixture(
+        inputs,
+        json!({}),
+        false,
+        flightdeck_inbox::sessions::Local::fixed(Default::default(), Vec::new()),
+        common::series(),
+    );
     let tree = app.tree();
     let rows: Vec<usize> = (0..tree.nodes.len()).filter(|&n| tree.nodes[n].row.key.starts_with("worktree:")).collect();
     assert_eq!(rows.len(), 9);

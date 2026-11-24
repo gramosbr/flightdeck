@@ -3,7 +3,7 @@
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
-use cockpit_core::{actions, agent, files, frontend, hub};
+use flightdeck_core::{actions, agent, files, frontend, hub};
 use serde_json::{Value, json};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,7 +68,7 @@ impl Then {
                 Some(terminal) => frontend::app_type(terminal, text).then_some(()).ok_or_else(|| format!("could not type into {terminal}")),
                 None => herdr(&["pane", "send-text", pane, text]),
             },
-            Then::Ask { pane, text } => cockpit_core::deliver::deliver(pane, text),
+            Then::Ask { pane, text } => flightdeck_core::deliver::deliver(pane, text),
             Then::Fork { agent, session, cwd, title, prompt } => fork(agent, session, cwd, title, prompt),
             Then::Document { pane, name } => document(pane, name),
             Then::StartWork(text) => start_work(text),
@@ -76,7 +76,7 @@ impl Then {
     }
 }
 
-/// `cockpit start-work <text>` in this terminal, the popup herdr opened for the palette: it stays until the form closes.
+/// `flightdeck start-work <text>` in this terminal, the popup herdr opened for the palette: it stays until the form closes.
 fn start_work(text: &str) -> Result<(), String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let status = Command::new(exe).args(["start-work", text]).status().map_err(|e| format!("start work: {e}"))?;
@@ -90,7 +90,7 @@ fn herdr(args: &[&str]) -> Result<(), String> {
     if out.status.success() { Ok(()) } else { Err(format!("herdr {}: {}", args[..2].join(" "), String::from_utf8_lossy(&out.stderr).trim())) }
 }
 
-/// A view in a pane split off the agent's to its right, `cockpit show` running there; the keyboard stays with the agent.
+/// A view in a pane split off the agent's to its right, `flightdeck show` running there; the keyboard stays with the agent.
 fn document(pane: &str, name: &str) -> Result<(), String> {
     let split = actions::herdr(&["pane", "split", pane, "--direction", "right"]).ok_or("herdr pane split failed")?;
     let new = split["pane"]["pane_id"].as_str().ok_or("herdr pane split gave no pane")?.to_string();
@@ -146,7 +146,7 @@ fn editor(cwd: &str) -> Result<(), String> {
     // An editor whose command isn't on the PATH still opens by its app name on macOS.
     let opened = cfg!(target_os = "macos")
         && Command::new("open").args(["-a", app, cwd]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status().is_ok_and(|s| s.success());
-    if opened { Ok(()) } else { Err(format!("{app} is not installed (set \"editor\" in the cockpit config)")) }
+    if opened { Ok(()) } else { Err(format!("{app} is not installed (set \"editor\" in the flightdeck config)")) }
 }
 
 fn fork(agent: &str, session: &str, cwd: &str, title: &str, prompt: &str) -> Result<(), String> {

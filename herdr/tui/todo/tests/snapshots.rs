@@ -2,9 +2,9 @@
 
 use std::path::PathBuf;
 
-use cockpit_core::files::Density;
-use cockpit_core::testing::render;
-use cockpit_todo::app::{App, Sel};
+use flightdeck_core::files::Density;
+use flightdeck_core::testing::render;
+use flightdeck_todo::app::{App, Sel};
 
 fn fixture(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures").join(name)
@@ -12,7 +12,7 @@ fn fixture(name: &str) -> PathBuf {
 
 /// The app on a copy of the fixture list, so an edit never touches it.
 fn app(test: &str, density: Density) -> App {
-    let dir = std::env::temp_dir().join(format!("cockpit-todo-{test}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("flightdeck-todo-{test}-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("todo.md");
     std::fs::copy(fixture("todo.md"), &path).unwrap();
@@ -51,7 +51,7 @@ fn compact_60_done_unfolded() {
 #[test]
 fn marked_and_filtered_100() {
     let mut app = app("m100", Density::Comfortable);
-    app.filter = cockpit_core::input::Input::new("re");
+    app.filter = flightdeck_core::input::Input::new("re");
     app.marks.insert("ADR Noor".into());
     app.marks.insert("release billing & billing-web (done 2026-10-27)".into());
     app.sel = Sel::Item("ADR Noor".into());
@@ -94,13 +94,13 @@ fn keeps_what_another_process_added_while_typing() {
     let body = std::fs::read_to_string(&app.path).unwrap().replace("# To-do\n\n", "# To-do\n\n- [ ] from /todo\n");
     std::thread::sleep(std::time::Duration::from_millis(20));
     std::fs::write(&app.path, body).unwrap();
-    app.editing.as_mut().unwrap().input = cockpit_core::input::Input::new("typed here");
+    app.editing.as_mut().unwrap().input = flightdeck_core::input::Input::new("typed here");
     app.commit_edit();
     let text = std::fs::read_to_string(&app.path).unwrap();
     assert!(text.starts_with("# To-do\n\n- [ ] from /todo\n- [ ] typed here\n"), "{text}");
 }
 
-/// A focus request (`cockpit focus todo:<text>`) from any process selects an item; its keys wait for the person's move.
+/// A focus request (`flightdeck focus todo:<text>`) from any process selects an item; its keys wait for the person's move.
 #[test]
 fn an_item_a_focus_request_selected_takes_no_key_that_acts_until_a_move() {
     use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};

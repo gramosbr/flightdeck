@@ -19,14 +19,14 @@ const PLAN_AFTER_MS = 250;
  * close the dialog before its keys hear it, so Esc lets go of a lit choice or closes the confirm first.
  */
 export const START_KEYS = [
-  { keystroke: "escape", action: "cockpit_start_escape", context: "CockpitStart && start_holds" },
-  { keystroke: "escape", action: "cockpit_start_escape", context: "CockpitStart && start_holds > Input" },
+  { keystroke: "escape", action: "flightdeck_start_escape", context: "FlightdeckStart && start_holds" },
+  { keystroke: "escape", action: "flightdeck_start_escape", context: "FlightdeckStart && start_holds > Input" },
 ];
 
 /** Opens the Start work dialog on a ticket's key, a PR's URL or a prompt, or `{run}` on a start that runs or failed. */
 export function openStart(source = "") {
   const given = typeof source === "object" && source ? source : { source };
-  openOverlay({ mod: "cockpit", props: { app: "start", source: given.source ?? "", run: given.run ?? "" }, kind: "dialog", modal: true, width: 640, height: 0.86 });
+  openOverlay({ mod: "flightdeck", props: { app: "start", source: given.source ?? "", run: given.run ?? "" }, kind: "dialog", modal: true, width: 640, height: 0.86 });
 }
 
 export default class Start {
@@ -43,8 +43,8 @@ export default class Start {
     this.confirm = null;
     this.home = "";
     this.sub = null;
-    // Cockpit Chat keeps key hints in tooltips; Cockpit shows them on the buttons.
-    this.chips = !String(shared("layout") ?? "").startsWith("cockpit-chat");
+    // Flightdeck Chat keeps key hints in tooltips; Flightdeck shows them on the buttons.
+    this.chips = !String(shared("layout") ?? "").startsWith("flightdeck-chat");
     this.handle = cx.focus_handle();
     // The keymap is the app's: binding again for the next dialog only repeats the same entries.
     try {
@@ -96,7 +96,7 @@ export default class Start {
     closeOverlay(props().overlay);
   }
 
-  /** `cockpit.start:type:<text>` types the source for checks driven from a shell; only a click on Start starts it. */
+  /** `flightdeck.start:type:<text>` types the source for checks driven from a shell; only a click on Start starts it. */
   command(c, cx) {
     if (!c.startsWith("start:type:")) return;
     const text = c.slice("start:type:".length);
@@ -106,7 +106,7 @@ export default class Start {
     cx.notify();
   }
 
-  /** A key's hint: on the button in Cockpit, in its tooltip in Cockpit Chat. */
+  /** A key's hint: on the button in Flightdeck, in its tooltip in Flightdeck Chat. */
   hint(key, words = "") {
     return this.chips ? { kbd: key, ...(words ? { tooltip: words } : {}) } : { tooltip: words ? `${words}  ${key}` : key };
   }
@@ -209,7 +209,7 @@ export default class Start {
       if (m.view !== "start") return;
       if (m.value?.run) this.run = m.value.run;
       else if (this.reply?.error) this.run = { state: "failed", steps: this.run?.steps ?? [], error: { step: "start", text: this.reply.error }, retry: true };
-      // A session cockpit drives that was open already is brought up in Cockpit Chat, where it is read.
+      // A session flightdeck drives that was open already is brought up in Flightdeck Chat, where it is read.
       if (this.run?.state === "done" && this.plan?.session === true && this.run.made?.pane && !this.opened) {
         this.opened = true;
         readInChat(this.run.made.pane);
@@ -493,7 +493,7 @@ export default class Start {
     return h_flex().gap(8).items_center().child(div().flex_1().min_w(0).truncate().text_size(TEXT.xs).text_color(k.dim).child(hint)).children(buttons);
   }
 
-  /** The AlertDialog as Cockpit Chat draws it: its keys in the buttons' tooltips, not on them. */
+  /** The AlertDialog as Flightdeck Chat draws it: its keys in the buttons' tooltips, not on them. */
   quietConfirm(id, { title, description, confirmLabel, onConfirm, onCancel }) {
     const k = tokens();
     return div()
@@ -541,8 +541,8 @@ export default class Start {
       .bg(k.popover)
       .track_focus(this.handle)
       // A menu opened from the dialog has the keyboard while it is up: its Esc is its own.
-      .key_context(this.handle.is_focused() || this.field ? "CockpitStart start_holds" : "CockpitStart")
-      .on_action("cockpit_start_escape", (_e, cx) => (this.key({ keystroke: "escape", key: "escape" }, cx), cx.notify()))
+      .key_context(this.handle.is_focused() || this.field ? "FlightdeckStart start_holds" : "FlightdeckStart")
+      .on_action("flightdeck_start_escape", (_e, cx) => (this.key({ keystroke: "escape", key: "escape" }, cx), cx.notify()))
       .on_key_down((e, cx) => {
         if (!this.key(e, cx)) return;
         cx.stop_propagation();
@@ -557,7 +557,7 @@ export default class Start {
           .p(20)
           .gap(16)
           .child(v_flex().gap(4).child(div().truncate().text_size(TEXT.lg).font_semibold().text_color(k.foreground).child(title)).child(div().text_size(TEXT.sm).text_color(k.mutedFg).child("A prompt, a ticket or a PR becomes a worktree, a space and an agent.")))
-          .when(Boolean(this.remote), (e) => e.child(div().p(12).rounded(RADIUS.md).bg(k.muted).text_size(TEXT.sm).text_color(k.mutedFg).child(`Start work runs on ${this.remote}'s own cockpit: this window only reads it. Start it from a window on ${this.remote}.`)))
+          .when(Boolean(this.remote), (e) => e.child(div().p(12).rounded(RADIUS.md).bg(k.muted).text_size(TEXT.sm).text_color(k.mutedFg).child(`Start work runs on ${this.remote}'s own flightdeck: this window only reads it. Start it from a window on ${this.remote}.`)))
           .when(!this.remote && !started && p?.place !== "focus", (e) => e.child(this.fields(k)))
           .when(!this.remote && !started && p?.place === "focus", (e) => e.child(this.row("Source", TextField(this.source), k)))
           .when(!this.remote, (e) => e.child(div().h(1).bg(k.border)).child(this.planEl(k))),

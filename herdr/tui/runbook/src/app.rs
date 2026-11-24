@@ -6,13 +6,13 @@ use std::path::PathBuf;
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant, SystemTime};
 
-use cockpit_core::anim::{Effects, Glide, Kind};
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::files::Density;
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::toast::{self, Toasts};
+use flightdeck_core::anim::{Effects, Glide, Kind};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::files::Density;
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::toast::{self, Toasts};
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use serde_json::Value;
@@ -32,7 +32,7 @@ pub const FOCUSED: Kind = Kind::Flash(Color::Rgb(90, 70, 50), 1.0);
 /// steps to mark done together.
 #[derive(Clone)]
 pub enum Cmd {
-    Act { slug: String, n: Option<String>, act: cockpit_core::acts::Act, question: String },
+    Act { slug: String, n: Option<String>, act: flightdeck_core::acts::Act, question: String },
     GoTo { slug: String, n: String },
     Done(Vec<(String, String)>),
 }
@@ -57,7 +57,7 @@ pub struct Paths {
 
 impl Paths {
     pub fn from_env() -> Self {
-        Self { runbooks: book::dir(), handoffs: handoff::dir(), inbox: handoff::inbox_path(), focus: cockpit_core::files::cache().join("focus") }
+        Self { runbooks: book::dir(), handoffs: handoff::dir(), inbox: handoff::inbox_path(), focus: flightdeck_core::files::cache().join("focus") }
     }
 }
 
@@ -122,12 +122,12 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        Self::open(Paths::from_env(), cockpit_core::files::density(), pinned::is_pinned())
+        Self::open(Paths::from_env(), flightdeck_core::files::density(), pinned::is_pinned())
     }
 
     pub fn open(paths: Paths, density: Density, pinned: bool) -> Self {
         let _ = std::fs::create_dir_all(&paths.runbooks);
-        let (watcher, changes) = cockpit_core::files::watch(&[paths.runbooks.clone(), paths.handoffs.clone(), paths.focus.clone()]);
+        let (watcher, changes) = flightdeck_core::files::watch(&[paths.runbooks.clone(), paths.handoffs.clone(), paths.focus.clone()]);
         let mut palette = Palette::default();
         palette.app = "runbook".into();
         let mut app = Self {
@@ -288,7 +288,7 @@ impl App {
                 }
             }
         }
-        if let Some(target) = cockpit_core::focus::take("runbook", &mut self.focus_seen)
+        if let Some(target) = flightdeck_core::focus::take("runbook", &mut self.focus_seen)
             && let Some(key) = target["key"].as_str()
         {
             self.focus(key);
@@ -314,7 +314,7 @@ impl App {
         let keep_n = self.book().and_then(|b| b.steps.get(self.selected)).map(|s| s.n.clone());
         self.books = book::read_books(&self.paths.runbooks);
         let before_handoffs = std::mem::replace(&mut self.handoffs, handoff::read(&self.paths.handoffs));
-        self.inbox = cockpit_core::files::load(&self.paths.inbox).unwrap_or(Value::Null);
+        self.inbox = flightdeck_core::files::load(&self.paths.inbox).unwrap_or(Value::Null);
         let done: HashMap<String, Vec<String>> = self.books.iter().map(|b| (b.slug.clone(), b.done_steps())).collect();
         let before = self.done.replace(done.clone());
         if let Some(i) = keep.and_then(|slug| self.books.iter().position(|b| b.slug == slug)) {
@@ -442,9 +442,9 @@ impl App {
             let newly = self.newly.remove(&slug).unwrap_or_default();
             let reason = self.reasons.remove(&slug).unwrap_or_default();
             // runbook.update writes the exit status beside the log, since a pid alone cannot tell a failure.
-            let status = std::fs::read_to_string(cockpit_core::files::cache().join(format!("runbook-refresh-{slug}.exit")));
+            let status = std::fs::read_to_string(flightdeck_core::files::cache().join(format!("runbook-refresh-{slug}.exit")));
             if status.ok().and_then(|s| s.trim().parse::<i32>().ok()).is_some_and(|code| code != 0) {
-                self.toasts.push(format!("{}: refresh failed, see ~/.cache/cockpit/runbook-refresh-{slug}.log", slug.to_uppercase()), toast::Kind::Bad);
+                self.toasts.push(format!("{}: refresh failed, see ~/.cache/flightdeck/runbook-refresh-{slug}.log", slug.to_uppercase()), toast::Kind::Bad);
                 continue;
             }
             self.toasts.push(format!("{} refreshed", slug.to_uppercase()), toast::Kind::Good);

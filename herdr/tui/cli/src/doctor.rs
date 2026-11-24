@@ -1,4 +1,4 @@
-//! `cockpit doctor`: checks every part of cockpit and prints one line per check, ok, warn or fail, with what it found
+//! `flightdeck doctor`: checks every part of flightdeck and prints one line per check, ok, warn or fail, with what it found
 //! and the fix. `--json` gives the same checks as data (each with an id, its category and its fix), the steps of
 //! getting started they make, and what each agent can do, and keeps it in the cache for the apps.
 
@@ -7,18 +7,18 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use cockpit_core::{agent, files, transcripts};
+use flightdeck_core::{agent, files, transcripts};
 use serde_json::{Value, json};
 
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering as Atomic};
 
 use crate::proc::{self, Out};
 
-const SESSION: &str = "no Claude session with cockpit is running";
-const NO_FEED: &str = "neither a cockpit app (its hub) nor a Claude session with cockpit is running";
+const SESSION: &str = "no Claude session with flightdeck is running";
+const NO_FEED: &str = "neither a flightdeck app (its hub) nor a Claude session with flightdeck is running";
 const SPACES: [&str; 6] = ["inbox", "terminal", "actions", "to-do", "runbook", "meetings"];
-/// Puts the `cockpit` a shell runs back on the current install.
-const LINK_BIN: &str = "ln -sfn ~/.config/cockpit/herdr/bin/cockpit ~/.local/bin/cockpit";
+/// Puts the `flightdeck` a shell runs back on the current install.
+const LINK_BIN: &str = "ln -sfn ~/.config/flightdeck/herdr/bin/flightdeck ~/.local/bin/flightdeck";
 /// The shape of `--json`; a change of it bumps this.
 const JSON_VERSION: u64 = 1;
 /// How old a kept report `--cached` still answers with.
@@ -118,7 +118,7 @@ fn verdict() {
         println!("\nEvery check passed ({}).", count(ok, "check"));
     } else {
         let found = format!("{}, {}", count(fail, "failure"), count(warn, "warning"));
-        println!("\n{found}{}", if ALL.load(Atomic::Relaxed) { String::new() } else { format!("; {} passed, cockpit doctor --all lists them", ok) });
+        println!("\n{found}{}", if ALL.load(Atomic::Relaxed) { String::new() } else { format!("; {} passed, flightdeck doctor --all lists them", ok) });
     }
 }
 
@@ -131,7 +131,7 @@ fn restores_screen(toml: &str) -> bool {
 struct Doctor {
     /// The herdr plugin folder this binary belongs to, its links resolved.
     root: PathBuf,
-    /// ~/.config/cockpit/herdr, the link kept on the current install.
+    /// ~/.config/flightdeck/herdr, the link kept on the current install.
     link: PathBuf,
     /// The plugin folder herdr's registry names.
     registered: String,
@@ -139,7 +139,7 @@ struct Doctor {
     /// The config as the mod resolved it, else the raw file; None when neither reads as JSON.
     settings: Option<Value>,
     settings_path: PathBuf,
-    /// ~/.config/cockpit/config.json as written.
+    /// ~/.config/flightdeck/config.json as written.
     config: Option<Value>,
     herdr: String,
     path: String,
@@ -174,8 +174,8 @@ pub fn main(args: &[String]) {
     doctor.herdr_app();
     doctor.agents();
     // The Claude plugin and its sessions only matter when Claude Code is the default agent or installed.
-    let claude = cockpit_core::agent::get("claude");
-    let is_default = cockpit_core::agent::default().id == "claude";
+    let claude = flightdeck_core::agent::get("claude");
+    let is_default = flightdeck_core::agent::default().id == "claude";
     if is_default || claude.is_some_and(|c| c.installed()) {
         let installed = doctor.claude_plugin(is_default);
         doctor.sessions(&installed);
@@ -207,7 +207,7 @@ fn now_ms() -> u64 {
 /// marks it `stale`); one dated in the future is not trusted.
 fn is_recent(report: &Value, now: u64, config_changed: u64) -> bool {
     report["version"] == JSON_VERSION
-        && report["cockpit"] == env!("CARGO_PKG_VERSION")
+        && report["flightdeck"] == env!("CARGO_PKG_VERSION")
         && report["stale"] != true
         && report["at"].as_u64().is_some_and(|at| at <= now && at >= config_changed && now - at < CACHED_FOR.as_millis() as u64)
 }
@@ -223,25 +223,25 @@ fn getting_started(checks: &[Check]) -> Vec<Value> {
             steps.push(json!({"id": id, "label": label, "done": c.status == "pass", "status": c.status, "check": c.id, "fix": c.fix}));
         }
     };
-    step(&mut steps, "setup", "Set up cockpit: frontends, agent and sources", by_id("tools.config"));
-    step(&mut steps, "agent", "Pick the agent cockpit starts", by_id("agents.default"));
-    step(&mut steps, "tools", &format!("Give {} cockpit's tools", agent.name), by_id(&tools_check(&agent)));
-    // GitHub is read through gh, or through a code server of cockpit's own.
+    step(&mut steps, "setup", "Set up flightdeck: frontends, agent and sources", by_id("tools.config"));
+    step(&mut steps, "agent", "Pick the agent flightdeck starts", by_id("agents.default"));
+    step(&mut steps, "tools", &format!("Give {} flightdeck's tools", agent.name), by_id(&tools_check(&agent)));
+    // GitHub is read through gh, or through a code server of flightdeck's own.
     let code = by_id("sources.server.code").filter(|c| c.status == "pass");
     step(&mut steps, "github", "Sign in to GitHub for your pull requests", code.or_else(|| by_id("tools.gh")));
     step(&mut steps, "tickets", "Connect your tickets", by_id("sources.tickets"));
-    step(&mut steps, "app", "Put cockpit's layouts in the Herdr app", by_id("app.layout"));
-    step(&mut steps, "notifications", "Let cockpit notify you", by_id("notifications.allowed"));
+    step(&mut steps, "app", "Put flightdeck's layouts in the Herdr app", by_id("app.layout"));
+    step(&mut steps, "notifications", "Let flightdeck notify you", by_id("notifications.allowed"));
     steps
 }
 
 /// Whether tickets come in: read by the hub lately (its freshness record), or brought by a Claude session's plugin
-/// within 15 minutes; `hub_reads` when a server of cockpit's own or a token lets the hub read them.
+/// within 15 minutes; `hub_reads` when a server of flightdeck's own or a token lets the hub read them.
 fn tickets(inbox: &Value, hub_reads: bool, now: u64) {
-    use cockpit_core::fresh::{self, Freshness, State};
+    use flightdeck_core::fresh::{self, Freshness, State};
     let record = Freshness::from_json(&inbox["hub"]["fresh"]["tickets"]);
     let brought = inbox["modFetched"]["tickets"].as_u64();
-    let another = "cockpit setup gives the hub a ticket server of its own";
+    let another = "flightdeck setup gives the hub a ticket server of its own";
     match (record.state(now), &record.error) {
         (State::Fresh, _) => ok("sources.tickets", &format!("tickets read by the hub {}", fresh::ago(record.at.unwrap_or(now), now))),
         _ if brought.is_some_and(|at| now.saturating_sub(at) < 15 * 60_000) => {
@@ -258,17 +258,17 @@ fn tickets(inbox: &Value, hub_reads: bool, now: u64) {
         _ if hub_reads => warn("sources.tickets", "tickets: not read yet → read them now").act("sources", "refresh", json!([])),
         _ => match brought {
             Some(at) => warn("sources.tickets", &format!("tickets: last brought {} → {SESSION} ({another})", fresh::ago(at, now))),
-            None => warn("sources.tickets", &format!("tickets: never fetched → cockpit setup ({another})")).run("cockpit setup"),
+            None => warn("sources.tickets", &format!("tickets: never fetched → flightdeck setup ({another})")).run("flightdeck setup"),
         },
     };
 }
 
-/// The check that says whether an agent has cockpit's tools: its plugin's, else its MCP config's.
+/// The check that says whether an agent has flightdeck's tools: its plugin's, else its MCP config's.
 fn tools_check(agent: &agent::Agent) -> String {
     if agent.has_plugin() { format!("{}.plugin", agent.id) } else { format!("agents.tools.{}", agent.id) }
 }
 
-/// What each agent cockpit knows can do, the installed ones first and the default one first of them.
+/// What each agent flightdeck knows can do, the installed ones first and the default one first of them.
 fn agents_json(checks: &[Check]) -> Vec<Value> {
     let default = agent::default().id;
     let mut all = agent::all();
@@ -276,7 +276,7 @@ fn agents_json(checks: &[Check]) -> Vec<Value> {
     all.iter()
         .map(|a| {
             let installed = a.installed();
-            // cockpit's tools reach an agent through cockpit's plugin, else through its MCP config.
+            // flightdeck's tools reach an agent through flightdeck's plugin, else through its MCP config.
             let tools = if a.has_plugin() {
                 Some("plugin")
             } else if crate::connect::TARGETS.iter().any(|t| t.id == a.id) {
@@ -296,7 +296,7 @@ fn agents_json(checks: &[Check]) -> Vec<Value> {
                     "driven": a.stream.is_some(),
                 },
                 "sessions": reads,
-                "usage": match (reads, cockpit_core::usage::counts_tokens(a.transcripts)) {
+                "usage": match (reads, flightdeck_core::usage::counts_tokens(a.transcripts)) {
                     (true, true) => Value::from("its session files: tokens and context"),
                     (true, false) => Value::from("its session files: context"),
                     _ => Value::Null,
@@ -308,7 +308,7 @@ fn agents_json(checks: &[Check]) -> Vec<Value> {
         .collect()
 }
 
-/// Where cockpit reads an agent's plan limits, in the agents table's words; null when it reports none.
+/// Where flightdeck reads an agent's plan limits, in the agents table's words; null when it reports none.
 fn limits_of(a: &agent::Agent) -> Value {
     match agent::reports(&a.id) {
         Some(r) => Value::from(r.sources.iter().map(|(_, words)| *words).collect::<Vec<_>>().join(", or ")),
@@ -321,7 +321,7 @@ fn print_agents() {
     println!("\nAgents");
     for a in agents_json(&checks()) {
         let can = &a["can"];
-        // `driven` reads "in chat": Cockpit Chat runs the agent itself, without a terminal.
+        // `driven` reads "in chat": Flightdeck Chat runs the agent itself, without a terminal.
         let words: Vec<&str> = [("start", "start"), ("resume", "resume"), ("fork", "fork"), ("headless", "headless"), ("driven", "in chat")]
             .into_iter()
             .filter(|(key, _)| can[*key] == true)
@@ -342,7 +342,7 @@ impl Doctor {
         let root = herdr_dir.canonicalize().unwrap_or(herdr_dir);
         let link = files::config_dir().join("herdr");
         let plugins = load(&home.join(".config/herdr/plugins.json")).unwrap_or(Value::Null);
-        let registered = values(&plugins).filter(|p| p["plugin_id"] == "cockpit").map(|p| raw(&p["plugin_root"])).collect::<Vec<_>>().join("\n");
+        let registered = values(&plugins).filter(|p| p["plugin_id"] == "flightdeck").map(|p| raw(&p["plugin_root"])).collect::<Vec<_>>().join("\n");
         // herdr installs each update in a new folder: only the folder its registry names moves the link.
         if registered == root.to_string_lossy() && readlink(&link) != registered {
             if let Some(parent) = link.parent() {
@@ -391,7 +391,7 @@ impl Doctor {
     fn report(&self, checks: &[Check]) -> Value {
         let count = |status: &str| checks.iter().filter(|c| c.status == status).count();
         json!({
-            "version": JSON_VERSION, "at": now_ms(), "cockpit": env!("CARGO_PKG_VERSION"),
+            "version": JSON_VERSION, "at": now_ms(), "flightdeck": env!("CARGO_PKG_VERSION"),
             "summary": {"pass": count("pass"), "warn": count("warn"), "fail": count("fail")},
             "checks": checks.iter().map(Check::json).collect::<Vec<_>>(),
             "getting_started": getting_started(checks),
@@ -447,9 +447,10 @@ impl Doctor {
         let v = said.lines().map(|l| l.split_whitespace().nth(1).unwrap_or_default()).collect::<Vec<_>>().join("\n");
         let v = v.trim_end_matches('\n');
         if v.is_empty() && self.app.is_some() {
-            ok("tools.herdr", "herdr not installed: cockpit runs in the Herdr app alone");
+            ok("tools.herdr", "herdr not installed: flightdeck runs in the Herdr app alone");
         } else if v.is_empty() || glob("0.[0-8].*", v) {
-            fail("tools.herdr", &format!("herdr {}: cockpit needs 0.9 or later → herdr update", if v.is_empty() { "missing" } else { v })).run("herdr update");
+            fail("tools.herdr", &format!("herdr {}: flightdeck needs 0.9 or later → herdr update", if v.is_empty() { "missing" } else { v }))
+                .run("herdr update");
         } else {
             ok("tools.herdr", &format!("herdr {v}"));
         }
@@ -463,38 +464,44 @@ impl Doctor {
         let root = quote(&self.root.to_string_lossy());
         let mut dir = self.root.join("bin");
         let dev = self.root.join("tui/target/release");
-        if !proc::executable(&dir.join("cockpit")) && proc::executable(&dev.join("cockpit")) {
+        if !proc::executable(&dir.join("flightdeck")) && proc::executable(&dev.join("flightdeck")) {
             dir = dev;
         }
         let toml = std::fs::read_to_string(self.root.join("herdr-plugin.toml")).unwrap_or_default();
         let want = toml.lines().filter_map(|l| l.strip_prefix("version = \"")?.strip_suffix('"')).collect::<Vec<_>>().join("\n");
         let have = std::fs::read_to_string(dir.join(".version")).unwrap_or_default().trim_end_matches('\n').to_string();
-        let binary = dir.join("cockpit");
+        let binary = dir.join("flightdeck");
         let runs = self.output(&[&binary.to_string_lossy(), "--version"]);
         if !proc::executable(&binary) {
-            fail("tools.binary", &format!("cockpit binary missing, the spaces stay empty → sh {root}/fetch-apps.sh, or cargo build --release in {root}/tui"))
-                .run(format!("sh {root}/fetch-apps.sh"));
+            fail(
+                "tools.binary",
+                &format!("flightdeck binary missing, the spaces stay empty → sh {root}/fetch-apps.sh, or cargo build --release in {root}/tui"),
+            )
+            .run(format!("sh {root}/fetch-apps.sh"));
         } else if dir == self.root.join("bin") && have != want {
             let have = if have.is_empty() { "an unknown version" } else { &have };
             warn(
                 "tools.binary",
-                &format!("cockpit binary from {have}, the plugin is on {want}: the hub installs it once the release has it → sh {root}/fetch-apps.sh"),
+                &format!("flightdeck binary from {have}, the plugin is on {want}: the hub installs it once the release has it → sh {root}/fetch-apps.sh"),
             )
             .run(format!("sh {root}/fetch-apps.sh"));
         } else if runs.is_empty() {
-            fail("tools.binary", &format!("cockpit binary in {} does not run on this machine → rm -rf {root}/bin && sh {root}/fetch-apps.sh", dir.display()))
-                .run(format!("rm -rf {root}/bin && sh {root}/fetch-apps.sh"));
+            fail(
+                "tools.binary",
+                &format!("flightdeck binary in {} does not run on this machine → rm -rf {root}/bin && sh {root}/fetch-apps.sh", dir.display()),
+            )
+            .run(format!("rm -rf {root}/bin && sh {root}/fetch-apps.sh"));
         } else {
-            ok("tools.binary", &format!("cockpit binary in {} ({})", dir.display(), runs.strip_prefix("cockpit ").unwrap_or(&runs)));
+            ok("tools.binary", &format!("flightdeck binary in {} ({})", dir.display(), runs.strip_prefix("flightdeck ").unwrap_or(&runs)));
         }
         self.hub(&binary);
         let config = files::config_dir().join("config.json");
         if !config.is_file() {
-            fail("tools.config", "no ~/.config/cockpit/config.json → cockpit setup (/cockpit:setup in Claude Code)").run("cockpit setup");
+            fail("tools.config", "no ~/.config/flightdeck/config.json → flightdeck setup (/flightdeck:setup in Claude Code)").run("flightdeck setup");
         } else if std::fs::read_to_string(&config).is_ok_and(|text| serde_json::Deserializer::from_str(&text).into_iter::<Value>().all(|v| v.is_ok())) {
             ok("tools.config", "config.json");
         } else {
-            fail("tools.config", "config.json is not valid JSON → fix it or rerun cockpit setup").run("cockpit setup");
+            fail("tools.config", "config.json is not valid JSON → fix it or rerun flightdeck setup").run("flightdeck setup");
         }
     }
 
@@ -502,18 +509,18 @@ impl Doctor {
     /// or left with a dead socket that keeps every action and search waiting.
     fn hub(&self, binary: &Path) {
         if self.cache.join("hub.stopped").is_file() {
-            warn("tools.hub", "the hub was stopped: run cockpit hub start → cockpit hub start").run("cockpit hub start");
+            warn("tools.hub", "the hub was stopped: run flightdeck hub start → flightdeck hub start").run("flightdeck hub start");
             return;
         }
-        if !self.running(&format!("cockpit ({}) cockpit-space", cockpit_core::SPACE_APPS.join("|"))) {
+        if !self.running(&format!("flightdeck ({}) flightdeck-space", flightdeck_core::SPACE_APPS.join("|"))) {
             return;
         }
-        if !self.running("(^|/)cockpit hub$") {
+        if !self.running("(^|/)flightdeck hub$") {
             ok("tools.hub", "hub not started yet: the apps start it at their first action or search");
         } else if self.succeeds(&[&binary.to_string_lossy(), "hub", "ping"]) {
             ok("tools.hub", "hub answers");
         } else {
-            fail("tools.hub", "hub not answering → pkill -f '(^|/)cockpit hub$'; the apps start a new one").run("pkill -f '(^|/)cockpit hub$'");
+            fail("tools.hub", "hub not answering → pkill -f '(^|/)flightdeck hub$'; the apps start a new one").run("pkill -f '(^|/)flightdeck hub$'");
         }
     }
 
@@ -525,20 +532,22 @@ impl Doctor {
         self.binary_link();
     }
 
-    /// The `cockpit` a shell runs, which has to go through the link: an update installs in a new folder and prunes the
+    /// The `flightdeck` a shell runs, which has to go through the link: an update installs in a new folder and prunes the
     /// one a link named.
     fn binary_link(&self) {
-        let bin = files::home().join(".local/bin/cockpit");
+        let bin = files::home().join(".local/bin/flightdeck");
         if std::fs::symlink_metadata(&bin).is_err() {
             return;
         }
-        let through = self.link.join("bin/cockpit");
+        let through = self.link.join("bin/flightdeck");
         let fix = format!("→ {LINK_BIN}");
         match (bin.canonicalize(), through.canonicalize()) {
-            (Ok(linked), Ok(current)) if linked == current => ok("install.bin_link", "link ~/.local/bin/cockpit is current"),
-            (Ok(linked), _) => warn("install.bin_link", &format!("~/.local/bin/cockpit runs {} instead of this install {fix}", linked.display())).run(LINK_BIN),
+            (Ok(linked), Ok(current)) if linked == current => ok("install.bin_link", "link ~/.local/bin/flightdeck is current"),
+            (Ok(linked), _) => {
+                warn("install.bin_link", &format!("~/.local/bin/flightdeck runs {} instead of this install {fix}", linked.display())).run(LINK_BIN)
+            }
             (Err(_), _) => {
-                fail("install.bin_link", &format!("~/.local/bin/cockpit points at a folder that is gone, so no shell finds cockpit {fix}")).run(LINK_BIN)
+                fail("install.bin_link", &format!("~/.local/bin/flightdeck points at a folder that is gone, so no shell finds flightdeck {fix}")).run(LINK_BIN)
             }
         };
     }
@@ -548,30 +557,30 @@ impl Doctor {
         let at = quote(registered);
         if !self.has_herdr {
             // The Herdr app alone runs the scripts install.sh put in place, else the Claude plugin's marketplace copy.
-            let installed = files::home().join(".local/share/cockpit/herdr");
+            let installed = files::home().join(".local/share/flightdeck/herdr");
             let shipped =
-                if installed.join("cockpit.sh").is_file() { installed } else { transcripts::claude_home().join("plugins/marketplaces/cockpit/herdr") };
+                if installed.join("flightdeck.sh").is_file() { installed } else { transcripts::claude_home().join("plugins/marketplaces/flightdeck/herdr") };
             let linked = readlink(&self.link);
-            if Path::new(&linked).join("cockpit.sh").is_file() {
-                ok("install.link", &format!("link ~/.config/cockpit/herdr points at {linked}"));
+            if Path::new(&linked).join("flightdeck.sh").is_file() {
+                ok("install.link", &format!("link ~/.config/flightdeck/herdr points at {linked}"));
             } else {
                 let shipped = quote(&shipped.to_string_lossy());
-                fail("install.link", &format!("no ~/.config/cockpit/herdr link → ln -sfn {shipped} ~/.config/cockpit/herdr"))
-                    .run(format!("ln -sfn {shipped} ~/.config/cockpit/herdr"));
+                fail("install.link", &format!("no ~/.config/flightdeck/herdr link → ln -sfn {shipped} ~/.config/flightdeck/herdr"))
+                    .run(format!("ln -sfn {shipped} ~/.config/flightdeck/herdr"));
             }
             return;
         }
         if !registered.is_empty() && Path::new(registered).is_dir() {
             ok("install.plugin", &format!("herdr plugin at {registered}"));
         } else {
-            fail("install.plugin", "herdr plugin not installed → herdr plugin install quaresc/cockpit/herdr --yes")
-                .run("herdr plugin install quaresc/cockpit/herdr --yes");
+            fail("install.plugin", "herdr plugin not installed → herdr plugin install gramosbr/flightdeck/herdr --yes")
+                .run("herdr plugin install gramosbr/flightdeck/herdr --yes");
         }
         let linked = readlink(&self.link);
         if linked == *registered {
-            ok("install.link", "link ~/.config/cockpit/herdr is current");
+            ok("install.link", "link ~/.config/flightdeck/herdr is current");
         } else {
-            fail("install.link", &format!("link ~/.config/cockpit/herdr points at {linked} → sh {at}/ensure-spaces.sh"))
+            fail("install.link", &format!("link ~/.config/flightdeck/herdr points at {linked} → sh {at}/ensure-spaces.sh"))
                 .run(format!("sh {at}/ensure-spaces.sh"));
         }
         let is_github_install = registered.strip_suffix("/checkout/herdr").is_some_and(|rest| rest.contains("/github-installations/"));
@@ -589,20 +598,20 @@ impl Doctor {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // The agents: the default one installed, and cockpit's tools in each installed agent's MCP config
+    // The agents: the default one installed, and flightdeck's tools in each installed agent's MCP config
 
     fn agents(&self) {
         let set = self.config.as_ref().map_or(Value::Null, |c| c["agents"]["default"].clone());
-        match set.as_str().map(|id| (id, cockpit_core::agent::get(id))) {
+        match set.as_str().map(|id| (id, flightdeck_core::agent::get(id))) {
             Some((_, Some(agent))) if agent.installed() => ok("agents.default", &format!("default agent {} ({})", agent.name, agent.path())),
-            Some((id, Some(_))) => fail("agents.default", &format!("default agent {id} is not installed → install it, or pick another with cockpit setup")),
+            Some((id, Some(_))) => fail("agents.default", &format!("default agent {id} is not installed → install it, or pick another with flightdeck setup")),
             Some((id, None)) => {
-                fail("agents.default", &format!("default agent {id} is unknown → cockpit setup picks one of the installed agents")).run("cockpit setup")
+                fail("agents.default", &format!("default agent {id} is unknown → flightdeck setup picks one of the installed agents")).run("flightdeck setup")
             }
             None => {
-                let agent = cockpit_core::agent::default();
-                warn("agents.default", &format!("no agents.default in config.json: cockpit starts {} → cockpit setup picks yours", agent.name))
-                    .run("cockpit setup")
+                let agent = flightdeck_core::agent::default();
+                warn("agents.default", &format!("no agents.default in config.json: flightdeck starts {} → flightdeck setup picks yours", agent.name))
+                    .run("flightdeck setup")
             }
         };
         let bin = crate::connect::binary();
@@ -610,26 +619,26 @@ impl Doctor {
             match target.current() {
                 Err(e) => fail(
                     &format!("agents.tools.{}", target.id),
-                    &format!("{}: {} does not read ({e}) → fix it, then cockpit agents connect {}", target.name, target.path().display(), target.id),
+                    &format!("{}: {} does not read ({e}) → fix it, then flightdeck agents connect {}", target.name, target.path().display(), target.id),
                 ),
-                _ if target.is_connected(&bin) => ok(&format!("agents.tools.{}", target.id), &format!("{} has cockpit's tools", target.name)),
+                _ if target.is_connected(&bin) => ok(&format!("agents.tools.{}", target.id), &format!("{} has flightdeck's tools", target.name)),
                 Ok(Some(_)) => warn(
                     &format!("agents.tools.{}", target.id),
-                    &format!("{} runs cockpit's tools from another binary → cockpit agents connect {}", target.name, target.id),
+                    &format!("{} runs flightdeck's tools from another binary → flightdeck agents connect {}", target.name, target.id),
                 )
-                .run(format!("cockpit agents connect {}", target.id)),
+                .run(format!("flightdeck agents connect {}", target.id)),
                 Ok(None) => warn(
                     &format!("agents.tools.{}", target.id),
-                    &format!("{} has no cockpit tools (show, search, changes) → cockpit agents connect {}", target.name, target.id),
+                    &format!("{} has no flightdeck tools (show, search, changes) → flightdeck agents connect {}", target.name, target.id),
                 )
-                .run(format!("cockpit agents connect {}", target.id)),
+                .run(format!("flightdeck agents connect {}", target.id)),
             };
         }
         // A permission pattern that does not compile is left out; the measured ones stand in when none is left.
-        for (id, pattern) in cockpit_core::agent::unreadable_permission() {
+        for (id, pattern) in flightdeck_core::agent::unreadable_permission() {
             warn(
                 &format!("agents.permission.{id}"),
-                &format!("agents.commands.{id}.permission: {pattern:?} is not a regex cockpit can read, so it is left out → fix it in config.json"),
+                &format!("agents.commands.{id}.permission: {pattern:?} is not a regex flightdeck can read, so it is left out → fix it in config.json"),
             );
         }
     }
@@ -642,33 +651,33 @@ impl Doctor {
             ok("app.installed", "Herdr app not installed: the herdr half alone (https://herdr.dev installs the app)");
             return;
         };
-        let home = cockpit_core::frontend::app_home();
-        let fix = format!("{} app install", self.script("cockpit.sh"));
-        if !home.join("layouts/cockpit.json").is_file() || !home.join("mods/cockpit/main.js").is_file() {
-            warn("app.layout", &format!("Herdr app without the cockpit layout and mod → {fix}")).run(fix.clone());
+        let home = flightdeck_core::frontend::app_home();
+        let fix = format!("{} app install", self.script("flightdeck.sh"));
+        if !home.join("layouts/flightdeck.json").is_file() || !home.join("mods/flightdeck/main.js").is_file() {
+            warn("app.layout", &format!("Herdr app without the flightdeck layout and mod → {fix}")).run(fix.clone());
             return;
         }
-        if !home.join("layouts/cockpit-chat.json").is_file() || !home.join("themes/cockpit-chat.json").is_file() {
-            warn("app.chat", &format!("Herdr app without the Cockpit Chat layout or its theme → {fix}")).run(fix.clone());
+        if !home.join("layouts/flightdeck-chat.json").is_file() || !home.join("themes/flightdeck-chat.json").is_file() {
+            warn("app.chat", &format!("Herdr app without the Flightdeck Chat layout or its theme → {fix}")).run(fix.clone());
         }
-        let noted = load(&home.join("cockpit.json")).unwrap_or(Value::Null);
+        let noted = load(&home.join("flightdeck.json")).unwrap_or(Value::Null);
         let bin = raw(&noted["bin"]);
         let ours = env!("CARGO_PKG_VERSION");
         if bin.is_empty() || !proc::executable(Path::new(&bin)) {
-            fail("app.layout", &format!("the cockpit mod names no cockpit binary that runs ({}) → {fix}", if bin.is_empty() { "none" } else { &bin }))
+            fail("app.layout", &format!("the flightdeck mod names no flightdeck binary that runs ({}) → {fix}", if bin.is_empty() { "none" } else { &bin }))
                 .run(fix.clone());
         } else if raw(&noted["version"]) != ours {
-            warn("app.layout", &format!("the cockpit mod is from {}, this cockpit is {ours} → {fix}", raw(&noted["version"]))).run(fix.clone());
+            warn("app.layout", &format!("the flightdeck mod is from {}, this flightdeck is {ours} → {fix}", raw(&noted["version"]))).run(fix.clone());
         } else {
-            ok("app.layout", &format!("Herdr app: cockpit layout and mod {ours}"));
+            ok("app.layout", &format!("Herdr app: flightdeck layout and mod {ours}"));
         }
-        let checked = self.run(&[&app.to_string_lossy(), "check", &home.join("mods/cockpit").to_string_lossy()], Duration::from_secs(30));
+        let checked = self.run(&[&app.to_string_lossy(), "check", &home.join("mods/flightdeck").to_string_lossy()], Duration::from_secs(30));
         match checked {
-            Some(o) if o.ok() => ok("app.mod", "Herdr app: the cockpit mod loads"),
+            Some(o) if o.ok() => ok("app.mod", "Herdr app: the flightdeck mod loads"),
             Some(o) => fail(
                 "app.mod",
                 &format!(
-                    "Herdr app: the cockpit mod does not load: {} → {fix}",
+                    "Herdr app: the flightdeck mod does not load: {} → {fix}",
                     o.stderr.lines().chain(o.stdout.lines()).find(|l| !l.trim().is_empty()).unwrap_or("no reason given")
                 ),
             )
@@ -679,11 +688,11 @@ impl Doctor {
     }
 
     /// herdr-core 0.1.21 and later can show a terminal's last screen above its new shell after a reboot, when its
-    /// config.toml asks: beside cockpit's Resume, it shows where each agent was.
+    /// config.toml asks: beside flightdeck's Resume, it shows where each agent was.
     fn restore_screen(&self) {
-        let said = self.output(&[&cockpit_core::frontend::program("hc", "HC_BIN"), "--version"]);
+        let said = self.output(&[&flightdeck_core::frontend::program("hc", "HC_BIN"), "--version"]);
         let Some(version) = said.split_whitespace().nth(1) else { return };
-        if !cockpit_core::options::is_newer(version, "0.1.20") {
+        if !flightdeck_core::options::is_newer(version, "0.1.20") {
             return;
         }
         let dir = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|| files::home().join(".config"));
@@ -707,7 +716,7 @@ impl Doctor {
             for tab in values(&space["tabs"]) {
                 for terminal in values(&tab["terminals"]) {
                     let address = raw(&terminal["terminal"]);
-                    let program = cockpit_core::frontend::hc(&["get", &address]).map(|t| raw(&t["foreground"]["name"])).unwrap_or_default();
+                    let program = flightdeck_core::frontend::hc(&["get", &address]).map(|t| raw(&t["foreground"]["name"])).unwrap_or_default();
                     if !program.contains("claude") {
                         continue;
                     }
@@ -717,14 +726,14 @@ impl Doctor {
                     match beat.map(|b| raw(&b["version"])) {
                         None => warn(
                             &format!("sessions.{address}"),
-                            &format!("session \"{label}\" ({address}) runs no cockpit → /reload-plugins in it, or restart it"),
+                            &format!("session \"{label}\" ({address}) runs no flightdeck → /reload-plugins in it, or restart it"),
                         ),
                         Some(v) if !installed.is_empty() && v != installed => warn(
                             &format!("sessions.{address}"),
-                            &format!("session \"{label}\" runs cockpit {v}, {installed} is installed → {}", self.script("reload.sh")),
+                            &format!("session \"{label}\" runs flightdeck {v}, {installed} is installed → {}", self.script("reload.sh")),
                         )
                         .run(self.script("reload.sh")),
-                        Some(v) => ok(&format!("sessions.{address}"), &format!("session \"{label}\" on cockpit {v}")),
+                        Some(v) => ok(&format!("sessions.{address}"), &format!("session \"{label}\" on flightdeck {v}")),
                     };
                 }
             }
@@ -733,33 +742,33 @@ impl Doctor {
 
     /// The Claude plugin's installed version, empty when it is not installed (a failure when Claude is the default agent).
     fn claude_plugin(&self, is_default: bool) -> String {
-        // Asked of the Claude Code cockpit starts (`agents.commands.claude.bin`, `COCKPIT_CLAUDE`): a wrapper there may
+        // Asked of the Claude Code flightdeck starts (`agents.commands.claude.bin`, `FLIGHTDECK_CLAUDE`): a wrapper there may
         // pick its own CLAUDE_CONFIG_DIR, which the Herdr app's environment does not carry.
-        let bin = cockpit_core::agent::get("claude").map_or_else(|| "claude".to_string(), |a| a.path());
+        let bin = flightdeck_core::agent::get("claude").map_or_else(|| "claude".to_string(), |a| a.path());
         let listed = self.output(&[bin.as_str(), "plugin", "list"]);
         let mut found = false;
         let mut installed = String::new();
         for line in listed.lines() {
-            found |= line.contains("cockpit@cockpit");
+            found |= line.contains("flightdeck@flightdeck");
             if found && line.contains("Version:") {
                 installed = line.split_whitespace().nth(1).unwrap_or_default().to_string();
                 break;
             }
         }
         if installed.is_empty() {
-            let line = "Claude plugin not installed → /plugin install cockpit --marketplace quaresc/cockpit";
+            let line = "Claude plugin not installed → /plugin install flightdeck --marketplace gramosbr/flightdeck";
             if is_default {
                 fail("claude.plugin", line);
             } else {
                 warn("claude.plugin", line);
             }
         } else {
-            ok("claude.plugin", &format!("Claude plugin cockpit {installed}"));
+            ok("claude.plugin", &format!("Claude plugin flightdeck {installed}"));
         }
         let update = load(&self.cache.join("update.json")).unwrap_or(Value::Null);
         let latest = if truthy(&update["latest"]) { raw(&update["latest"]) } else { String::new() };
         if !latest.is_empty() && !installed.is_empty() && latest != installed && newest(&latest, &installed) == latest {
-            warn("claude.update", &format!("cockpit {latest} is published → {}", self.script("update.sh"))).run(self.script("update.sh"));
+            warn("claude.update", &format!("flightdeck {latest} is published → {}", self.script("update.sh"))).run(self.script("update.sh"));
         }
         installed
     }
@@ -789,22 +798,22 @@ impl Doctor {
             let version = beat.map(|b| &b["version"]).filter(|v| truthy(v)).map(raw).unwrap_or_default();
             let others = beats.iter().filter(|b| b["version"] != version.as_str()).count();
             if beat.is_none() {
-                warn(&format!("sessions.{pane}"), &format!("session \"{label}\" ({pane}) runs no cockpit → /reload-plugins in it, or restart it"));
+                warn(&format!("sessions.{pane}"), &format!("session \"{label}\" ({pane}) runs no flightdeck → /reload-plugins in it, or restart it"));
             } else if !installed.is_empty() && version != installed {
                 warn(
                     &format!("sessions.{pane}"),
-                    &format!("session \"{label}\" runs cockpit {version}, {installed} is installed → {}", self.script("reload.sh")),
+                    &format!("session \"{label}\" runs flightdeck {version}, {installed} is installed → {}", self.script("reload.sh")),
                 )
                 .run(self.script("reload.sh"));
             } else if others > 0 {
                 warn(
                     &format!("sessions.{pane}"),
                     &format!(
-                        "session \"{label}\" on cockpit {version}, but an older cockpit still runs in its pane → restart Claude there (exit, then claude --resume)"
+                        "session \"{label}\" on flightdeck {version}, but an older flightdeck still runs in its pane → restart Claude there (exit, then claude --resume)"
                     ),
                 );
             } else {
-                ok(&format!("sessions.{pane}"), &format!("session \"{label}\" on cockpit {version}"));
+                ok(&format!("sessions.{pane}"), &format!("session \"{label}\" on flightdeck {version}"));
             }
         }
     }
@@ -852,7 +861,7 @@ impl Doctor {
 
     fn caches(&self) {
         self.check_cache("inbox.json", "inbox", 900, NO_FEED);
-        // Each source with a server of cockpit's own, and tickets from a Claude session's connector otherwise.
+        // Each source with a server of flightdeck's own, and tickets from a Claude session's connector otherwise.
         let inbox = self.cache.join("inbox.json");
         let mut hub_tickets = false;
         for section in ["code", "tickets", "ci", "calendar", "platform", "observability", "datadog", "mail"] {
@@ -860,18 +869,20 @@ impl Doctor {
             let entry = self.config.as_ref().map(|c| c["servers"][name.as_str()].clone()).filter(Value::is_object);
             let on = ["observability", "datadog", "code"].contains(&section) || self.config.as_ref().is_some_and(|c| c[section]["enabled"] != false);
             let Some(entry) = entry.filter(|_| on) else { continue };
-            use cockpit_connectors::Server;
+            use flightdeck_connectors::Server;
             match Server::from_entry(&entry) {
                 Some(server) if server.is_ready() => {
                     hub_tickets |= section == "tickets";
-                    ok(&format!("sources.server.{section}"), &format!("{section} from \"{name}\" through cockpit's own connection"))
+                    ok(&format!("sources.server.{section}"), &format!("{section} from \"{name}\" through flightdeck's own connection"))
                 }
                 Some(server) if server.login_url().is_some() => {
                     let url = server.login_url().unwrap_or_default();
-                    fail(&format!("sources.server.{section}"), &format!("{section}: cockpit is not logged in to {url} → cockpit connector login {name}"))
-                        .run(format!("cockpit connector login {}", quote(&name)))
+                    fail(&format!("sources.server.{section}"), &format!("{section}: flightdeck is not logged in to {url} → flightdeck connector login {name}"))
+                        .run(format!("flightdeck connector login {}", quote(&name)))
                 }
-                _ => fail(&format!("sources.server.{section}"), &format!("servers.\"{name}\" has no url or command → cockpit setup")).run("cockpit setup"),
+                _ => {
+                    fail(&format!("sources.server.{section}"), &format!("servers.\"{name}\" has no url or command → flightdeck setup")).run("flightdeck setup")
+                }
             };
         }
         if self.enabled("tickets") {
@@ -883,7 +894,7 @@ impl Doctor {
             let by = if !truthy(server) || raw(server).is_empty() || self.has_token("ci") {
                 NO_FEED.to_string()
             } else {
-                format!("{SESSION} (cockpit setup gives the hub a CI server of its own)")
+                format!("{SESSION} (flightdeck setup gives the hub a CI server of its own)")
             };
             self.check_cache("ci.json", "CI", 600, &by);
         }
@@ -935,14 +946,14 @@ impl Doctor {
             if space == "review" && herdr_config.as_ref().is_some_and(|c| !c.contains("$review_space")) {
                 warn(
                     "spaces.review.token",
-                    "space review shows no count in the sidebar → cockpit setup adds { token = \"$review_space\", dim = true } to ui.sidebar.spaces",
+                    "space review shows no count in the sidebar → flightdeck setup adds { token = \"$review_space\", dim = true } to ui.sidebar.spaces",
                 );
             }
-            let Some(app) = cockpit_core::SPACE_APPS.iter().find(|app| cockpit_core::space_of(app) == space) else {
+            let Some(app) = flightdeck_core::SPACE_APPS.iter().find(|app| flightdeck_core::space_of(app) == space) else {
                 ok(&format!("spaces.{space}"), &format!("space {space}"));
                 continue;
             };
-            if self.running(&format!("(^|/)cockpit space {app}$")) {
+            if self.running(&format!("(^|/)flightdeck space {app}$")) {
                 ok(&format!("spaces.{space}"), &format!("space {space}, app running"));
             } else {
                 fail(&format!("spaces.{space}"), &format!("space {space} has no app running → sh {link}/ensure-spaces.sh"))
@@ -959,8 +970,8 @@ impl Doctor {
             return;
         }
         let build = format!("{}/notifier/build.sh", self.root.display());
-        let app = files::config_dir().join("Cockpit.app/Contents/MacOS/cockpit-notify");
-        if let Some(program) = std::env::var_os(cockpit_core::notify::TEST_PROGRAM).filter(|p| !p.is_empty()) {
+        let app = files::config_dir().join("Flightdeck.app/Contents/MacOS/flightdeck-notify");
+        if let Some(program) = std::env::var_os(flightdeck_core::notify::TEST_PROGRAM).filter(|p| !p.is_empty()) {
             // Notifications go to that program (tests, the sandbox): no notifier is built or asked.
             ok("notifications.allowed", &format!("notifications go to {}", program.to_string_lossy()));
         } else if cfg!(target_os = "macos") && QUIET.load(Atomic::Relaxed) && !proc::executable(&app) {
@@ -974,7 +985,7 @@ impl Doctor {
                     ok("notifications.allowed", "notifications allowed");
                 } else {
                     let status = if status.is_empty() { "unknown" } else { &status };
-                    fail("notifications.allowed", &format!("notifications {status} → System Settings → Notifications → Cockpit → Allow"))
+                    fail("notifications.allowed", &format!("notifications {status} → System Settings → Notifications → Flightdeck → Allow"))
                         .run("open x-apple.systempreferences:com.apple.Notifications-Settings.extension");
                 }
             } else {
@@ -1093,10 +1104,10 @@ impl Doctor {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // The Chromium side browser, when config.json asks for it: cockpit's own window, in the Herdr app on macOS
+    // The Chromium side browser, when config.json asks for it: flightdeck's own window, in the Herdr app on macOS
 
     fn chromium_browser(&self) {
-        use cockpit_core::{browser, options};
+        use flightdeck_core::{browser, options};
 
         use crate::browser::install;
         let config = self.config.as_ref().unwrap_or(&Value::Null);
@@ -1104,15 +1115,15 @@ impl Doctor {
             return;
         }
         if !options::CHROMIUM_HERE {
-            warn("browser.engine", &format!("{} → cockpit options set sideBrowser terminal-browser", browser::MAC_ONLY))
-                .run("cockpit options set sideBrowser terminal-browser");
+            warn("browser.engine", &format!("{} → flightdeck options set sideBrowser terminal-browser", browser::MAC_ONLY))
+                .run("flightdeck options set sideBrowser terminal-browser");
             return;
         }
-        ok("browser.engine", "the side browser is cockpit's Chromium window, docked in the Herdr app (herdr's panes keep terminal-browser)");
+        ok("browser.engine", "the side browser is flightdeck's Chromium window, docked in the Herdr app (herdr's panes keep terminal-browser)");
         let pins = match install::pins() {
             Ok(pins) => pins,
             Err(why) => {
-                fail("browser.chromium.installed", &format!("the Chromium side browser's files are not where cockpit looks: {why}"));
+                fail("browser.chromium.installed", &format!("the Chromium side browser's files are not where flightdeck looks: {why}"));
                 return;
             }
         };
@@ -1122,18 +1133,18 @@ impl Doctor {
         } else {
             fail(
                 "browser.chromium.installed",
-                &format!("Electron {} is not installed: pages open in the default browser → cockpit browser install", pins.electron.version),
+                &format!("Electron {} is not installed: pages open in the default browser → flightdeck browser install", pins.electron.version),
             )
-            .run("cockpit browser install");
+            .run("flightdeck browser install");
         }
         if agent {
             ok("browser.chromium.agent", &format!("agent-browser {} drives its pages", pins.agent.version));
         } else {
             fail(
                 "browser.chromium.agent",
-                &format!("agent-browser {} is not installed: agents cannot drive its pages → cockpit browser install", pins.agent.version),
+                &format!("agent-browser {} is not installed: agents cannot drive its pages → flightdeck browser install", pins.agent.version),
             )
-            .run("cockpit browser install");
+            .run("flightdeck browser install");
         }
         let Ok(status) = browser::request(&serde_json::json!({"op": "status"}), std::time::Duration::from_secs(3)) else {
             ok("browser.chromium.running", "not running: the next page an agent opens starts it");
@@ -1150,21 +1161,21 @@ impl Doctor {
         if port == 0 || open {
             warn(
                 "browser.chromium.port",
-                "the Chromium side browser's debugging port is not bound to this machine alone → cockpit browser quit, then open a page again",
+                "the Chromium side browser's debugging port is not bound to this machine alone → flightdeck browser quit, then open a page again",
             )
-            .run("cockpit browser quit");
+            .run("flightdeck browser quit");
         } else {
             ok("browser.chromium.port", &format!("its debugging port {port} listens on this machine only"));
         }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-    // Connectors: their tools as /cockpit:setup mapped them, and the permission rules their background calls need
+    // Connectors: their tools as /flightdeck:setup mapped them, and the permission rules their background calls need
 
     fn connectors(&self) {
         let set = self.set();
         let config = self.config.as_ref().unwrap_or(&Value::Null);
-        // The platform connector's tools, mapped to what cockpit does with deploys and previews.
+        // The platform connector's tools, mapped to what flightdeck does with deploys and previews.
         if self.enabled("platform") {
             let tools = &set["platform"]["tools"];
             let mut mapped: Vec<&str> =
@@ -1172,17 +1183,20 @@ impl Doctor {
             let order = platform_tools_order(&self.settings_path);
             mapped.sort_by_key(|name| order.iter().position(|o| o == name).unwrap_or(usize::MAX));
             if mapped.is_empty() {
-                warn("connectors.platform", "platform is on but no tool is mapped: no deploys or previews → /cockpit:setup or cockpit connector map maps them");
+                warn(
+                    "connectors.platform",
+                    "platform is on but no tool is mapped: no deploys or previews → /flightdeck:setup or flightdeck connector map maps them",
+                );
             } else {
                 ok("connectors.platform", &format!("platform tools mapped: {}", mapped.join(", ")));
             }
         }
         // The ticket connector's tools (Linear's by default).
         if truthy(&config["linear"]) && !truthy(&config["tickets"]) {
-            warn("connectors.tickets", "config has the old linear block: it still works as Linear's mapping → /cockpit:setup rewrites it as tickets");
+            warn("connectors.tickets", "config has the old linear block: it still works as Linear's mapping → /flightdeck:setup rewrites it as tickets");
         } else if self.enabled("tickets") {
             // A mapping with no tool listing the states a ticket moves to holds them in `states` instead (GitHub's open
-            // and closed), which cockpit reads in its place.
+            // and closed), which flightdeck reads in its place.
             let listed = set["tickets"]["states"].as_array().is_some_and(|states| !states.is_empty());
             let wanted: &[&str] = if listed { &["listMine", "get", "setState"] } else { &["listMine", "get", "listStates", "setState"] };
             let missing = unmapped(&set["tickets"]["tools"], wanted);
@@ -1191,19 +1205,19 @@ impl Doctor {
             } else {
                 warn(
                     "connectors.tickets",
-                    &format!("ticket tools not mapped: {missing}; cockpit skips what they do → /cockpit:setup or cockpit connector map maps them"),
+                    &format!("ticket tools not mapped: {missing}; flightdeck skips what they do → /flightdeck:setup or flightdeck connector map maps them"),
                 );
             }
         }
         // The CI: GitHub's checks through gh, or a CI connector.
         if truthy(&config["circleci"]) && !truthy(&config["ci"]) {
-            warn("connectors.ci", "config has the old circleci block: it still works as CircleCI's mapping → /cockpit:setup rewrites it as ci");
+            warn("connectors.ci", "config has the old circleci block: it still works as CircleCI's mapping → /flightdeck:setup rewrites it as ci");
         } else if truthy(&set["ci"]["server"]) && !raw(&set["ci"]["server"]).is_empty() {
             let missing = unmapped(&set["ci"]["tools"], &["listRuns", "listJobs"]);
             if missing.is_empty() {
                 ok("connectors.ci", "CI tools mapped");
             } else {
-                warn("connectors.ci", &format!("CI tools not mapped: {missing}; no CI runs → /cockpit:setup or cockpit connector map maps them"));
+                warn("connectors.ci", &format!("CI tools not mapped: {missing}; no CI runs → /flightdeck:setup or flightdeck connector map maps them"));
             }
         } else {
             ok("connectors.ci", "CI from GitHub checks");
@@ -1634,7 +1648,7 @@ mod tests {
         let checks = [
             check("tools.config", "pass", "config.json"),
             check("agents.default", "pass", "default agent Claude Code"),
-            check("claude.plugin", "fail", "Claude plugin not installed → /plugin install cockpit"),
+            check("claude.plugin", "fail", "Claude plugin not installed → /plugin install flightdeck"),
             check("tools.gh", "fail", "gh not signed in → gh auth login"),
             check("notifications.allowed", "pass", "notifications allowed"),
         ];
@@ -1646,7 +1660,7 @@ mod tests {
         assert_eq!((&github["done"], &github["check"], &github["fix"]["label"]), (&json!(false), &json!("tools.gh"), &json!("gh auth login")));
         assert!(!ids.contains(&"app") && !ids.contains(&"tickets"), "a step whose check did not run is left out");
         let mut through_code = checks.to_vec();
-        through_code.push(check("sources.server.code", "pass", "code from \"GitLab\" through cockpit's own connection"));
+        through_code.push(check("sources.server.code", "pass", "code from \"GitLab\" through flightdeck's own connection"));
         let github = getting_started(&through_code).into_iter().find(|s| s["id"] == "github").unwrap();
         assert_eq!((&github["done"], &github["check"]), (&json!(true), &json!("sources.server.code")), "a code server reads GitHub without gh");
         // Every step names a check the hub's `doctor fix` can find.
@@ -1655,7 +1669,7 @@ mod tests {
         let mut with_tickets = checks.to_vec();
         with_tickets.extend(taken());
         let tickets = getting_started(&with_tickets).into_iter().find(|s| s["id"] == "tickets").unwrap();
-        assert_eq!((&tickets["done"], &tickets["check"], &tickets["fix"]["command"]), (&json!(false), &json!("sources.tickets"), &json!("cockpit setup")));
+        assert_eq!((&tickets["done"], &tickets["check"], &tickets["fix"]["command"]), (&json!(false), &json!("sources.tickets"), &json!("flightdeck setup")));
     }
 
     /// The checks the global list holds, emptied.
@@ -1741,22 +1755,22 @@ mod tests {
         };
         std::fs::write(dir.path().join("hub.stopped"), "").unwrap();
         checks_reset();
-        doctor.hub(Path::new("/nowhere/cockpit"));
+        doctor.hub(Path::new("/nowhere/flightdeck"));
         let c = taken().pop().unwrap();
         assert_eq!(
             c.json(),
-            json!({"id": "tools.hub", "category": "tools", "status": "warn", "message": "the hub was stopped: run cockpit hub start",
-                   "fix": {"label": "cockpit hub start", "command": "cockpit hub start"}})
+            json!({"id": "tools.hub", "category": "tools", "status": "warn", "message": "the hub was stopped: run flightdeck hub start",
+                   "fix": {"label": "flightdeck hub start", "command": "flightdeck hub start"}})
         );
     }
 
     #[test]
     fn a_kept_report_answers_while_it_is_recent_and_of_this_version() {
-        let report = |at: u64| json!({"version": JSON_VERSION, "cockpit": env!("CARGO_PKG_VERSION"), "at": at});
+        let report = |at: u64| json!({"version": JSON_VERSION, "flightdeck": env!("CARGO_PKG_VERSION"), "at": at});
         let now = 1_000_000_000;
         assert!(is_recent(&report(now - 60_000), now, 0));
         assert!(!is_recent(&report(now - CACHED_FOR.as_millis() as u64), now, 0));
-        assert!(!is_recent(&json!({"version": JSON_VERSION, "cockpit": "0.0.1", "at": now}), now, 0), "another cockpit's report runs again");
+        assert!(!is_recent(&json!({"version": JSON_VERSION, "flightdeck": "0.0.1", "at": now}), now, 0), "another flightdeck's report runs again");
         assert!(!is_recent(&report(now + 60_000), now, 0), "a report from the future");
         assert!(!is_recent(&report(now - 60_000), now, now - 30_000), "the config changed since");
         let mut fixed = report(now - 60_000);

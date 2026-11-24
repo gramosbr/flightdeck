@@ -1,5 +1,5 @@
 [package]
-name = "cockpit-mail"
+name = "flightdeck-mail"
 description = "The mail space: the messages that need me above the updates, each read whole beside the list."
 version.workspace = true
 edition.workspace = true
@@ -9,8 +9,8 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-core.workspace = true
-cockpit-connectors = { path = "../connectors" }
+flightdeck-core.workspace = true
+flightdeck-connectors = { path = "../connectors" }
 chrono.workspace = true
 crossterm.workspace = true
 ratatui.workspace = true

@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/shared/browser/annotations/browser-annotation-viewport-report.ts
 // and src/renderer/src/components/browser-pane/annotate/viewport/browser-annotation-viewport-message.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /**
  * What the viewport bridge reports while a note is being written, in the page's CSS pixels.
@@ -12,7 +12,7 @@
  */
 
 /** The prefix of the console lines the viewport bridge writes; the token and a colon follow it, then the JSON report. */
-export const ANNOTATION_VIEWPORT_MESSAGE_PREFIX = "__cockpit_annotation_viewport__:";
+export const ANNOTATION_VIEWPORT_MESSAGE_PREFIX = "__flightdeck_annotation_viewport__:";
 
 /** Whether a value is a rectangle of finite numbers with a width and height of zero or more. */
 export function isValidGrabRect(value) {

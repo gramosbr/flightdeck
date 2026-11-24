@@ -1,4 +1,4 @@
-//! `cockpit space <app>`: keeps a space's app running in its pane, as a child started again whenever it ends; ctrl+c
+//! `flightdeck space <app>`: keeps a space's app running in its pane, as a child started again whenever it ends; ctrl+c
 //! twice in a row leaves it. An app that keeps dying soon after its start waits longer each time before the next one.
 
 use std::io::Write;
@@ -10,11 +10,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
 const USAGE: &str = "Keeps a space's app running in its pane; ctrl+c twice in a row leaves it.
 
-    cockpit space inbox|todo|runbook|meetings|monitor|routines|review|mail";
+    flightdeck space inbox|todo|runbook|meetings|monitor|routines|review|mail";
 
 /// A run at least this long resets the wait before the next one.
 const LONG_RUN: Duration = Duration::from_secs(60);
@@ -23,7 +23,7 @@ const LONGEST_WAIT: Duration = Duration::from_secs(30);
 
 pub fn main(args: &[String]) {
     let [app] = args else { crate::proc::fail(USAGE) };
-    if !cockpit_core::SPACE_APPS.contains(&app.as_str()) {
+    if !flightdeck_core::SPACE_APPS.contains(&app.as_str()) {
         crate::proc::fail(USAGE);
     }
     // A ctrl+c while the app runs is the app's; one during the wait after it ends leaves.
@@ -40,7 +40,7 @@ pub fn main(args: &[String]) {
         match (&binary, &own) {
             (Some(binary), Some(_)) if current.is_some() && current != own => {
                 let error = Command::new(binary).args(["space", app]).exec();
-                eprintln!("cockpit: {} space {app}: {error}", binary.display());
+                eprintln!("flightdeck: {} space {app}: {error}", binary.display());
             }
             (_, None) => own = current,
             _ => {}
@@ -51,7 +51,7 @@ pub fn main(args: &[String]) {
         let started = Instant::now();
         match &binary {
             Some(binary) => run(binary, &dir, app),
-            None => eprintln!("cockpit: no cockpit binary for this machine yet; /cockpit:doctor says why"),
+            None => eprintln!("flightdeck: no flightdeck binary for this machine yet; /flightdeck:doctor says why"),
         }
         let pause = next_wait(wait, started.elapsed());
         wait = Some(pause);
@@ -66,25 +66,25 @@ pub fn main(args: &[String]) {
 /// marks it as a space's.
 fn run(binary: &Path, dir: &Path, app: &str) {
     let mut command = Command::new(binary);
-    command.args([app, "cockpit-space"]).env("COCKPIT_HERDR_DIR", dir).current_dir(dir);
+    command.args([app, "flightdeck-space"]).env("FLIGHTDECK_HERDR_DIR", dir).current_dir(dir);
     // Run from here, the app is in its own space and reports its count on that space's sidebar row.
     if app != "inbox" {
-        command.env("COCKPIT_SPACE", "1");
+        command.env("FLIGHTDECK_SPACE", "1");
     }
     if let Err(error) = command.status() {
-        eprintln!("cockpit: {}: {error}", binary.display());
+        eprintln!("flightdeck: {}: {error}", binary.display());
     }
 }
 
 /// The release's binary in bin/, else a dev build in tui/target/release/.
 fn binary(dir: &Path) -> Option<PathBuf> {
-    ["bin/cockpit", "tui/target/release/cockpit"].iter().map(|rel| dir.join(rel)).find(|p| crate::proc::executable(p))
+    ["bin/flightdeck", "tui/target/release/flightdeck"].iter().map(|rel| dir.join(rel)).find(|p| crate::proc::executable(p))
 }
 
 /// The release's binary, fetched when neither is there.
 fn fetch(dir: &Path) -> Option<PathBuf> {
     let _ = Command::new("sh").arg("fetch-apps.sh").current_dir(dir).env("PATH", crate::proc::path()).status();
-    Some(dir.join("bin/cockpit")).filter(|p| crate::proc::executable(p))
+    Some(dir.join("bin/flightdeck")).filter(|p| crate::proc::executable(p))
 }
 
 /// The wait after a run: a second at first and after a long run, doubled after each short one, up to 30 seconds.

@@ -39,7 +39,7 @@ mods/relevo/spinner.svg comes from Herdr's `workspace-chrome` mod
 ### herdr-editor-layout
 
 - Source: https://github.com/yama-lei/herdr-editor-layout, its editor pane
-- In cockpit: `app/mods/cockpit/code.js`, the code view.
+- In cockpit: `app/mods/flightdeck/code.js`, the code view.
 - Modified by cockpit: adapted to cockpit's mod and extended. The project ships no NOTICE file.
 
 ### Gemini CLI
@@ -113,7 +113,7 @@ SOFTWARE.
 ### herdr-blueprint-app
 
 - Source: https://github.com/chappse6/herdr-blueprint-app, `mermaid.js` and `layout.js`
-- In cockpit: `app/mods/cockpit/diagram.js`, the Mermaid flowchart parser and layered layout.
+- In cockpit: `app/mods/flightdeck/diagram.js`, the Mermaid flowchart parser and layered layout.
 
 ```text
 MIT License
@@ -218,7 +218,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OF THE SOFTWARE.
 ## ISC License: Lucide
 
 - Source: https://github.com/lucide-icons/lucide
-- In cockpit: the icons in `app/mods/cockpit/icons/`, some with a thinner stroke.
+- In cockpit: the icons in `app/mods/flightdeck/icons/`, some with a thinner stroke.
 
 ```text
 ISC License
@@ -279,7 +279,7 @@ The subset is licensed under the SIL Open Font License, Version 1.1, whose full 
 ## MIT License: LobeHub icons
 
 - Source: https://github.com/lobehub/lobe-icons, `@lobehub/icons-static-svg` 1.102.0, monochrome agent marks.
-- In cockpit: `app/mods/cockpit/icons/agents/`, used in Cockpit Chat.
+- In cockpit: `app/mods/flightdeck/icons/agents/`, used in Cockpit Chat.
 
 ```text
 MIT License

@@ -107,7 +107,7 @@ fn github_and_linear_land_in_the_caches_beside_the_mods_fields() {
         &json!({"ci": {"enabled": true, "name": "GitHub", "server": "", "imageJob": "docker_build"},
         "tickets": {"enabled": true, "name": "Linear", "server": "claude.ai Linear", "token": LINEAR_TOKEN}}),
     );
-    let cache = sandbox.home().join(".cache/cockpit");
+    let cache = sandbox.home().join(".cache/flightdeck");
     // The mod's last fetch: no direct review request yet, and the run of my PR still going.
     edit(&cache.join("inbox.json"), |inbox| inbox["direct"] = json!([]));
     std::fs::write(
@@ -117,7 +117,7 @@ fn github_and_linear_land_in_the_caches_beside_the_mods_fields() {
         .to_string(),
     )
     .unwrap();
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("COCKPIT_GITHUB_API", &base), ("COCKPIT_LINEAR_API", &base)]);
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("FLIGHTDECK_GITHUB_API", &base), ("FLIGHTDECK_LINEAR_API", &base)]);
     hub.request(&json!({"op": "ping"}));
 
     let inbox = wait_for(&cache.join("inbox.json"), |v| v["hub"]["github"].is_number() && v["hub"]["tickets"].is_number());
@@ -164,8 +164,8 @@ fn a_rate_limit_is_said_and_waited_out_even_when_asked() {
         (403, headers, json!({"message": "API rate limit exceeded"}).to_string())
     }));
     let sandbox = Sandbox::new(&json!({}), &json!({}));
-    let cache = sandbox.home().join(".cache/cockpit");
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("COCKPIT_GITHUB_API", &base)]);
+    let cache = sandbox.home().join(".cache/flightdeck");
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("FLIGHTDECK_GITHUB_API", &base)]);
     hub.request(&json!({"op": "ping"}));
     let inbox = wait_for(&cache.join("inbox.json"), |v| v["hub"]["errors"].as_array().is_some_and(|e| !e.is_empty()));
     let line = inbox["errors"][0].as_str().unwrap();
@@ -195,10 +195,10 @@ fn the_calendar_address_fills_meetings_json_and_keeps_what_was_notified() {
     }));
     let address = format!("{base}/calendar/ical/me%40acme.example/private-feedtest/basic.ics");
     let sandbox = Sandbox::new(&json!({}), &json!({"github": {"enabled": false}, "calendar": {"enabled": true, "ics": address}}));
-    let cache = sandbox.home().join(".cache/cockpit");
+    let cache = sandbox.home().join(".cache/flightdeck");
     let live = format!("weekly_{today}T080000Z");
     edit(&cache.join("meetings.json"), |doc| doc["notified"] = json!(["ev1_20261028T084500Z", live]));
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on")]);
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on")]);
     hub.request(&json!({"op": "ping"}));
 
     let doc = wait_for(&cache.join("meetings.json"), |v| v["by"] == "hub");
@@ -236,8 +236,8 @@ fn each_source_says_how_fresh_it_is_and_recovers_without_a_restart() {
         &json!({"ci": {"enabled": true, "name": "GitHub", "server": "", "imageJob": "docker_build"},
         "tickets": {"enabled": true, "name": "Linear", "server": "claude.ai Linear", "token": LINEAR_TOKEN}}),
     );
-    let cache = sandbox.home().join(".cache/cockpit");
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("COCKPIT_GITHUB_API", &base), ("COCKPIT_LINEAR_API", &base)]);
+    let cache = sandbox.home().join(".cache/flightdeck");
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on"), ("GH_TOKEN", TOKEN), ("FLIGHTDECK_GITHUB_API", &base), ("FLIGHTDECK_LINEAR_API", &base)]);
     hub.request(&json!({"op": "ping"}));
     let fresh = |doc: &Value, source: &str| doc["hub"]["fresh"][source].clone();
     let kind = |doc: &Value, source: &str| doc["hub"]["fresh"][source]["error"]["kind"].as_str().unwrap_or("").to_string();
@@ -246,12 +246,12 @@ fn each_source_says_how_fresh_it_is_and_recovers_without_a_restart() {
     let inbox = wait_for(&cache.join("inbox.json"), |v| fresh(v, "github")["state"] == "fresh" && kind(v, "tickets") == "auth");
     let github = fresh(&inbox, "github");
     assert_eq!((&github["label"], &github["every"]), (&json!("GitHub"), &json!(30_000)));
-    assert_eq!(github["login"], "cockpit reads GitHub with GH_TOKEN: replace that token where it is set, then refresh", "gh's login is not what it reads");
+    assert_eq!(github["login"], "flightdeck reads GitHub with GH_TOKEN: replace that token where it is set, then refresh", "gh's login is not what it reads");
     assert!(github["next"].as_u64() > github["at"].as_u64(), "{github}");
     let tickets = fresh(&inbox, "tickets");
     assert_eq!(
         (&tickets["label"], &tickets["error"]["message"], &tickets["login"]),
-        (&json!("Linear"), &json!("HTTP 401: token refused"), &json!("cockpit setup"))
+        (&json!("Linear"), &json!("HTTP 401: token refused"), &json!("flightdeck setup"))
     );
     let ci = wait_for(&cache.join("ci.json"), |v| fresh(v, "ci")["state"] == "fresh");
     assert_eq!(fresh(&ci, "ci")["label"], "CI", "GitHub's checks are read with it");
@@ -281,7 +281,7 @@ fn each_source_says_how_fresh_it_is_and_recovers_without_a_restart() {
     assert_eq!(kind(&read(&cache.join("inbox.json")), "tickets"), "auth", "Linear still refuses");
 
     // The config stops reading tickets: their chip and error line leave the inbox with no restart.
-    let config = sandbox.home().join(".config/cockpit/config.json");
+    let config = sandbox.home().join(".config/flightdeck/config.json");
     edit(&config, |c| c["tickets"]["enabled"] = json!(false));
     ask();
     let inbox = wait_for(&cache.join("inbox.json"), |v| v["hub"]["fresh"].get("tickets").is_none() && v["hub"]["fresh"].get("github").is_some());

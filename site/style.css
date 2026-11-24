@@ -1,4 +1,4 @@
-/* cockpit site: one stylesheet, light and dark from the system setting. */
+/* flightdeck site: one stylesheet, light and dark from the system setting. */
 
 :root {
   --bg: #fbfaf7;
@@ -306,7 +306,7 @@ main { display: block; }
 .frame figcaption b { color: var(--text); }
 @media (max-width: 600px) { .frame { padding: 5px; border-radius: 14px; } .frame video, .frame img { border-radius: 10px; } }
 
-/* What sets cockpit apart: each reason beside its screenshot, sides alternating. */
+/* What sets flightdeck apart: each reason beside its screenshot, sides alternating. */
 
 .rows { display: grid; gap: 80px; }
 .row { display: grid; gap: 48px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; }

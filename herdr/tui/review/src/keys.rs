@@ -2,12 +2,12 @@
 //! typed first, then the space's own keys (the shared verbs on their keys), then the diff's (moving, folding,
 //! commenting); the `?` overlay and the palette list the actions the state in view offers.
 
-use cockpit_core::acts::Act;
-use cockpit_core::dialog::Answer;
-use cockpit_core::keys::{self, Move};
-use cockpit_core::palette::{Entry, Outcome};
-use cockpit_show::row::Act as RowAct;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind};
+use flightdeck_core::acts::Act;
+use flightdeck_core::dialog::Answer;
+use flightdeck_core::keys::{self, Move};
+use flightdeck_core::palette::{Entry, Outcome};
+use flightdeck_show::row::Act as RowAct;
 
 use crate::app::{App, Ask, Cmd, Mode, Scope};
 use crate::walk;
@@ -149,7 +149,7 @@ impl App {
                         self.run(cmd);
                     }
                 }
-                Outcome::Elsewhere(target) => cockpit_core::hub::go(&target),
+                Outcome::Elsewhere(target) => flightdeck_core::hub::go(&target),
                 _ => {}
             }
             return false;
@@ -246,7 +246,7 @@ impl App {
                 let at = self.here().step as isize;
                 self.run(Cmd::Step(step as isize - at));
             }
-            RowAct::Open(url) => cockpit_core::files::open_url(&url),
+            RowAct::Open(url) => flightdeck_core::files::open_url(&url),
             act => {
                 self.here_mut().diff.act(&act);
                 self.reveal = true;

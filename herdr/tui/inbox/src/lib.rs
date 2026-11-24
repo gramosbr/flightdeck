@@ -24,12 +24,12 @@ pub mod tree;
 mod work;
 pub mod worktrees;
 
-/// `cockpit start-work [source]`: the Start work form alone in the terminal until it closes.
+/// `flightdeck start-work [source]`: the Start work form alone in the terminal until it closes.
 pub fn start_work(source: &str) -> std::io::Result<()> {
     start::run(source)
 }
 
-/// `cockpit inbox`: the inbox in the terminal until it quits.
+/// `flightdeck inbox`: the inbox in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
-    cockpit_core::term::run(&mut app::App::start())
+    flightdeck_core::term::run(&mut app::App::start())
 }

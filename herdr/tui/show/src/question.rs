@@ -5,8 +5,8 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::style::{Color, Modifier, Style};
 use serde_json::{Value, json};
 
-use cockpit_core::text::{fit, width};
-use cockpit_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
+use flightdeck_core::text::{fit, width};
+use flightdeck_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
 
 use crate::markdown::markdown;
 use crate::row::{Act, Row, Target};

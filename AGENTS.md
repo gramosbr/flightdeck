@@ -1,17 +1,17 @@
-# Working on cockpit as a coding agent
+# Working on flightdeck as a coding agent
 
 Read `CONTRIBUTING.md` first: it maps the repo and gives the build, test and quality-gate commands. This file adds the
 rules that matter most when an agent does the work.
 
 ## Never touch the person's live setup
 
-cockpit runs on the machine you are working on, probably beside you. Leave all of this alone:
+flightdeck runs on the machine you are working on, probably beside you. Leave all of this alone:
 
 - their Herdr window and herdr-core terminals: never create, close or type into their spaces, tabs or panes;
-- their running hub (`~/.cache/cockpit/hub.json`) and cockpit data under `~/.cache/cockpit` and `~/.config/cockpit`;
+- their running hub (`~/.cache/flightdeck/hub.json`) and flightdeck data under `~/.cache/flightdeck` and `~/.config/flightdeck`;
 - their agents' settings, such as `~/.claude/settings.json` or `~/.codex/config.toml`.
 
-Check GUI work in the sandbox only: `COCKPIT_SANDBOX=/tmp/cc-<letter> HC_SESSION=cc-<letter> sh scripts/sandbox.sh start`,
+Check GUI work in the sandbox only: `FLIGHTDECK_SANDBOX=/tmp/cc-<letter> HC_SESSION=cc-<letter> sh scripts/sandbox.sh start`,
 then `show`, `shot`, `check`, and `stop` when done. It has its own fake HOME, hub and herdr-core.
 
 Run Rust tests with `env -u HC_TERMINAL_ID -u HC_TERMINAL_SOCKET -u HC_SCOPE cargo test …`, so they never reach the

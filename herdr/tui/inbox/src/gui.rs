@@ -1,12 +1,12 @@
-//! The inbox for the Herdr app's cockpit mod: the TUI's own rows (`model::model`) as JSON, with flat lists of my PRs,
+//! The inbox for the Herdr app's flightdeck mod: the TUI's own rows (`model::model`) as JSON, with flat lists of my PRs,
 //! tickets and worktrees for the home screen, and the outcomes of the requests the rows filed.
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use cockpit_core::theme::{DIM, GREEN, ORANGE, RED};
-use cockpit_core::{files, header};
+use flightdeck_core::theme::{DIM, GREEN, ORANGE, RED};
+use flightdeck_core::{files, header};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::Line;
 use serde_json::{Map, Value, json};

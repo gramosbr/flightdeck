@@ -14,25 +14,25 @@ fn from_starter(key: &str) -> bool {
 }
 
 /// What the hub never takes, even from the login shell: a terminal's or a window's identity, the binaries and sockets
-/// cockpit's tests and sandbox stand in, a session's own markers.
+/// flightdeck's tests and sandbox stand in, a session's own markers.
 fn never(key: &str) -> bool {
     const STAND_INS: [&str; 12] = [
-        "COCKPIT_AGENTS_DEMO",
-        "COCKPIT_HC_BIN",
-        "COCKPIT_NOTIFY_PROGRAM",
-        "COCKPIT_HUB_FEED",
-        "COCKPIT_HERDR_DIR",
-        "COCKPIT_FRONTEND",
-        "COCKPIT_SHOT_DIR",
-        "COCKPIT_EMBED",
-        "COCKPIT_TOASTS",
-        "COCKPIT_SPACE",
-        "COCKPIT_CLAUDE",
-        "COCKPIT_HUB_IDLE_SECS",
+        "FLIGHTDECK_AGENTS_DEMO",
+        "FLIGHTDECK_HC_BIN",
+        "FLIGHTDECK_NOTIFY_PROGRAM",
+        "FLIGHTDECK_HUB_FEED",
+        "FLIGHTDECK_HERDR_DIR",
+        "FLIGHTDECK_FRONTEND",
+        "FLIGHTDECK_SHOT_DIR",
+        "FLIGHTDECK_EMBED",
+        "FLIGHTDECK_TOASTS",
+        "FLIGHTDECK_SPACE",
+        "FLIGHTDECK_CLAUDE",
+        "FLIGHTDECK_HUB_IDLE_SECS",
     ];
     key.starts_with("HC_")
         || key.starts_with("HERDR_")
-        || key.starts_with("COCKPIT_TEST")
+        || key.starts_with("FLIGHTDECK_TEST")
         || STAND_INS.contains(&key)
         || key.starts_with("CLAUDE_CODE_")
         || matches!(key, "CLAUDECODE" | "PWD" | "OLDPWD" | "SHLVL" | "_" | "TERM_SESSION_ID" | "TMUX" | "TMUX_PANE")
@@ -57,7 +57,7 @@ fn account() -> Option<(PathBuf, PathBuf, String)> {
     }
 }
 
-const MARK: &str = "--cockpit-env--";
+const MARK: &str = "--flightdeck-env--";
 
 /// What the login shell sets, run on nothing but the account's own names: five seconds at most, else nothing.
 fn login(shell: &Path, home: &Path, user: &str) -> Vec<(String, String)> {
@@ -140,7 +140,7 @@ fn plan(starter: &[(String, String)], home: &Path, shell: &Path, user: &str, log
 /// Whether HOME `given` reaches the account's own cache: the same folder once links, `.` and `..` are resolved
 /// (`/Users/me/../me`, `/Users//me/`, a link to the home or to its `.cache`).
 fn persons(given: &Path, home: &Path) -> bool {
-    let cache = |h: &Path| resolved(&h.join(".cache/cockpit"));
+    let cache = |h: &Path| resolved(&h.join(".cache/flightdeck"));
     given.is_absolute() && cache(given).is_some_and(|c| Some(c) == cache(home))
 }
 
@@ -179,7 +179,7 @@ mod tests {
             ("PATH", "/tmp/evil:/usr/bin"),
             ("HERDR_BIN_PATH", "/tmp/evil/herdr"),
             ("HC_BIN", "/tmp/evil/hc"),
-            ("COCKPIT_AGENTS_DEMO", "/tmp/demo.json"),
+            ("FLIGHTDECK_AGENTS_DEMO", "/tmp/demo.json"),
             ("SSH_AUTH_SOCK", "/tmp/agent.sock"),
             ("LANG", "en_GB.UTF-8"),
             ("CLAUDECODE", "1"),
@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(env["PATH"], "/opt/homebrew/bin:/usr/bin");
         assert_eq!(env["CLAUDE_CONFIG_DIR"], "/Users/me/.claude-work", "the person's own settings come from their profile");
         assert_eq!((env["SSH_AUTH_SOCK"].as_str(), env["LANG"].as_str()), ("/tmp/agent.sock", "en_GB.UTF-8"));
-        for gone in ["HERDR_BIN_PATH", "HC_BIN", "COCKPIT_AGENTS_DEMO", "CLAUDECODE", "HC_SESSION", "PWD"] {
+        for gone in ["HERDR_BIN_PATH", "HC_BIN", "FLIGHTDECK_AGENTS_DEMO", "CLAUDECODE", "HC_SESSION", "PWD"] {
             assert!(!env.contains_key(gone), "{gone}");
         }
         assert_eq!((env["HOME"].as_str(), env["SHELL"].as_str(), env["USER"].as_str()), ("/Users/me", "/bin/zsh", "me"));
@@ -221,7 +221,7 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let root = std::fs::canonicalize(root.path()).unwrap();
         let home = root.join("me");
-        std::fs::create_dir_all(home.join(".cache/cockpit")).unwrap();
+        std::fs::create_dir_all(home.join(".cache/flightdeck")).unwrap();
         let link = root.join("home-link");
         std::os::unix::fs::symlink(&home, &link).unwrap();
         // Another HOME whose `.cache` is a link to the account's: the same socket and hub.json.

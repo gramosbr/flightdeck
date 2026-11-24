@@ -11,7 +11,7 @@ pub trait Tools {
     async fn call(&self, verb: &str, values: &Value) -> Result<Value, String>;
     /// Whether a tool is mapped to `verb`.
     fn has(&self, verb: &str) -> bool;
-    /// A tool called by its own name, its answer's text as it is (servers whose tools cockpit names itself).
+    /// A tool called by its own name, its answer's text as it is (servers whose tools flightdeck names itself).
     async fn text(&self, tool: &str, args: &Value) -> Result<String, String>;
 }
 

@@ -1,4 +1,4 @@
-"""The /cockpit settings pane, from fictional values: each value a button that cycles it."""
+"""The /flightdeck settings pane, from fictional values: each value a button that cycles it."""
 import os, sys
 sys.path.insert(0, os.path.dirname(__file__))
 from term2svg import screen_of, svg
@@ -16,7 +16,7 @@ def put(r, c, text, fg=None, bg=None, bold=False):
 def pill(r, c, label):
     put(r, c, "", QUIET); put(r, c + 1, label, WHITE, QUIET); put(r, c + 1 + len(label), "", QUIET)
 
-put(2, 3, "Cockpit settings", WHITE, bold=True)
+put(2, 3, "Flightdeck settings", WHITE, bold=True)
 SETTINGS = [("E2E tests run in", "terminal-browser beside the agent"), ("Close browsers out of view", "after 1 h"),
             ("Notifications", "on"), ("Morning brief", "on"), ("Recap when back in a space", "on"),
             ("Check errors after a deploy", "off"), ("Meeting briefs", "on"),
@@ -24,8 +24,8 @@ SETTINGS = [("E2E tests run in", "terminal-browser beside the agent"), ("Close b
 WIDTH = max(len(label) for label, _ in SETTINGS) + 2  # settings.tsx pads the labels to the longest plus two
 for i, (label, value) in enumerate(SETTINGS):
     put(4 + i, 3, label.ljust(WIDTH)); pill(4 + i, 3 + WIDTH, value)
-put(13, 3, "terminal-browser 0.13.4 · press a value to change it · /cockpit <setting> <value> from any session", DIMC)
+put(13, 3, "terminal-browser 0.13.4 · press a value to change it · /flightdeck <setting> <value> from any session", DIMC)
 
 screen = screen_of("".join(ops), COLS, ROWS)
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "settings.svg"), "w") as f:
-    f.write(svg(screen, "claude · /cockpit"))
+    f.write(svg(screen, "claude · /flightdeck"))

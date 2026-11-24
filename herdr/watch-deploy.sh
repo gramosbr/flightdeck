@@ -6,7 +6,7 @@ PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.claude/local:$PAT
 . "$(dirname "$0")/lib.sh"
 ticket=$1 repos=$2 version=${3:-}
 slug=$(printf '%s' "$ticket" | tr '[:upper:]' '[:lower:]')
-mark="$HOME/.cache/cockpit/watched/$slug"
+mark="$HOME/.cache/flightdeck/watched/$slug"
 [ -e "$mark" ] && exit 0
 mkdir -p "$(dirname "$mark")" && touch "$mark"
 
@@ -14,22 +14,22 @@ after=$(jq -r '.deployWatch.afterMinutes // 30' "$SETTINGS")
 deployed=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 sleep $((after * 60))
 
-book="$HOME/.config/cockpit/runbooks/$slug.md"
+book="$HOME/.config/flightdeck/runbooks/$slug.md"
 row=""
 [ -f "$book" ] && row="Then add one row at the end of the runbook table in $book, numbered after the last one:
 | <n> | Watch after deploy | prod | ✅ <three words> or ❌ <three words> | |
 keeping the file's format."
 prompt="$ticket went live in production around $deployed (repos: $repos${version:+, version $version}).
 Compare the 30 minutes before that time with the $after minutes after it, for the services these repos run in production:
-error rate, new error logs, p95 latency. Use cockpit's cockpit_health tool (a service, from and to) when you have it,
+error rate, new error logs, p95 latency. Use flightdeck's flightdeck_health tool (a service, from and to) when you have it,
 else the observability tools you have, read-only. $row
 Finish with exactly one line of JSON and nothing after it:
 {\"ok\": true or false, \"summary\": \"<at most 12 words>\", \"url\": \"<a link to the logs or dashboard you looked at, or empty>\"}"
 # Each entry of deployWatch.tools is one tool Claude Code may call without asking, e.g. an observability MCP server.
-set -- Read Edit Write mcp__cockpit__cockpit_health mcp__cockpit__cockpit_read
+set -- Read Edit Write mcp__flightdeck__flightdeck_health mcp__flightdeck__flightdeck_read
 for tool in $(jq -r '.deployWatch.tools // [] | .[]' "$SETTINGS"); do set -- "$@" "$tool"; done
-agent=$(sh "$ROOT/cockpit.sh" agent id --agent "$(jq -r '.deployWatch.agent // empty' "$SETTINGS")")
-line=$(sh "$ROOT/cockpit.sh" agent argv run --agent "$agent" --prompt "$prompt" --model sonnet --edits --dir "$HOME/.config/cockpit/runbooks")
+agent=$(sh "$ROOT/flightdeck.sh" agent id --agent "$(jq -r '.deployWatch.agent // empty' "$SETTINGS")")
+line=$(sh "$ROOT/flightdeck.sh" agent argv run --agent "$agent" --prompt "$prompt" --model sonnet --edits --dir "$HOME/.config/flightdeck/runbooks")
 [ "$agent" = claude ] && line="$line --allowedTools \"\$@\""
 out=""
 [ -n "$line" ] && out=$(cd "$REPOS" && eval "$line" </dev/null 2>/dev/null | grep '^{' | tail -1)
@@ -39,7 +39,7 @@ summary=$(printf '%s' "$out" | jq -r '.summary // empty' 2>/dev/null)
 url=$(printf '%s' "$out" | jq -r '.url // empty' 2>/dev/null)
 if [ -f "$book" ]; then action="runbook:$slug"; elif [ -n "$url" ]; then action=$url; else action="space:inbox"; fi
 case "$ok" in
-  true) sh "$ROOT/cockpit.sh" notify "✅ $ticket after deploy" "${summary:-no change in errors or latency}" "$action" ;;
-  false) sh "$ROOT/cockpit.sh" notify "⚠️ $ticket after deploy" "${summary:-errors or latency moved, have a look}" "$action" ;;
-  *) sh "$ROOT/cockpit.sh" notify "❔ $ticket after deploy" "The check did not conclude; see ~/.cache/cockpit/watch-$slug.log" "$action" ;;
+  true) sh "$ROOT/flightdeck.sh" notify "✅ $ticket after deploy" "${summary:-no change in errors or latency}" "$action" ;;
+  false) sh "$ROOT/flightdeck.sh" notify "⚠️ $ticket after deploy" "${summary:-errors or latency moved, have a look}" "$action" ;;
+  *) sh "$ROOT/flightdeck.sh" notify "❔ $ticket after deploy" "The check did not conclude; see ~/.cache/flightdeck/watch-$slug.log" "$action" ;;
 esac

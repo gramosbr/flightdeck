@@ -5,8 +5,8 @@ docs/screenshots/home/
 herdr/bin/
 herdr/bin.*/
 herdr/fetch.lock/
-app/mods/cockpit/gpui-kit.d.ts
-app/mods/cockpit/jsconfig.json
+app/mods/flightdeck/gpui-kit.d.ts
+app/mods/flightdeck/jsconfig.json
 .ruff_cache/
 node_modules/
 _site/
@@ -15,3 +15,4 @@ notes.md
 .idea/
 .vscode/
 plugin/.claude-plugin/types/
+/.worktrees/

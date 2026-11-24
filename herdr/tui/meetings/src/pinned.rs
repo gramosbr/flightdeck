@@ -1,10 +1,10 @@
 //! The duties of the app running in the meetings space: the next meeting on the space's sidebar row, and the meeting a
-//! notification click asks for (meetings-focus.json, written by `cockpit focus`).
+//! notification click asks for (meetings-focus.json, written by `flightdeck focus`).
 
 use std::process::Command;
 use std::time::SystemTime;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
 use crate::week::{Clock, Week, until_text};
 
@@ -22,9 +22,9 @@ pub fn response_icon(response: &str) -> &'static str {
     }
 }
 
-/// Run by `cockpit space meetings` in the meetings space: the sidebar row is this app's then.
+/// Run by `flightdeck space meetings` in the meetings space: the sidebar row is this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 /// The next meeting, as the sidebar shows it: now, in N min today, else its day and time.
@@ -47,7 +47,7 @@ pub fn report(text: String) {
     let bin = std::env::var("HERDR_BIN_PATH").unwrap_or_else(|_| "herdr".into());
     std::thread::spawn(move || {
         let _ = Command::new(bin)
-            .args(["workspace", "report-metadata", &workspace, "--source", "cockpit-meetings", "--token", &format!("meetings={text}")])
+            .args(["workspace", "report-metadata", &workspace, "--source", "flightdeck-meetings", "--token", &format!("meetings={text}")])
             .output();
     });
 }

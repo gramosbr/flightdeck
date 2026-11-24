@@ -1,4 +1,4 @@
-// A pane's header in the cockpit layout (`pane.header.content` = {mod: "cockpit", props: {app: "pane"}}): the program's
+// A pane's header in the flightdeck layout (`pane.header.content` = {mod: "flightdeck", props: {app: "pane"}}): the program's
 // icon, the name given to the pane else its program or title, the folder and branch, the agent's status; on hover, Open
 // in editor, Fork (an agent's session), Rename and Herdr's split, zoom and close. Herdr gives each copy `props().pane`
 // and `props().terminal`.

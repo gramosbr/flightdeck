@@ -6,7 +6,7 @@ import { test } from "node:test";
 // Copies of one window lend the agents view they follow to the window's commands (⌘J, the palette). Herdr 0.1.12
 // evaluates the mod once per copy, so every running load lends; a load that stopped running (a reload) lends nothing.
 
-const folder = new URL("../mods/cockpit/", import.meta.url);
+const folder = new URL("../mods/flightdeck/", import.meta.url);
 
 /** The mod's sources, and the natives each one imports, stubbed to throw: commands.js loads without a window. */
 async function sources() {

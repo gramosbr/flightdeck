@@ -1,9 +1,9 @@
 //! A tree row: aligned cells (lead glyphs, ref, title, notes, age) or one free text, with its actions, the call its
 //! enter makes and the details the panel shows.
 
-use cockpit_core::acts::Act;
-use cockpit_core::text::{fit, width};
-use cockpit_core::theme::{DIM, GREEN, ORANGE, RED, fg};
+use flightdeck_core::acts::Act;
+use flightdeck_core::text::{fit, width};
+use flightdeck_core::theme::{DIM, GREEN, ORANGE, RED, fg};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use serde_json::Value;

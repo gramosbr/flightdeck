@@ -1,5 +1,5 @@
 //! The options a person sets, each listed once with its section, its kind, its default and the version that brought it,
-//! and what of them was shown: the update dialog, `cockpit options`, setup and Cockpit settings all read this list.
+//! and what of them was shown: the update dialog, `flightdeck options`, setup and Flightdeck settings all read this list.
 
 use std::path::{Path, PathBuf};
 
@@ -10,14 +10,14 @@ use crate::{agent, files, jsonedit};
 /// The version the options below arrive in: the one number to change at release.
 pub const NEXT: &str = "1.5.0";
 
-/// The side browser that is cockpit's own Chromium window, which only the Herdr app on macOS shows.
+/// The side browser that is flightdeck's own Chromium window, which only the Herdr app on macOS shows.
 pub const CHROMIUM: &str = "chromium";
 
 /// Whether this machine can run the Chromium side browser.
 pub const CHROMIUM_HERE: bool = cfg!(target_os = "macos");
 
 /// The layout an update offers to try, once, to a window on another layout, and the version that brought it.
-pub const LAYOUT: (&str, &str) = ("cockpit-chat", "1.0.0");
+pub const LAYOUT: (&str, &str) = ("flightdeck-chat", "1.0.0");
 
 /// The values a choice takes, each with its name in words.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -75,7 +75,7 @@ pub enum Def {
     Count(i64),
 }
 
-/// One option: its dotted key in config.json, its section, the version that brought it (None for one cockpit always
+/// One option: its dotted key in config.json, its section, the version that brought it (None for one flightdeck always
 /// read), its name, one plain line, its default and how it is set.
 #[derive(Debug)]
 pub struct Setting {
@@ -144,7 +144,7 @@ pub const ALL: &[Setting] = &[
         key: "agents.default",
         section: "Agents",
         since: None,
-        title: "The agent cockpit starts",
+        title: "The agent flightdeck starts",
         description: "Start work, the inbox and one-off jobs start this agent when nothing else says which.",
         default: Def::Word(""),
         kind: Kind::Choice(Choices::Agents),
@@ -209,7 +209,7 @@ pub const ALL: &[Setting] = &[
             "chat.projectPanels",
             "Chat",
             "Files and Changes follow the agent's projects",
-            "In Cockpit Chat, the side panel's Files and Changes show the repositories the agent works in, even from a \
+            "In Flightdeck Chat, the side panel's Files and Changes show the repositories the agent works in, even from a \
              folder of several; off, Herdr's own follow the focused terminal's folder.",
             true,
         ),
@@ -258,7 +258,7 @@ pub const ALL: &[Setting] = &[
     refresh("refresh.calendar", "Calendar", "Seconds between two reads of your meetings; an iCal address left alone is read every 300.", 120),
     refresh("refresh.platform", "Deploys and previews", "Seconds between two reads of the deploys and preview environments.", 60),
     refresh("refresh.monitor", "Release monitor", "Seconds between two reads of the releases' error rate and latency.", 120),
-    toggle("notifications", "Notifications", "Notifications", "Cockpit notifies you: an agent that needs you, a failed CI run, a review asked.", true),
+    toggle("notifications", "Notifications", "Notifications", "Flightdeck notifies you: an agent that needs you, a failed CI run, a review asked.", true),
     choice(
         "monitor.notify",
         "Notifications",
@@ -376,7 +376,7 @@ pub const ALL: &[Setting] = &[
 pub const IN_FILE: &[(&str, &str)] = &[
     ("spaces", "The pinned spaces, in order: a name, or {name, cwd, icon, key} for one of your own."),
     ("agents.commands", "An agent's command line overridden field by field, by agent id; a new id adds an agent."),
-    ("usage.commands", "A command per agent id that prints its limits, for a provider cockpit has no source for."),
+    ("usage.commands", "A command per agent id that prints its limits, for a provider flightdeck has no source for."),
     ("chat.nextStepsModel", "Next prompts' model per agent id, as {\"claude\": \"haiku\"}, in place of one name."),
     ("chat.nextStepsAgent", "The agent that writes next prompts for one that cannot answer with no tools."),
     ("start.setup", "A command per repo folder that Start work runs in a new worktree before the agent."),
@@ -386,7 +386,7 @@ pub const IN_FILE: &[(&str, &str)] = &[
     ("mail", "Your unread mail: enabled, name, server, and its tools and fields."),
     ("platform", "Deploys and previews: enabled, server, previewPrefix, the page addresses, tools and fields."),
     ("code", "Pull requests from another forge than GitHub: server, tools, fields."),
-    ("servers", "The MCP servers cockpit calls itself, each with its URL or command."),
+    ("servers", "The MCP servers flightdeck calls itself, each with its URL or command."),
     ("metabase, datadog", "The connectors show panes refresh from: {server}."),
     ("observability", "Errors and latency from another tool than Datadog: server, tools, fields, queries."),
     ("monitor", "The release monitor: env, queries, the moved thresholds, serviceReplace."),
@@ -395,7 +395,7 @@ pub const IN_FILE: &[(&str, &str)] = &[
     ("runbookTools", "Extra tools a runbook's background refresh may use."),
     ("footer.links", "The links under Claude Code's prompt: on in a terminal, off in the Herdr app."),
     ("artifactGuard", "false lets every claude.ai artifact through, for a machine with no pane to draw in."),
-    ("frontend", "tui or app, when cockpit cannot tell which it runs in."),
+    ("frontend", "tui or app, when flightdeck cannot tell which it runs in."),
 ];
 
 /// Whether `a` is a later version than `b`, number by number.
@@ -606,7 +606,7 @@ pub fn after_run(state: &Value, update: &Value, own: &str, now: u64) -> Value {
 }
 
 /// Notes the version that runs, once per process start: the hub before its first look at what is published, and
-/// `cockpit options`. Gives the state as it stands.
+/// `flightdeck options`. Gives the state as it stands.
 pub fn note_run(own: &str) -> Value {
     let path = state_path();
     files::locked(&path, || {
@@ -703,7 +703,7 @@ fn resolved_value(setting: &Setting, value: &Value) -> Value {
     }
 }
 
-/// Sets options in ~/.config/cockpit/config.json, everything else kept as written, and in the resolved copy the apps
+/// Sets options in ~/.config/flightdeck/config.json, everything else kept as written, and in the resolved copy the apps
 /// read until a session writes it again; they count as seen. A value its option does not take is refused, and then
 /// nothing is written.
 pub fn save(values: &[(&str, Value)]) -> Result<(), String> {
@@ -913,11 +913,11 @@ mod tests {
         assert_eq!(checked(pace, &json!("weekdays")), Ok(json!("weekdays")));
         assert_eq!(checked(pace, &json!("monthly")).unwrap_err(), "Pace of the 7-day limit takes one of: week, weekdays");
         assert!(checked(pace, &json!(true)).is_err());
-        // The agent cockpit starts: the first installed, or an agent of the table, installed or not.
+        // The agent flightdeck starts: the first installed, or an agent of the table, installed or not.
         let agent = get("agents.default").unwrap();
         assert_eq!(checked(agent, &json!("")), Ok(json!("")));
         assert_eq!(checked(agent, &json!("codex")), Ok(json!("codex")));
-        assert!(checked(agent, &json!("nobody")).unwrap_err().starts_with("The agent cockpit starts takes one of: \"\""));
+        assert!(checked(agent, &json!("nobody")).unwrap_err().starts_with("The agent flightdeck starts takes one of: \"\""));
         assert_eq!(choices(agent)[0], (String::new(), "The first installed".to_string()));
     }
 
@@ -1124,7 +1124,7 @@ mod tests {
     fn a_linked_config_stays_a_link_and_a_failed_write_leaves_nothing() {
         use std::os::unix::fs::PermissionsExt;
         let root = tempfile::tempdir().unwrap();
-        let real = root.path().join("dotfiles/cockpit.json");
+        let real = root.path().join("dotfiles/flightdeck.json");
         std::fs::create_dir_all(real.parent().unwrap()).unwrap();
         std::fs::write(&real, "{\"names\": true}\n").unwrap();
         let link = root.path().join("config/config.json");
@@ -1193,7 +1193,7 @@ mod tests {
         let view = view(&json!({"agents": {"default": "made-up-agent"}, "meetingBrief": {"model": {"claude": "haiku"}}}), &json!({}));
         assert_eq!(view["sections"], json!(SECTIONS));
         let option = |key: &str| view["options"].as_array().unwrap().iter().find(|o| o["key"] == key).unwrap().clone();
-        // An option cockpit always read is neither new nor unseen, and names no version.
+        // An option flightdeck always read is neither new nor unseen, and names no version.
         let names = option("names");
         assert_eq!(
             (&names["section"], &names["kind"], &names["since"], &names["seen"], &names["new"]),
@@ -1217,6 +1217,6 @@ mod tests {
         assert_eq!(option("meetingBrief.model")["by_hand"], true);
         let in_file = view["in_file"].as_array().unwrap();
         assert!(in_file.iter().any(|f| f["key"] == "agents.commands") && in_file.iter().any(|f| f["key"] == "usage.commands"));
-        assert!(view["path"].as_str().unwrap().ends_with(".config/cockpit/config.json"));
+        assert!(view["path"].as_str().unwrap().ends_with(".config/flightdeck/config.json"));
     }
 }

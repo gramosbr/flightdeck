@@ -8,7 +8,7 @@ async function usage(entry = "./usage.js", natives = {}, withDefault = false) {
   const context = createContext({ console });
   const imports = { ...natives, "./hub.js": { act: () => { throw new Error("no hub action expected"); }, subscribe: () => ({ stop() {} }), ...(natives["./hub.js"] ?? {}) } };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -164,14 +164,14 @@ test("logo drawing takes picture metadata from Herdr, brand colours in both layo
   const programs = [{ key: "codex", icon: "icons/codex.svg", tint: false }, { key: "pi", icon: "icons/pi.svg", tint: true }];
   const plain = (v) => JSON.parse(JSON.stringify(v));
   assert.deepEqual(plain(ui.agentLogoSpec("codex", { mono: false, programs })), { name: "codex", path: "icons/codex.svg", picture: true });
-  assert.deepEqual(plain(ui.agentLogoSpec("codex", { mono: true, programs })), { name: "codex", path: "mods/cockpit/icons/agents/codex.svg", picture: false });
+  assert.deepEqual(plain(ui.agentLogoSpec("codex", { mono: true, programs })), { name: "codex", path: "mods/flightdeck/icons/agents/codex.svg", picture: false });
   assert.equal(ui.agentLogoSpec("pi", { mono: false, programs }).picture, false);
   assert.equal(ui.CHAT_LOGO_STYLE, "brand");
 });
 
 
 function drawing() {
-  const state = new Map([["layout", "cockpit"]]);
+  const state = new Map([["layout", "flightdeck"]]);
   const element = (kind = "div", path = null) => {
     const value = { kind, path, kids: [], made: [] };
     const el = new Proxy(value, { get: (t, name) => {
@@ -205,7 +205,7 @@ test("limits without readings still draw honest words, and long window names hav
   assert.ok(label.made.find(([key, width]) => key === "w" && width >= 44));
 });
 
-test("Cockpit settings draws the hub-provided agent logo beside its name", async () => {
+test("Flightdeck settings draws the hub-provided agent logo beside its name", async () => {
   const f = drawing();
   const d = await usage("./doctor.js", f.natives, true);
   const view = Object.create(d.default.prototype);
@@ -218,8 +218,8 @@ test("Cockpit settings draws the hub-provided agent logo beside its name", async
 
 test("the Chat drawer keeps its agents and no-reading row when the hub has never answered", async () => {
   const f = drawing();
-  f.state.set("layout", "cockpit-chat");
-  f.state.set("cockpit.chat.sidebar", false);
+  f.state.set("layout", "flightdeck-chat");
+  f.state.set("flightdeck.chat.sidebar", false);
   Object.assign(f.natives.herdr, { agents: () => [{ address: "t1", tab: "tab-a", title: "Quota checks", status: "idle", program: { key: "codex", name: "Codex", icon: "icons/codex.svg", tint: false } }],
     focused: () => ({ terminal: "t1", tab: "tab-a" }), spaces: () => [], keys: () => [],
     layout: () => ({ id: "root", children: [{ id: "sidebar", hidden: true }] }) });

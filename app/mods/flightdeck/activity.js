@@ -27,13 +27,13 @@ const ITEMS = [
 function present(item, tree) {
   if (item.name === "code") return Boolean(findNode(tree, "code") && shared(CODE_PANEL)?.file);
   if (item.name === BROWSER) return Boolean(findNode(tree, BROWSER) && browserIn(panes(), focused()?.tab));
-  if (item.name === WEB) return Boolean(findNode(tree, WEB) && shared("cockpit.web.model")?.enabled);
+  if (item.name === WEB) return Boolean(findNode(tree, WEB) && shared("flightdeck.web.model")?.enabled);
   return true;
 }
 
 export default class Activity {
   init() {
-    // The tab bar restores a space's panel only among these, so the cockpit's own panels survive a space switch.
+    // The tab bar restores a space's panel only among these, so the flightdeck's own panels survive a space switch.
     const panels = shared("workspace.panels");
     const want = [...Object.values(PANELS), "project-files", "project-changes"];
     const have = Array.isArray(panels) ? panels : ["files", "changes"];

@@ -4,26 +4,26 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use cockpit_core::browser;
+use flightdeck_core::browser;
 use serde_json::{Value, json};
 
 use super::install;
 use crate::proc::{self, Out};
 
-/// The commands agent-browser takes that would leave the browser cockpit runs, or end it.
+/// The commands agent-browser takes that would leave the browser flightdeck runs, or end it.
 const REFUSED: [&str; 8] = ["close", "quit", "exit", "connect", "launch", "install", "session", "disconnect"];
 const REFUSED_FLAGS: [&str; 6] = ["--cdp", "--session", "--profile", "--headed", "--executable-path", "--auto-connect"];
 
-/// Why a command is not passed on, when it is one cockpit keeps for itself.
+/// Why a command is not passed on, when it is one flightdeck keeps for itself.
 pub fn refusal(command: &[String]) -> Option<String> {
     let first = command.first()?;
     if REFUSED.contains(&first.as_str()) {
-        return Some(format!("{first} is not for the side browser: cockpit starts, connects and ends it"));
+        return Some(format!("{first} is not for the side browser: flightdeck starts, connects and ends it"));
     }
     command
         .iter()
         .find(|a| REFUSED_FLAGS.contains(&a.as_str()))
-        .map(|flag| format!("{flag} is not for the side browser: cockpit picks its session and its page"))
+        .map(|flag| format!("{flag} is not for the side browser: flightdeck picks its session and its page"))
 }
 
 /// What a command asks of the browser's own tabs, which the shell does rather than agent-browser.
@@ -135,7 +135,7 @@ pub fn pinned(owner: &str, tab: Option<&str>, suffix: &str) -> Result<Pinned, St
     let pins = install::pins()?;
     let bin = install::agent_browser(&pins);
     if !proc::executable(&bin) {
-        return Err("agent-browser is not installed: run cockpit browser install".into());
+        return Err("agent-browser is not installed: run flightdeck browser install".into());
     }
     let endpoint = browser::request(&json!({"op": "agent.endpoint", "owner": owner, "tab": tab}), Duration::from_secs(10))?;
     let (port, target) = (endpoint["port"].as_u64().unwrap_or(0).to_string(), endpoint["target"].as_str().unwrap_or_default().to_string());
@@ -150,7 +150,7 @@ pub fn pinned(owner: &str, tab: Option<&str>, suffix: &str) -> Result<Pinned, St
         sockets: sockets.to_string_lossy().into_owned(),
         config: config.to_string_lossy().into_owned(),
     };
-    // The first call starts agent-browser's background process: it runs from cockpit's own folder, never from a
+    // The first call starts agent-browser's background process: it runs from flightdeck's own folder, never from a
     // worktree, which a program working in it would keep from being removed. The second binds the session to the tab.
     let call = |args: &[&str]| -> Result<(), String> {
         let mut command = std::process::Command::new(&found.bin);

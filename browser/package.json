@@ -1,6 +1,6 @@
 {
-  "name": "cockpit-browser",
-  "productName": "Cockpit Browser",
+  "name": "flightdeck-browser",
+  "productName": "Flightdeck Browser",
   "private": true,
   "type": "module",
   "main": "main/index.js"

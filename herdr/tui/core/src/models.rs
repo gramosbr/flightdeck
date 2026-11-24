@@ -1,6 +1,6 @@
 //! The one catalog of models: what each agent offers wherever a person picks one (Start work, the chat's chips, a
 //! routine). An agent with a listing command (`Agent::model_listing`) is asked in the background and its answer kept in
-//! `~/.cache/cockpit/models.json`; any other offers the models its table row names.
+//! `~/.cache/flightdeck/models.json`; any other offers the models its table row names.
 
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -49,9 +49,9 @@ fn path() -> PathBuf {
 }
 
 /// Lets this process ask agents for their models, as the hub does at its start. It stays off in the demo world and with
-/// COCKPIT_HUB_MODELS=off, which the sandbox and the tests set, so neither runs an agent found on the machine.
+/// FLIGHTDECK_HUB_MODELS=off, which the sandbox and the tests set, so neither runs an agent found on the machine.
 pub fn ask_agents() {
-    ASKS.store(may_ask(std::env::var_os("COCKPIT_AGENTS_DEMO").as_deref(), std::env::var_os("COCKPIT_HUB_MODELS").as_deref()), Ordering::SeqCst);
+    ASKS.store(may_ask(std::env::var_os("FLIGHTDECK_AGENTS_DEMO").as_deref(), std::env::var_os("FLIGHTDECK_HUB_MODELS").as_deref()), Ordering::SeqCst);
 }
 
 fn may_ask(demo: Option<&OsStr>, switch: Option<&OsStr>) -> bool {
@@ -347,7 +347,7 @@ mod tests {
         assert_eq!((listed.len(), listed[0].as_str()), (MAX_MODELS, "acme/model-0"));
         let codex_many = serde_json::json!({"models": (0..10_000).map(|i| serde_json::json!({"slug": format!("gpt-{i}")})).collect::<Vec<_>>()});
         assert_eq!(listed_models(&codex_many.to_string(), Listing::Codex).unwrap().len(), MAX_MODELS);
-        // What a models.json written by hand or by an older cockpit holds is read the same way.
+        // What a models.json written by hand or by an older flightdeck holds is read the same way.
         for kept in [serde_json::json!("-p"), serde_json::json!({"id": "--dangerously-skip-permissions"}), serde_json::json!(long)] {
             assert_eq!(Offer::of_json(&kept), None, "{kept}");
         }

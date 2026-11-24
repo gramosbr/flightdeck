@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
-use cockpit_core::agent::{self, Headless};
-use cockpit_core::{files, transcripts};
+use flightdeck_core::agent::{self, Headless};
+use flightdeck_core::{files, transcripts};
 use serde_json::{Value, json};
 
 use super::book::{handoffs_dir, read_books, read_handoffs, runbooks_dir};
@@ -16,9 +16,9 @@ use crate::config;
 use crate::herdr;
 use crate::proc;
 use crate::value::{Res, get, key, list, now, now_ms, s, text, truthy};
-use cockpit_core::frontend;
+use flightdeck_core::frontend;
 
-const REPORT_TOOL: &str = "mcp__cockpit__report_step";
+const REPORT_TOOL: &str = "mcp__flightdeck__report_step";
 /// A handoff no session took after this many seconds no longer counts as in flight.
 const SENT_WAIT: f64 = 900.0;
 const OPEN: [&str; 4] = ["⬜", "⏳", "🟡", "❌"];
@@ -94,9 +94,9 @@ pub fn run_step(ctx: &mut Ctx, args: &[Value]) -> Res {
     let argv = vec![String::from("sh"), script, dash(&pane), dash(&session), agent];
     // The script readies the session (resumed, at rest, in view); the prompt goes the one way words reach an agent,
     // on behalf of whoever pressed run.
-    let sender = cockpit_core::peer::carry();
+    let sender = flightdeck_core::peer::carry();
     std::thread::spawn(move || {
-        cockpit_core::peer::adopt(sender);
+        flightdeck_core::peer::adopt(sender);
         hand_over(&argv, &handoff, &prompt);
     });
     ctx.note(format!("step {n} sent to its session{}", if session != "-" { " (resuming it)" } else { "" }));
@@ -161,7 +161,7 @@ pub fn mark_done(ctx: &mut Ctx, args: &[Value]) -> Res {
 pub fn open_pr(ctx: &mut Ctx, args: &[Value]) -> Res {
     let (repo, number) = (text(arg(args, 0)?), arg(args, 1)?);
     let Some(url) = config::pr_url(&repo, number, &ctx.cfg, &config::read_inbox()) else {
-        ctx.note(format!("no URL known for {repo}#{}: set github.org in the cockpit config", text(number)));
+        ctx.note(format!("no URL known for {repo}#{}: set github.org in the flightdeck config", text(number)));
         return Ok(());
     };
     config::open_url(&url);
@@ -204,7 +204,7 @@ fn memory_dir(ctx: &Ctx) -> PathBuf {
 }
 
 fn tools(ctx: &Ctx) -> Vec<String> {
-    let mut tools = proc::strings(&["Bash(gh:*)", "Bash(git:*)", "Bash(jq:*)", "Read", "Write", "Edit", "Grep", "Glob", "mcp__cockpit__cockpit_read"]);
+    let mut tools = proc::strings(&["Bash(gh:*)", "Bash(git:*)", "Bash(jq:*)", "Read", "Write", "Edit", "Grep", "Glob", "mcp__flightdeck__flightdeck_read"]);
     for source in ["tickets", "ci", "platform"] {
         let conf = &ctx.cfg.0[source];
         if truthy(&conf["enabled"]) && truthy(&conf["server"]) {
@@ -229,7 +229,7 @@ fn refresh_prompt(ctx: &Ctx, book: &Value) -> Res<String> {
         format!("Update the runbook at {}: read it first, keep its step order and numbering, refresh every status from live facts, add the steps that appeared and mark the ones finished.", quoted_path(book)?),
         format!("Gather the facts, never from memory alone: every PR across repos (gh: state, review, CI), whether merged ones are live in production ({deploy_facts}), the ticket status, and deploy order, migrations and post-deploy commands from the PRs, the memory notes and the code."),
         "Keep the file's format: `# <TICKET> · <feature>`, `updated: <YYYY-MM-DD HH:MM>`, one `| # | Step | Where | Status | Command |` table, statuses from ✅ done, 🚀 live, 🟡 in progress, ⏳ waiting, ⬜ to do, ❌ blocked, optional `## Notes` of three bullets.".into(),
-        "cockpit's cockpit_read tool reads tickets, CI runs and deploys through cockpit's own servers (source tickets, ci or platform; verbs such as details, listRuns, deployStatus) when your own tools do not reach them.".into(),
+        "flightdeck's flightdeck_read tool reads tickets, CI runs and deploys through flightdeck's own servers (source tickets, ci or platform; verbs such as details, listRuns, deployStatus) when your own tools do not reach them.".into(),
         "Do not run any production command or deploy. Write the file, nothing else.".into(),
         format!("It is now {} local time: use it for `updated:` and any \"as of\" in a status.", chrono::Local::now().format("%Y-%m-%d %H:%M")),
     ]
@@ -349,7 +349,7 @@ pub fn announce(_: &mut Ctx, args: &[Value]) -> Res {
     }
     let action = if newly.is_empty() { format!("runbook:{slug}") } else { format!("runbook:{slug}:{}", newly.join(",")) };
     let title = book["title"].as_str().filter(|t| !t.is_empty()).unwrap_or(&slug).to_string();
-    std::thread::spawn(move || cockpit_core::notify::post(&format!("📋 {title}"), &body, &action, &[]));
+    std::thread::spawn(move || flightdeck_core::notify::post(&format!("📋 {title}"), &body, &action, &[]));
     Ok(())
 }
 

@@ -1,4 +1,4 @@
-//! `cockpit browser track`: follows a host window on screen for the docked browser. Each line is one reading as JSON,
+//! `flightdeck browser track`: follows a host window on screen for the docked browser. Each line is one reading as JSON,
 //! `{"host": {id, x, y, w, h} | null, "above": [{id, pid}]}`: the host's largest window and the windows in front of it,
 //! nearest the viewer first. A line is printed when the reading changes.
 

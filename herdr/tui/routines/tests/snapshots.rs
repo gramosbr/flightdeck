@@ -4,11 +4,11 @@
 use std::path::PathBuf;
 
 use chrono::DateTime;
-use cockpit_core::files::Density;
-use cockpit_core::testing::render;
-use cockpit_routines::app::{App, Sent};
-use cockpit_routines::data::{Clock, Doc};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::files::Density;
+use flightdeck_core::testing::render;
+use flightdeck_routines::app::{App, Sent};
+use flightdeck_routines::data::{Clock, Doc};
 use serde_json::{Value, json};
 
 fn fixtures() -> PathBuf {
@@ -145,18 +145,18 @@ fn a_new_routine_starts_from_a_template_picked_with_the_keyboard() {
     press(&mut app, 'a');
     press(&mut app, '2');
     let form = app.form.as_ref().expect("1–5 picks at once");
-    assert_eq!((form.text(cockpit_routines::form::NAME), form.text(cockpit_routines::form::WHEN)), ("Morning sweep", "weekdays 09:00"));
+    assert_eq!((form.text(flightdeck_routines::form::NAME), form.text(flightdeck_routines::form::WHEN)), ("Morning sweep", "weekdays 09:00"));
     insta::assert_snapshot!("a_form_filled_from_a_template", render(&mut app, 100, 36));
     assert!(app.sent.is_empty(), "a template fills the form: nothing is saved yet");
     for _ in 0..4 {
         key(&mut app, KeyCode::Tab);
     }
     key(&mut app, KeyCode::Enter);
-    assert!(app.sent.is_empty() && app.form.as_ref().unwrap().at == cockpit_routines::form::PRECHECK, "enter from the folder goes on to the precheck");
+    assert!(app.sent.is_empty() && app.form.as_ref().unwrap().at == flightdeck_routines::form::PRECHECK, "enter from the folder goes on to the precheck");
     key(&mut app, KeyCode::Enter);
     let sent = last(&app);
     let args: Vec<&str> = sent.args.iter().map(|a| a.as_str().unwrap()).collect();
-    let t = cockpit_core::routines::TEMPLATES[0];
+    let t = flightdeck_core::routines::TEMPLATES[0];
     assert_eq!(sent.action, "add");
     assert_eq!(args, [t.name, t.when, t.body, "", "", "sonnet", "", "always", t.precheck, "", t.tools, ""]);
     press(&mut app, 'a');
@@ -207,7 +207,7 @@ fn a_failed_run_says_how_in_one_sentence() {
 
 #[test]
 fn a_stretch_of_skips_shows_its_last_words_not_the_first_ones() {
-    let runs = std::env::temp_dir().join(format!("cockpit-routines-test-{}", std::process::id()));
+    let runs = std::env::temp_dir().join(format!("flightdeck-routines-test-{}", std::process::id()));
     std::fs::create_dir_all(runs.join("digest")).unwrap();
     let mut app = App::with(Some(clock()), Density::Comfortable, false, runs.clone());
     std::fs::write(runs.join("digest/7.txt"), "nothing waits\n").unwrap();
@@ -276,10 +276,10 @@ fn the_list_puts_running_and_failed_first() {
 #[test]
 fn the_sidebar_says_what_runs_and_what_failed() {
     let doc = Doc::parse(&data()).unwrap();
-    assert_eq!(cockpit_routines::pinned::sidebar_text(&doc, &clock()), ("\u{f04b}  1 running · 1 failed".into(), true));
+    assert_eq!(flightdeck_routines::pinned::sidebar_text(&doc, &clock()), ("\u{f04b}  1 running · 1 failed".into(), true));
     let calm =
         Doc::parse(&json!({"version": 1, "routines": [{"slug": "a", "next": clock().now + 240_000}, {"slug": "b", "paused": true, "next": 1}]})).unwrap();
-    assert_eq!(cockpit_routines::pinned::sidebar_text(&calm, &clock()).0, "\u{f017}  next in 4 min");
+    assert_eq!(flightdeck_routines::pinned::sidebar_text(&calm, &clock()).0, "\u{f017}  next in 4 min");
 }
 
 #[test]
@@ -357,14 +357,14 @@ fn the_form_picks_an_installed_agent_and_refreshes_models_without_losing_text() 
     let mut app = App::with(Some(clock()), Density::Comfortable, false, fixtures().join("runs"));
     app.set_doc(&doc);
     to_model(&mut app);
-    app.form.as_mut().unwrap().at = cockpit_routines::form::KIND;
+    app.form.as_mut().unwrap().at = flightdeck_routines::form::KIND;
     key(&mut app, KeyCode::Right);
     assert_eq!(app.form.as_ref().unwrap().agent_set, "opencode");
-    assert_eq!(app.form.as_ref().unwrap().text(cockpit_routines::form::PROMPT), "Tidy the logs");
+    assert_eq!(app.form.as_ref().unwrap().text(flightdeck_routines::form::PROMPT), "Tidy the logs");
     doc["agents"]["installed"][1]["models"] = json!(["", "Acme/Large@stable"]);
     app.set_doc(&doc);
     let form = app.form.as_mut().unwrap();
-    form.at = cockpit_routines::form::MODEL;
+    form.at = flightdeck_routines::form::MODEL;
     key(&mut app, KeyCode::Right);
     app.set_doc(&doc);
     assert_eq!(app.form.as_ref().unwrap().model, "Acme/Large@stable", "a refresh preserves the selection");

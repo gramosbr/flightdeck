@@ -6,13 +6,13 @@ use std::path::PathBuf;
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant, SystemTime};
 
-use cockpit_core::anim::{Effects, Kind};
-use cockpit_core::dialog::Dialog;
-use cockpit_core::files::{self, Density};
-use cockpit_core::input::Input;
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::anim::{Effects, Kind};
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::input::Input;
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use regex::Regex;
@@ -277,7 +277,7 @@ impl App {
 
     /// A palette jump from another app: the item with that text selected and in view.
     fn take_focus(&mut self) -> bool {
-        let Some(target) = cockpit_core::focus::take("todo", &mut self.focus_seen) else { return false };
+        let Some(target) = flightdeck_core::focus::take("todo", &mut self.focus_seen) else { return false };
         let Some(key) = target["key"].as_str() else { return false };
         self.focus(key);
         true
@@ -483,7 +483,7 @@ impl App {
                 files::open_url(&url);
                 self.toasts.push(format!("opened {url}"), Toast::Good);
             }
-            None => self.toasts.push(format!("no URL known for {}: set tickets.urlTemplate in the cockpit config", token.to_uppercase()), Toast::Note),
+            None => self.toasts.push(format!("no URL known for {}: set tickets.urlTemplate in the flightdeck config", token.to_uppercase()), Toast::Note),
         }
     }
 

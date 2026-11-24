@@ -4,4 +4,4 @@
 H="${HERDR_BIN_PATH:-herdr}"
 pane=${HERDR_PANE_ID:-}
 [ -n "$pane" ] || pane=$("$H" pane current | jq -r '.result.pane.pane_id // empty')
-"$H" plugin pane open --plugin cockpit --entrypoint "$1" --placement popup --env "QUEUE_PANE=$pane" >/dev/null
+"$H" plugin pane open --plugin flightdeck --entrypoint "$1" --placement popup --env "QUEUE_PANE=$pane" >/dev/null

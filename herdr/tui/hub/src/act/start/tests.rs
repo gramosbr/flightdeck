@@ -73,7 +73,7 @@ struct Fake {
     typed: RefCell<Vec<String>>,
     closed: RefCell<Vec<String>>,
     focused: RefCell<Vec<String>>,
-    /// Live sessions cockpit drives: (folder, key).
+    /// Live sessions flightdeck drives: (folder, key).
     sessions: Vec<(String, String)>,
 }
 
@@ -419,8 +419,8 @@ fn a_setup_command_asks_once_until_it_changes() {
     let id = "t-setup-once";
     run_in(&w, &json!({"id": id, "text": "Add a health check", "repo": "api", "trust": h})).expect("it starts");
     let script = script_of(&desk.typed.borrow()[0]);
-    let setup = format!("\n{} setup-run /bin/sh -c 'echo ready'\ns=$?\n", quote(&cockpit_bin()));
-    assert!(script.contains(&setup), "the setup runs as cockpit's own work, never as the person's: {script}");
+    let setup = format!("\n{} setup-run /bin/sh -c 'echo ready'\ns=$?\n", quote(&flightdeck_bin()));
+    assert!(script.contains(&setup), "the setup runs as flightdeck's own work, never as the person's: {script}");
     let again = plan_in(&w, &request(json!({"text": "Add another check", "repo": "api"})));
     assert!(again.ok(), "approved once: {:?}", again.blockers);
     let changed = world(&f, f.cfg(json!({"setup": {"api": "echo ready && make deps"}})), &desk);
@@ -482,9 +482,9 @@ fn a_run_makes_one_worktree_one_space_and_one_agent() {
     assert_eq!((p.place, p.label.as_str()), ("worktree", "eng-415 (api)"), "a space of that name on another folder is another start");
 }
 
-/// Start again on a ticket whose worktree a session cockpit drives works in: that session comes up, nothing is made.
+/// Start again on a ticket whose worktree a session flightdeck drives works in: that session comes up, nothing is made.
 #[test]
-fn pressing_start_again_brings_up_the_session_cockpit_drives_there() {
+fn pressing_start_again_brings_up_the_session_flightdeck_drives_there() {
     let f = Fixture::new();
     let desk = Fake::default();
     let w = world(&f, f.cfg(json!({"prefix": "me"})), &desk);
@@ -516,7 +516,7 @@ fn a_mode_goes_only_to_an_agent_whose_row_takes_one() {
     let script = script_for(&confirmed, Path::new("/m"), Path::new("/p"));
     assert!(script.ends_with("--permission-mode plan\n"), "{script}");
     assert_eq!(modes_of(&stub(false)), Vec::<Value>::new());
-    // A mode cockpit does not offer is refused, never handed to the agent's command line.
+    // A mode flightdeck does not offer is refused, never handed to the agent's command line.
     let odd = plan_in(&w, &request(json!({"text": "Tidy the logs", "repo": "api", "agent": "moded", "mode": "plan --dangerously-skip-permissions"})));
     assert_eq!(blocker_steps(&odd), ["agent"]);
     assert!(odd.blockers[0].text.starts_with("No mode \"plan --dangerously-skip-permissions\""), "{:?}", odd.blockers);
@@ -728,7 +728,7 @@ fn wait_for(id: &str, state: &str) -> Value {
 }
 
 #[test]
-fn the_choices_say_which_agents_cockpit_drives_itself() {
+fn the_choices_say_which_agents_flightdeck_drives_itself() {
     let f = Fixture::new();
     let desk = Fake::default();
     let mut w = world(&f, f.cfg(json!({})), &desk);

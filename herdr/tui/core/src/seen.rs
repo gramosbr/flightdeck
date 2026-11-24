@@ -1,5 +1,5 @@
 //! Since you last looked: the time an app's pane last lost the terminal focus, one file per app in
-//! ~/.cache/cockpit/seen/, and the hub's events after it, fetched in the background. A row an event touched gets a
+//! ~/.cache/flightdeck/seen/, and the hub's events after it, fetched in the background. A row an event touched gets a
 //! marker until you select it or leave the app again, and the head says how many changes came and what they were.
 
 use std::collections::HashMap;
@@ -177,7 +177,7 @@ mod tests {
     }
 
     fn temp(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("cockpit-seen-{}-{name}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("flightdeck-seen-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir.join("inbox.json")
     }

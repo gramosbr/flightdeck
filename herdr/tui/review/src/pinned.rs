@@ -6,9 +6,9 @@ use crate::app::App;
 
 pub const ICON: &str = "\u{f4af}";
 
-/// Run by `cockpit space review` in the review space: the sidebar row is this app's then.
+/// Run by `flightdeck space review` in the review space: the sidebar row is this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 /// The sidebar's line: the comments waiting to be sent, else the scope's changes, else that there is nothing to review.
@@ -36,7 +36,7 @@ pub fn report(text: String) {
     let bin = std::env::var("HERDR_BIN_PATH").unwrap_or_else(|_| "herdr".into());
     std::thread::spawn(move || {
         let _ = Command::new(bin)
-            .args(["workspace", "report-metadata", &workspace, "--source", "cockpit-review", "--token", &format!("review_space={text}")])
+            .args(["workspace", "report-metadata", &workspace, "--source", "flightdeck-review", "--token", &format!("review_space={text}")])
             .output();
     });
 }

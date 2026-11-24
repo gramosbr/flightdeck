@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use cockpit_agents::ledger;
-use cockpit_core::files;
-use cockpit_core::hub::Docs;
+use flightdeck_agents::ledger;
+use flightdeck_core::files;
+use flightdeck_core::hub::Docs;
 use serde_json::{Value, json};
 
 #[derive(Clone, Debug, Default)]
@@ -58,7 +58,7 @@ impl Inputs {
             worktrees,
             secs: ticket_week(crate::worktrees::now_ms()),
             routines: None,
-            started: cockpit_core::started::report(),
+            started: flightdeck_core::started::report(),
             starts: starts(),
         }
     }
@@ -89,7 +89,7 @@ fn muted() -> Vec<String> {
 
 /// What each ticket cost, as the hub's count estimates it everywhere (`usage::ticket_estimates`).
 fn ticket_costs() -> HashMap<String, f64> {
-    cockpit_core::usage::ticket_estimates()
+    flightdeck_core::usage::ticket_estimates()
 }
 
 pub fn json_files(dir: &str) -> Vec<PathBuf> {
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn ticket_costs_are_the_hub_s_estimates() {
         let home = crate::test_home::home();
-        let cache = home.join(".cache/cockpit");
+        let cache = home.join(".cache/flightdeck");
         std::fs::create_dir_all(&cache).unwrap();
         std::fs::write(cache.join("estimates.json"), r#"{"at": 1, "sessions": {"s-a": 4.0}, "tickets": {"ENG-1": 3.0, "ENG-2": 1.0}}"#).unwrap();
         let got = ticket_costs();

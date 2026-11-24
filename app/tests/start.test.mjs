@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-import { emptyState, requestOf, applyFix, edited, sourceOf, phase, resolved, stepMark, shortPath, choicesOf, agentOf, takesModel } from "../mods/cockpit/startform.js";
+import { emptyState, requestOf, applyFix, edited, sourceOf, phase, resolved, stepMark, shortPath, choicesOf, agentOf, takesModel } from "../mods/flightdeck/startform.js";
 
 test("the form becomes the request the hub plans", () => {
   const s = edited(edited(emptyState("ENG-412  ", "g1"), "mode", "plan"), "model", " opus ");
@@ -116,7 +116,7 @@ async function dialog(planFor) {
     "./ui.js": Object.fromEntries(["tokens", "TEXT", "RADIUS", "Icon", "Spinner", "Button", "Kbd", "TextField", "Pills", "AlertDialog", "HubDown", "alpha", "AgentLogo"].map((k) => [k, stub()])),
   };
   const context = createContext({ console, setTimeout, Promise, Date, JSON, Math, String, Number, Boolean, Object, Array, RegExp, Error, Set, Map });
-  const mods = new URL("../mods/cockpit/", import.meta.url);
+  const mods = new URL("../mods/flightdeck/", import.meta.url);
   const loaded = new Map();
   const load = async (file) => {
     if (loaded.has(file)) return loaded.get(file);
@@ -267,8 +267,8 @@ test("digits pick only while the dialog holds the keyboard, and Esc on a lit cho
 test("Esc is bound in the dialog's own context, from a field too, so the overlay's Esc does not close it before its keys hear it", async () => {
   const { s, key, type, world } = await dialog(readyPlan);
   assert.deepEqual(JSON.parse(JSON.stringify(world.bound)), [
-    { keystroke: "escape", action: "cockpit_start_escape", context: "CockpitStart && start_holds" },
-    { keystroke: "escape", action: "cockpit_start_escape", context: "CockpitStart && start_holds > Input" },
+    { keystroke: "escape", action: "flightdeck_start_escape", context: "FlightdeckStart && start_holds" },
+    { keystroke: "escape", action: "flightdeck_start_escape", context: "FlightdeckStart && start_holds > Input" },
   ]);
   type("ENG-412");
   await settle();
@@ -281,7 +281,7 @@ test("Esc is bound in the dialog's own context, from a field too, so the overlay
   assert.equal(world.dismissed, 1, "a second Esc closes the dialog");
 });
 
-test("a second Start on a ticket whose driven session is open brings that session up in Cockpit Chat", async () => {
+test("a second Start on a ticket whose driven session is open brings that session up in Flightdeck Chat", async () => {
   const sessionPlan = (request) => ({ ...readyPlan(request), place: "focus", session: true, space: "claude:1793611000000" });
   const { s, type, world, cx } = await dialog(sessionPlan);
   type("ENG-412");

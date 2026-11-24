@@ -19,8 +19,8 @@ expression: "render(&mut app, 80, 24)"
 │  prefix+i                                                                    │
 │refresh the inbox                                                             │
 │  PRs, reviews, tickets and CI fetched again now                              │
-│check cockpit                                                                 │
-│  the doctor's report: every part of cockpit, ok, warn or fail                │
+│check flightdeck                                                                 │
+│  the doctor's report: every part of flightdeck, ok, warn or fail                │
 │today's brief                                                                 │
 │  the morning brief: meetings, reviews, CI, tickets                           │
 │                                                                              │

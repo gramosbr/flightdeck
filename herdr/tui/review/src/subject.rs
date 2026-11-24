@@ -1,7 +1,7 @@
 //! Whose changes the space reviews: the agents of the hub's agents view that work in a git worktree, the most recently
 //! active first, and the one the comments go to.
 
-use cockpit_core::agent;
+use flightdeck_core::agent;
 use serde_json::Value;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,7 +15,7 @@ pub struct Agent {
     pub status: String,
     /// It waits on a question or a permission: what is typed into it would answer that instead.
     pub waiting: bool,
-    /// A session cockpit drives itself, which takes the review without a terminal.
+    /// A session flightdeck drives itself, which takes the review without a terminal.
     pub driven: bool,
     /// When its state began, in ms.
     pub since: u64,
@@ -48,7 +48,7 @@ impl Agent {
 }
 
 /// The agents the view lists that work in a git worktree (`toplevel` names a folder's), the most recently active
-/// first: working (active now), then blocked or done by their latest change of state, then idle. Sessions cockpit
+/// first: working (active now), then blocked or done by their latest change of state, then idle. Sessions flightdeck
 /// drives itself are among them: `deliver` hands them the review.
 pub fn agents(view: &Value, toplevel: &dyn Fn(&str) -> Option<String>) -> Vec<Agent> {
     let text = |row: &Value, key: &str| row[key].as_str().unwrap_or_default().trim().to_string();

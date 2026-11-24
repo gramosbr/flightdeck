@@ -7,9 +7,9 @@ use std::collections::HashSet;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use cockpit_agents::gui;
-use cockpit_core::deliver::is_waiting;
-use cockpit_hub::store;
+use flightdeck_agents::gui;
+use flightdeck_core::deliver::is_waiting;
+use flightdeck_hub::store;
 use serde_json::{Map, Value, json};
 
 /// Why a queue holds after a turn that failed, after one the person stopped, and when it was written for another agent.
@@ -33,7 +33,7 @@ pub fn view(_args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     // A driven session that is paused or whose agent ended takes nothing on its own: a prompt by hand picks it up.
     let asleep: Map<String, Value> = queues
         .keys()
-        .filter(|h| cockpit_agents::session::summary(h).is_some_and(|s| s["paused"] == true || !s["ended"].is_null()))
+        .filter(|h| flightdeck_agents::session::summary(h).is_some_and(|s| s["paused"] == true || !s["ended"].is_null()))
         .map(|h| (h.clone(), json!(true)))
         .collect();
     json!({"queues": queues, "paused": doc["paused"].as_object().cloned().unwrap_or_default(), "asleep": asleep, "drain": drains(), "count": count})
@@ -41,7 +41,7 @@ pub fn view(_args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
 
 /// Whether a prompt goes on its own once the agent rests: on unless the config's `queue.drain` is false.
 fn drains() -> bool {
-    cockpit_core::files::config()["queue"]["drain"] != false
+    flightdeck_core::files::config()["queue"]["drain"] != false
 }
 
 fn copy(doc: &Value) -> Value {
@@ -190,7 +190,7 @@ fn drain(handle: &str, now: bool) -> Option<Result<(), String>> {
     match went {
         Ok(()) => Some(Ok(())),
         // A session ended meanwhile takes its queue with it: nothing comes back for it.
-        Err(why) if cockpit_agents::session::is_gone(&why) => Some(Err(why)),
+        Err(why) if flightdeck_agents::session::is_gone(&why) => Some(Err(why)),
         Err(why) => {
             // Refused for a question, a screen it cannot read or a draft, it goes on a later look; anything else holds the
             // queue.
@@ -330,9 +330,9 @@ pub fn take_for_send(doc: &Value, handle: &str, which: &str) -> Result<(Value, V
     Ok((doc, taken, at))
 }
 
-/// Hands the prompt to the agent, a terminal or a session cockpit drives; nothing goes while it waits on a question.
+/// Hands the prompt to the agent, a terminal or a session flightdeck drives; nothing goes while it waits on a question.
 fn send(handle: &str, text: &str) -> Result<(), String> {
-    cockpit_core::deliver::deliver(handle, text)
+    flightdeck_core::deliver::deliver(handle, text)
 }
 
 /// How many prompts wait in `handle`'s queue.
@@ -487,7 +487,7 @@ fn resume(handle: &str) -> Result<String, String> {
 /// paused queue, `:q` quits.
 fn pick(handle: &str) {
     use std::io::{BufRead, Write};
-    let request = |req: Value| cockpit_core::hub::request(&req, std::time::Duration::from_secs(20));
+    let request = |req: Value| flightdeck_core::hub::request(&req, std::time::Duration::from_secs(20));
     let act = |action: &str, args: Vec<Value>| match request(json!({"op": "act", "app": "queue", "action": action, "args": args})) {
         Ok(answer) => answer["error"].as_str().or(answer["note"].as_str()).unwrap_or_default().to_string(),
         Err(err) => err,
@@ -545,13 +545,13 @@ pub fn state_line(view: &Value, handle: &str) -> String {
     }
 }
 
-/// `cockpit queue`: the queues as JSON, one of their actions through the hub, or `pick` (herdr's popup).
+/// `flightdeck queue`: the queues as JSON, one of their actions through the hub, or `pick` (herdr's popup).
 pub fn main(args: &[String]) {
     let (action, rest) = args.split_first().map(|(a, r)| (a.as_str(), r)).unwrap_or(("list", &[]));
     let request = match action {
         "pick" => {
             let handle = rest.first().cloned().or_else(|| std::env::var("QUEUE_PANE").ok()).filter(|h| !h.is_empty());
-            return pick(&handle.unwrap_or_else(|| crate::proc::fail("cockpit queue pick <terminal>: which agent?")));
+            return pick(&handle.unwrap_or_else(|| crate::proc::fail("flightdeck queue pick <terminal>: which agent?")));
         }
         "list" => json!({"op": "view", "name": "queue"}),
         "add" | "tell" | "send" | "clear" | "remove" | "resume" => {
@@ -565,10 +565,10 @@ pub fn main(args: &[String]) {
             json!({"op": "act", "app": "queue", "action": action, "args": parts})
         }
         _ => crate::proc::fail(
-            "cockpit queue [list|add <terminal> <text>|tell <terminal> <text>|send <terminal> [all|<id>]|clear <terminal>|resume <terminal>|pick [terminal]]",
+            "flightdeck queue [list|add <terminal> <text>|tell <terminal> <text>|send <terminal> [all|<id>]|clear <terminal>|resume <terminal>|pick [terminal]]",
         ),
     };
-    match cockpit_core::hub::request(&request, std::time::Duration::from_secs(20)) {
+    match flightdeck_core::hub::request(&request, std::time::Duration::from_secs(20)) {
         Ok(answer) if action == "list" => println!("{}", answer["value"]),
         Ok(answer) if answer["error"].is_string() => crate::proc::fail(answer["error"].as_str().unwrap_or_default()),
         Ok(answer) => println!("{}", answer["note"].as_str().unwrap_or_default()),
@@ -742,7 +742,7 @@ mod tests {
     #[test]
     fn tell_says_what_happened_to_the_oldest() {
         assert_eq!(behind(2, Some(Ok(()))).unwrap(), "queued behind 2: the oldest went now, the rest follow as it rests");
-        let asking = cockpit_core::deliver::waiting_note("Claude Code");
+        let asking = flightdeck_core::deliver::waiting_note("Claude Code");
         assert!(behind(2, Some(Err(asking))).unwrap().contains("waits on a question"));
         let kept = behind(2, Some(Err("app:t3 did not take it".into()))).unwrap();
         assert!(kept.starts_with("queued") && kept.contains("did not take it"), "added, the words are queued: never a refusal to send again");

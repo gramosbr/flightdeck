@@ -2,10 +2,10 @@
 // since it was opened), reloaded when the agent changes it, Markdown with a live preview. "Ask the agent" sends a
 // note about the file, or some of its lines, to the agent beside it, as a review comment. Ported from
 // yama-lei/herdr-editor-layout's editor pane (Apache-2.0).
-// Source: https://github.com/yama-lei/herdr-editor-layout (Apache-2.0), modified for cockpit; see THIRD_PARTY_NOTICES.md.
+// Source: https://github.com/yama-lei/herdr-editor-layout (Apache-2.0), modified for flightdeck; see THIRD_PARTY_NOTICES.md.
 //
-//   pane.split {direction: "right", pane, mod: "cockpit", props: {app: "code", file, line?, terminal?}}
-//   the reading layout's side panel: {app: "code", panel: true}, showing the file shared `cockpit.code.panel` names
+//   pane.split {direction: "right", pane, mod: "flightdeck", props: {app: "code", file, line?, terminal?}}
+//   the reading layout's side panel: {app: "code", panel: true}, showing the file shared `flightdeck.code.panel` names
 
 import { div } from "gpui-kit";
 import { v_flex, h_flex, Editor, EditorState, InputState, TextView, h_resizable, resizable_panel } from "gpui-base";
@@ -28,7 +28,7 @@ const tilde = (p) => {
 };
 
 /** Where the reading layout's side panel keeps the file it shows: {file, line, terminal, at, back}. */
-export const CODE_PANEL = "cockpit.code.panel";
+export const CODE_PANEL = "flightdeck.code.panel";
 
 /**
  * Opens a file beside a terminal's pane (the focused one when none is given); in the reading layout, in the side panel
@@ -39,7 +39,7 @@ export async function openCode(file, { terminal, line } = {}) {
   // Beside the given agent, else beside the terminal of the tab in view (the editor itself may have the focus).
   const here = focused()?.tab ?? null;
   const beside = terminal ? all.find((p) => p.terminal === terminal) : (all.find((p) => p.focused && p.terminal) ?? all.find((p) => p.tab === here && p.terminal));
-  if (layoutName() === "cockpit-chat") {
+  if (layoutName() === "flightdeck-chat") {
     const showing = findNode(layout(), "panel-body")?.active ?? null;
     const back = showing === "code" ? (shared(CODE_PANEL)?.back ?? null) : { open: panelOpen(), child: showing };
     setShared(CODE_PANEL, { file, line: line ?? null, terminal: terminal ?? beside?.terminal ?? null, at: Date.now(), back });
@@ -50,7 +50,7 @@ export async function openCode(file, { terminal, line } = {}) {
   // One editor per tab: the file replaces the one it showed.
   const open = tab ? (shared(SHOWN) ?? {})[tab] : null;
   if (open && all.some((p) => p.pane === open)) run("pane.close", { pane: open });
-  const args = { direction: "right", ...(beside ? { pane: beside.pane } : {}), mod: "cockpit", props: { app: "code", file, line, terminal: terminal ?? beside?.terminal, tab } };
+  const args = { direction: "right", ...(beside ? { pane: beside.pane } : {}), mod: "flightdeck", props: { app: "code", file, line, terminal: terminal ?? beside?.terminal, tab } };
   // Through herdr-app, which answers with the new pane: run() gives nothing back.
   const r = await exec("env", [`HERDR_APP_HOME=${appHome()}`, `${home()}/.local/bin/herdr-app`, "do", "pane.split", JSON.stringify(args)]).catch(() => null);
   const made = r?.code === 0 ? JSON.parse(r.stdout || "{}").pane : null;
@@ -58,7 +58,7 @@ export async function openCode(file, { terminal, line } = {}) {
   else if (tab) setShared(SHOWN, { ...(shared(SHOWN) ?? {}), [tab]: made });
 }
 
-const SHOWN = "cockpit.code.panes";
+const SHOWN = "flightdeck.code.panes";
 
 export default class Code {
   init(p) {
@@ -189,11 +189,11 @@ export default class Code {
   }
 
   /**
-   * Where "Ask the agent" goes, as {handle, name}: the chat's subject in Cockpit Chat, a driven session included, else
+   * Where "Ask the agent" goes, as {handle, name}: the chat's subject in Flightdeck Chat, a driven session included, else
    * the agent whose terminal the file opened beside.
    */
   async askTarget() {
-    const handle = (layoutName() === "cockpit-chat" ? shared(CHAT_SUBJECT) : null) ?? this.terminal ?? "";
+    const handle = (layoutName() === "flightdeck-chat" ? shared(CHAT_SUBJECT) : null) ?? this.terminal ?? "";
     const bare = String(handle).replace(/^app:/, "");
     const rows = lent()?.agents ?? (await hub.view("agents", { frontend: "app" }).catch(() => null))?.agents ?? [];
     const row = rows.find((r) => r.terminal === handle || r.address === bare || r.terminal === `app:${bare}`);
@@ -298,7 +298,7 @@ export default class Code {
           .child(Button("code-send", { label: "Send", icon: "send", size: "sm", kbd: "⏎", onClick: (_e, cx) => this.sendAsk(cx) }))
       : null;
     let root = v_flex()
-      .id("cockpit-code")
+      .id("flightdeck-code")
       .on_size_change((size, cx) => {
         const was = (this.width ?? Infinity) < 520;
         this.width = size.width;

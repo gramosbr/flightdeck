@@ -1,4 +1,4 @@
-// cockpit's design kit: shadcn/ui's components and proportions drawn with GPUI elements, colored from Herdr's theme()
+// flightdeck's design kit: shadcn/ui's components and proportions drawn with GPUI elements, colored from Herdr's theme()
 // so every screen follows the person's theme, light and dark. Build screens from these; add a missing piece here.
 //
 // Rhythm: a 4px grid, 13px body, 12px secondary, 11px captions; radius 8 (cards), 6 (controls), 4 (checkbox, kbd);
@@ -67,7 +67,7 @@ export function alpha(color, a) {
 
 /** A lucide icon from icons/, tinted with `color` (else the text color). */
 export function Icon(name, { size = 16, color } = {}) {
-  const el = svg(`mods/cockpit/icons/${name}.svg`).size(size).flex_none();
+  const el = svg(`mods/flightdeck/icons/${name}.svg`).size(size).flex_none();
   return color ? el.text_color(color) : el;
 }
 
@@ -76,7 +76,7 @@ export function Icon(name, { size = 16, color } = {}) {
 
 /** The reading layout's logo style: "tinted" or "brand". */
 export const CHAT_LOGO_STYLE = "brand";
-const PROGRAMS = "cockpit.agent.programs";
+const PROGRAMS = "flightdeck.agent.programs";
 const MONO_LOGOS = new Set(["claude", "codex", "amp", "antigravity", "kimi", "kiro"]);
 
 const iconName = (name) => typeof name === "string" && /^[a-z0-9][a-z0-9-]*$/.test(name) ? name : null;
@@ -100,11 +100,11 @@ function loadPrograms() {
 }
 
 /** The logo's path and drawing kind, using Herdr's program table for brand colours. */
-export function agentLogoSpec(x, { mono = layoutName() === "cockpit-chat" && CHAT_LOGO_STYLE === "tinted", programs = shared(PROGRAMS)?.rows ?? [] } = {}) {
+export function agentLogoSpec(x, { mono = layoutName() === "flightdeck-chat" && CHAT_LOGO_STYLE === "tinted", programs = shared(PROGRAMS)?.rows ?? [] } = {}) {
   const name = iconOf(x);
   const own = x?.program;
   const program = programIcon(own) === name ? own : programs.find((p) => programIcon(p) === name);
-  return { name, path: mono && MONO_LOGOS.has(name) ? `mods/cockpit/icons/agents/${name}.svg` : `icons/${name}.svg`, picture: !mono && program?.tint === false };
+  return { name, path: mono && MONO_LOGOS.has(name) ? `mods/flightdeck/icons/agents/${name}.svg` : `icons/${name}.svg`, picture: !mono && program?.tint === false };
 }
 
 /** The providers among these agents, each once in their order, with Herdr's drawing metadata. */
@@ -118,7 +118,7 @@ export function providersOf(rows) {
   return [...seen.values()];
 }
 
-/** Herdr's agent logo in brand colours in Cockpit, tinted in Cockpit Chat. */
+/** Herdr's agent logo in brand colours in Flightdeck, tinted in Flightdeck Chat. */
 export function AgentLogo(x, { size = 14, color, tooltip, id } = {}) {
   loadPrograms();
   const { name, path, picture } = agentLogoSpec(x);
@@ -148,9 +148,9 @@ export function keyLabel(key) {
   return parts.map((p) => MODIFIER[p.toLowerCase()] ?? p).join("") + (last.length === 1 ? last.toUpperCase() : last);
 }
 
-/** Keys as shadcn's <Kbd>: "⌘K", ["⌘", "K"], or "ctrl-p" (written ⌃P); nothing in Cockpit Chat, which keeps keys to tooltips. */
+/** Keys as shadcn's <Kbd>: "⌘K", ["⌘", "K"], or "ctrl-p" (written ⌃P); nothing in Flightdeck Chat, which keeps keys to tooltips. */
 export function Kbd(keys) {
-  if (layoutName() === "cockpit-chat") return div();
+  if (layoutName() === "flightdeck-chat") return div();
   const k = tokens();
   const list = (Array.isArray(keys) ? keys : [keys]).map(keyLabel);
   return h_flex()
@@ -176,9 +176,9 @@ export function Kbd(keys) {
     );
 }
 
-/** A choice's number: its Kbd chip in Cockpit, the number as quiet text in Cockpit Chat, whose tooltips say the key. */
+/** A choice's number: its Kbd chip in Flightdeck, the number as quiet text in Flightdeck Chat, whose tooltips say the key. */
 export function ChoiceKey(n) {
-  if (layoutName() !== "cockpit-chat") return Kbd(String(n));
+  if (layoutName() !== "flightdeck-chat") return Kbd(String(n));
   return div().w(20).flex_none().text_size(TEXT.xs).text_color(tokens().dim).child(String(n));
 }
 
@@ -221,12 +221,12 @@ const SIZE = { default: [32, 12, TEXT.base, 16], sm: [28, 10, TEXT.sm, 14], lg: 
 
 /**
  * A button: variant default | secondary | outline | ghost | destructive | link, size default | sm | lg | icon |
- * icon-sm; `kbd` shows its key, in its tooltip in Cockpit Chat; `tooltip` on hover. `onClick(event, cx)`.
+ * icon-sm; `kbd` shows its key, in its tooltip in Flightdeck Chat; `tooltip` on hover. `onClick(event, cx)`.
  */
 export function Button(id, { label, icon, iconRight, variant = "default", size = "default", kbd, disabled = false, tooltip, onClick, grow = false } = {}) {
   const k = tokens();
-  // Cockpit Chat keeps key hints to tooltips: the key goes after two spaces, unless the tooltip says it already.
-  if (kbd && layoutName() === "cockpit-chat") {
+  // Flightdeck Chat keeps key hints to tooltips: the key goes after two spaces, unless the tooltip says it already.
+  if (kbd && layoutName() === "flightdeck-chat") {
     const words = tooltip ?? (typeof label === "string" ? label : "");
     tooltip = words.includes(kbd) ? words : words ? `${words}  ${kbd}` : kbd;
     kbd = undefined;
@@ -577,11 +577,11 @@ const SOURCE_ICON = { auth: "key-round", rate: "hourglass", network: "triangle-a
 
 /**
  * A chip per source a view reads ("GitHub · 2 min ago", "Linear · sign in again"): a click runs its fix, the tooltip has
- * the exact error, and only Cockpit colours a failing one (Cockpit Chat keeps colour for agents). `view` owns the toasts.
+ * the exact error, and only Flightdeck colours a failing one (Flightdeck Chat keeps colour for agents). `view` owns the toasts.
  */
 export function SourceChips(sources, { view, narrow = false } = {}) {
   const k = tokens();
-  const chat = shared("layout") === "cockpit-chat";
+  const chat = shared("layout") === "flightdeck-chat";
   if (!SEEN.has(sources)) SEEN.set(sources, Date.now());
   const now = fresh.nowOf(sources, SEEN.get(sources), Date.now());
   const all = fresh.chips(sources, now, { readOnly: Boolean(hub.remoteMachine()) });
@@ -613,7 +613,7 @@ export function SourceChips(sources, { view, narrow = false } = {}) {
       .tooltip(tip(c));
     if (icon(c)) el = el.child(Icon(icon(c), { size: 12 }));
     el = el.child(div().min_w(0).max_w(260).truncate().child(c.text));
-    // Cockpit's visible buttons carry their key; Cockpit Chat puts it in the tooltip alone.
+    // Flightdeck's visible buttons carry their key; Flightdeck Chat puts it in the tooltip alone.
     if (c.action && c.state === "failing" && !chat) el = el.child(Kbd(key(c)));
     if (c.action) el = el.cursor_pointer().hover((s) => s.bg(tint ? alpha(tint, 0.22) : k.selected)).on_click((_e, cx) => (cx.stop_propagation(), runSource(c, cx, view)));
     return el;
@@ -657,7 +657,7 @@ export function sourceKey(e, sources, cx, view, { refresh = false } = {}) {
 
 /** A footer line of key hints: [["⏎", "edit"], ["x", "done"], ...]. */
 export function KeyHints(hints) {
-  if (layoutName() === "cockpit-chat") return div();
+  if (layoutName() === "flightdeck-chat") return div();
   const k = tokens();
   return h_flex()
     .h(36)
@@ -978,14 +978,14 @@ export function HoverCard(id, trigger, content, { width = 320, openDelay = 500 }
 
 /**
  * A menu: items [{ label, icon, kbd, command, destructive } | "separator"], at the pointer, or at `at` ({x, y} in the
- * window, under the control a key opened it from). Choosing one runs `cockpit.<command>` with a key minted for this
+ * window, under the control a key opened it from). Choosing one runs `flightdeck.<command>` with a key minted for this
  * opening (person.js), which reaches the view's `command()`.
  */
 export function openMenu(items, { width = 220, at = null, clickOnly = false, byKey = false } = {}) {
   const rows = keyedItems(items.filter(Boolean));
   const height = rows.reduce((h, i) => h + (i === "separator" ? 9 : 32), 10);
   // Opened from a key (`byKey`), the first item is already picked, so ↓ and ⏎ start from it; a click picks nothing.
-  openOverlay({ mod: "cockpit", props: { app: "menu", items: rows, ...(byKey ? { picked: 0 } : {}), ...(clickOnly ? { clickOnly: true } : {}) }, kind: "popup", at: menuAt(at, width, height), width, height, frame: "none" });
+  openOverlay({ mod: "flightdeck", props: { app: "menu", items: rows, ...(byKey ? { picked: 0 } : {}), ...(clickOnly ? { clickOnly: true } : {}) }, kind: "popup", at: menuAt(at, width, height), width, height, frame: "none" });
 }
 
 /** The window's drawable size in px, or null outside a host call (tests, a closed window). */
@@ -1311,7 +1311,7 @@ export function StatTile(id, { label, value, delta, deltaGood, hint, spark, spar
 // Boards: state chips, stage headings, metrics with mini bars, callouts (the Home board's pieces)
 
 /** Text in the mono face, for what you would type: branches, keys, numbers. */
-/** Markdown as cockpit draws it in a panel: selectable, links to the browser. */
+/** Markdown as flightdeck draws it in a panel: selectable, links to the browser. */
 export function Markdown(id, text, { size = TEXT.sm } = {}) {
   return TextView.markdown(id, String(text ?? "")).selectable(true).text_size(size).on_link_click((url) => hub.openUrl(url));
 }
@@ -1701,7 +1701,7 @@ export function HubDown(id, owner, why = "", k = tokens(), { maxW = 760, onStart
   // Not installed is a setup to finish, not a hub to start; a runner's hub is started on the runner.
   const missing = hub.isNotInstalled(why);
   const startable = !missing && !hub.remoteMachine();
-  const words = missing ? "Cockpit isn't set up in this Herdr: run cockpit app install" : owner.starting ? "Starting the cockpit hub…" : hub.downWords(why);
+  const words = missing ? "Flightdeck isn't set up in this Herdr: run flightdeck app install" : owner.starting ? "Starting the flightdeck hub…" : hub.downWords(why);
   return h_flex()
     .id(id)
     .w_full()
@@ -1716,7 +1716,7 @@ export function HubDown(id, owner, why = "", k = tokens(), { maxW = 760, onStart
     .text_color(k.mutedFg)
     .child(Icon(missing ? "wrench" : "triangle-alert", { size: 14 }))
     .child(div().flex_1().min_w(0).child(words))
-    .when(!owner.starting && startable, (e) => e.child(Button(`${id}-start`, { label: "Start it", size: "sm", tooltip: why || "Start the cockpit hub", onClick: (_e, cx) => start(cx) })));
+    .when(!owner.starting && startable, (e) => e.child(Button(`${id}-start`, { label: "Start it", size: "sm", tooltip: why || "Start the flightdeck hub", onClick: (_e, cx) => start(cx) })));
 }
 
 /** An app's body while the hub does not answer and nothing was loaded yet: the `HubDown` card, centred. */

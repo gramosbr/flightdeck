@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use cockpit_core::frontend::{self, status_mark};
-use cockpit_core::text::fit;
-use cockpit_core::{agent, names};
+use flightdeck_core::frontend::{self, status_mark};
+use flightdeck_core::text::fit;
+use flightdeck_core::{agent, names};
 use serde_json::Value;
 
 /// Lines under a space; when more terminals run, the last one counts the rest.
@@ -52,8 +52,8 @@ pub fn lines(spaces: &Value, panes: &Value, pinned: &[String]) -> Vec<(String, V
         let label = w["label"].as_str().unwrap_or_default();
         let Some(name) = pinned.iter().find(|n| *n != "actions" && label.ends_with(&format!("  {n}"))) else { continue };
         let Some(id) = w["workspace_id"].as_str() else { continue };
-        // A pinned space whose first pane runs cockpit's own app leaves that pane out of its list.
-        let skip = usize::from(cockpit_core::SPACE_APPS.iter().any(|app| cockpit_core::space_of(app) == name));
+        // A pinned space whose first pane runs flightdeck's own app leaves that pane out of its list.
+        let skip = usize::from(flightdeck_core::SPACE_APPS.iter().any(|app| flightdeck_core::space_of(app) == name));
         let mut found: Vec<Line> = panes["result"]["panes"].as_array().into_iter().flatten().filter(|p| p["workspace_id"] == id).skip(skip).map(line).collect();
         found.sort_by_key(|l| !l.waiting);
         out.push((id.to_string(), found));
@@ -64,7 +64,7 @@ pub fn lines(spaces: &Value, panes: &Value, pinned: &[String]) -> Vec<(String, V
 /// The herdr arguments that list a space's lines under its row: one token per slot, a waiting line under its own name
 /// so it stands out, the unused ones cleared.
 pub fn tokens(ws: &str, lines: &[Line], room: usize) -> Vec<String> {
-    let mut args: Vec<String> = ["workspace", "report-metadata", ws, "--source", "cockpit-terms"].map(String::from).to_vec();
+    let mut args: Vec<String> = ["workspace", "report-metadata", ws, "--source", "flightdeck-terms"].map(String::from).to_vec();
     for i in 0..SLOTS {
         let more = i == SLOTS - 1 && lines.len() > SLOTS;
         let line = lines.get(i).filter(|_| !more);
@@ -160,7 +160,7 @@ mod tests {
     fn one_token_per_line_a_waiting_one_apart() {
         let lines = [Line { text: "⏸ Codex".into(), waiting: true }, Line { text: "› ~/acme/web".into(), waiting: false }];
         let line = tokens("w2", &lines, 30).join(" | ");
-        assert!(line.starts_with("workspace | report-metadata | w2 | --source | cockpit-terms"));
+        assert!(line.starts_with("workspace | report-metadata | w2 | --source | flightdeck-terms"));
         assert!(line.contains("--clear-token | term_1 | --token | term_1_wait=⏸ Codex"));
         assert!(line.contains("--token | term_2=› ~/acme/web | --clear-token | term_2_wait"));
         assert!(line.ends_with("--clear-token | term_4 | --clear-token | term_4_wait"));

@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/requests/<MS>-release.req": {
+    "home/.cache/flightdeck/requests/<MS>-release.req": {
       "label": "ENG-402",
       "ticket": "ENG-402",
       "type": "release"

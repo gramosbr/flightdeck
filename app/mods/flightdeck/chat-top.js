@@ -1,4 +1,4 @@
-// The reading layout's top bar: a capsule with a pill per tab of the space in front and per session cockpit drives, each
+// The reading layout's top bar: a capsule with a pill per tab of the space in front and per session flightdeck drives, each
 // with the mark of what its agent is doing, and a "+N" pill for those that do not fit. Always shown,
 // it runs the window's commands in this layout (commands.js).
 
@@ -98,8 +98,8 @@ function menuAnchor({ window, bar, lights, left, tabs, more }) {
  */
 export function hubDot(state, { remote = false } = {}) {
   const s = String(state ?? "connecting");
-  if (s === "live") return { kind: "live", label: null, tooltip: "Cockpit's hub is running", startable: false };
-  if (s === "connecting") return { kind: "connecting", label: null, tooltip: "Reaching cockpit's hub…", startable: false };
+  if (s === "live") return { kind: "live", label: null, tooltip: "Flightdeck's hub is running", startable: false };
+  if (s === "connecting") return { kind: "connecting", label: null, tooltip: "Reaching flightdeck's hub…", startable: false };
   const startable = s.startsWith("error") && !hub.isNotInstalled(s) && !remote;
   const label = hub.downWords(s, true);
   const tooltip = startable ? `${hub.downTip(s)} · click to start it` : hub.downTip(s);
@@ -122,7 +122,7 @@ export default class ChatTop {
     });
     this.sizes = new Map();
     this.hub = "connecting";
-    // The sessions cockpit drives have no tab: they get pills of their own, from the window's one agents feed.
+    // The sessions flightdeck drives have no tab: they get pills of their own, from the window's one agents feed.
     this.sessions = [];
     // Every agents row, for the logo of the agent in each tab and the name a tab still at Herdr's number shows.
     this.rows = [];
@@ -145,7 +145,7 @@ export default class ChatTop {
 
   close() {
     this.sub?.stop();
-    // The cockpit layout shows the tab's panes as they are, not zoomed on the browser.
+    // The flightdeck layout shows the tab's panes as they are, not zoomed on the browser.
     releaseBrowser();
   }
 
@@ -190,9 +190,9 @@ export default class ChatTop {
       .cursor_pointer()
       .text_color(k.mutedFg)
       .hover((s) => s.bg(k.accent).text_color(k.foreground))
-      .tooltip(hint(terminalWords(a), "cockpit.terminal"))
+      .tooltip(hint(terminalWords(a), "flightdeck.terminal"))
       .on_click((_e, cx) => {
-        run("cockpit.terminal");
+        run("flightdeck.terminal");
         cx.notify();
       })
       .child(a ? AgentLogo(a, { size: 16 }) : Icon("terminal", { size: 15 }));
@@ -217,10 +217,10 @@ export default class ChatTop {
       .text_color(waiting ? k.blocked : on ? k.foreground : k.mutedFg)
       .when(on, (e) => e.bg(k.selected).font_medium())
       .when(!on, (e) => e.hover((st) => st.text_color(waiting ? k.blocked : k.foreground)))
-      .tooltip(s.paused ? `${name} · paused, picks up when you write` : `${name} · a session cockpit drives`)
+      .tooltip(s.paused ? `${name} · paused, picks up when you write` : `${name} · a session flightdeck drives`)
       .on_size_change((size, cx) => this.sized(`pill:d:${s.terminal}`, size.width, cx))
       .on_click((_e, cx) => {
-        run(keyed(`cockpit.via:chat|chat:open:${s.terminal}`));
+        run(keyed(`flightdeck.via:chat|chat:open:${s.terminal}`));
         cx.notify();
       })
       .child(s.paused ? Icon("circle-pause", { size: 13, color: k.dim }) : statusMark(status, k))
@@ -359,10 +359,10 @@ export default class ChatTop {
     if (c === "tabs") this.openTabs(true);
     else if (c.startsWith("tabs:select:")) showTab(c.slice(12));
     else if (c.startsWith("tabs:open:")) {
-      const open = `cockpit.via:chat|chat:open:${c.slice(10)}`;
+      const open = `flightdeck.via:chat|chat:open:${c.slice(10)}`;
       run(take(c, key) ? keyed(open) : open);
     }
-    else runCommand(c, cx, "cockpit-chat", { key });
+    else runCommand(c, cx, "flightdeck-chat", { key });
     cx.notify();
   }
 
@@ -418,7 +418,7 @@ export default class ChatTop {
           .text_color(k.mutedFg)
           .cursor_pointer()
           .hover((s) => s.bg(k.accent).text_color(k.foreground))
-          .tooltip(hint(parts, "cockpit.tabs"))
+          .tooltip(hint(parts, "flightdeck.tabs"))
           .on_size_change((size, cx) => this.sized("more", size.width, cx))
           .on_click((_e, cx) => {
             this.openTabs();
@@ -464,7 +464,7 @@ export default class ChatTop {
             capsule("chat-actions", [
               this.hubButton(k),
               // Herdr's own new menu: a terminal, an agent, a space, a worktree.
-              button("chat-new-tab", "plus", hint("Start something new", "cockpit.new"), (_e, cx) => {
+              button("chat-new-tab", "plus", hint("Start something new", "flightdeck.new"), (_e, cx) => {
                 openNew();
                 cx.notify();
               }),

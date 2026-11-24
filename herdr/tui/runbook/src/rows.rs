@@ -3,8 +3,8 @@
 
 use std::collections::HashMap;
 
-use cockpit_core::text::{width, wrap};
-use cockpit_core::theme::{DIM, FG, GREEN, ORANGE, bold, dim, fg};
+use flightdeck_core::text::{width, wrap};
+use flightdeck_core::theme::{DIM, FG, GREEN, ORANGE, bold, dim, fg};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use serde_json::Value;

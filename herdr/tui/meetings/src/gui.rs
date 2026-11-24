@@ -1,11 +1,11 @@
-//! The meetings for the Herdr app's cockpit mod: the week as the mod draws it (the list grouped by day, the now-or-next
+//! The meetings for the Herdr app's flightdeck mod: the week as the mod draws it (the list grouped by day, the now-or-next
 //! banner, each meeting's times in words, brief and actions, and the calendar grid's blocks), built from the week the
 //! hub keeps and the briefs on disk. The mod asks again each minute, so the "in N min" texts stay true.
 
 use std::path::PathBuf;
 
 use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike, Weekday};
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::timeline;
@@ -53,8 +53,8 @@ pub fn model(data: Option<&Value>, clock: &Clock, brief_enabled: bool, brief: &d
     json!({
         "waiting": false,
         "updated": updated,
-        "error": week.error.clone().filter(|_| !cockpit_core::header::has(&week.sources, "calendar")),
-        "sources": cockpit_core::header::json(&week.sources, cockpit_core::header::now()),
+        "error": week.error.clone().filter(|_| !flightdeck_core::header::has(&week.sources, "calendar")),
+        "sources": flightdeck_core::header::json(&week.sources, flightdeck_core::header::now()),
         "now": clock.now.timestamp_millis(),
         "today": clock.today().to_string(),
         "banner": banner(&week, clock),
@@ -63,7 +63,7 @@ pub fn model(data: Option<&Value>, clock: &Clock, brief_enabled: bool, brief: &d
         "meetings": meetings,
         "grid": grid(&week, clock),
         "brief_enabled": brief_enabled,
-        "connected": cockpit_core::sources::Source::Calendar.connected(),
+        "connected": flightdeck_core::sources::Source::Calendar.connected(),
     })
 }
 

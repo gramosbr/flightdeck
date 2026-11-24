@@ -47,7 +47,7 @@ function dots(k, height) {
  * the focused pane's (a shell's own views); null when nothing is in view.
  */
 export function followed() {
-  const subject = layoutName() === "cockpit-chat" ? shared(CHAT_SUBJECT) : null;
+  const subject = layoutName() === "flightdeck-chat" ? shared(CHAT_SUBJECT) : null;
   if (subject) return String(subject).replace(/^app:/, "");
   const f = focused();
   return frontAgent(f) ?? f?.shown ?? f?.terminal ?? null;
@@ -66,7 +66,7 @@ const PENDING_MS = 10_000;
 function shownInLayout(app) {
   const walk = (node, ok) => {
     if (!node || typeof node !== "object") return null;
-    if (node.content?.mod === "cockpit" && node.content?.props?.app === app) return ok && !node.hidden;
+    if (node.content?.mod === "flightdeck" && node.content?.props?.app === app) return ok && !node.hidden;
     for (const child of node.children ?? []) {
       const visible = ok && !node.hidden && !child.hidden && (node.type !== "stack" || (node.active ?? node.children?.[0]?.id) === child.id);
       const found = walk(child, visible);
@@ -121,7 +121,7 @@ export default class Show {
       // A pane split from the agent's is focused for a moment: that is how this copy learns which pane it is.
       const learn = () => {
         const f = focused();
-        const mine = f?.pane && panes().find((x) => x.pane === f.pane && x.mod === "cockpit");
+        const mine = f?.pane && panes().find((x) => x.pane === f.pane && x.mod === "flightdeck");
         if (mine && !this.pane) this.pane = f.pane;
       };
       learn();
@@ -265,7 +265,7 @@ export default class Show {
   ensure(pic, cx) {
     if (!pic?.key || this.images.has(pic.key)) return;
     this.images.set(pic.key, { state: "loading" });
-    const rel = `data/cockpit/show/${pic.key}`;
+    const rel = `data/flightdeck/show/${pic.key}`;
     const fetch = pic.remote ? 'curl -fsSL --max-time 20 -o "$1" "$2"' : 'cp "$2" "$1"';
     // Its size from sips on macOS, elsewhere from `file` when it is there ("PNG image data, 800 x 600, …").
     const size = win()?.platform === "macos" ? 'sips -g pixelWidth -g pixelHeight "$1"' : '{ file -b "$1" || true; }';
@@ -622,7 +622,7 @@ export default class Show {
     if (!view) {
       const waiting = this.status !== "live" && !this.data;
       root = root.child(waiting
-        ? v_flex().flex_1().items_center().justify_center().gap(8).child(Spinner({ size: 18 })).child(div().text_size(TEXT.sm).text_color(k.mutedFg).child("Connecting to the cockpit hub…"))
+        ? v_flex().flex_1().items_center().justify_center().gap(8).child(Spinner({ size: 18 })).child(div().text_size(TEXT.sm).text_color(k.mutedFg).child("Connecting to the flightdeck hub…"))
         : Empty({ icon: "layers", title: this.name ? `Waiting for the view ${this.name}` : "No documents yet", description: this.name ? "It appears as soon as the session writes it." : "When an agent shows a chart, a diagram, a diff, a plan or a question, it lands here." }));
     } else {
       root = root.child(this.body(k, view, cx, narrow)).child(this.footer(k, view));
@@ -1213,8 +1213,8 @@ export default class Show {
     const hints = typing ? [["⏎", this.asking ? "send to the session" : "add the comment"], ["esc", "cancel"]]
       : b ? [...(by[b.type] ?? []), ["esc", "leave"]]
       : [["j/k", "blocks"], ["tab", "focus"], ["^P", "commands"], ...(view.url ? [["o", "page"]] : []), ...(this.name ? [["q", "hide"]] : [])];
-    // Cockpit Chat keeps keys to tooltips: there the hints line goes.
-    if (layoutName() === "cockpit-chat") return div();
+    // Flightdeck Chat keeps keys to tooltips: there the hints line goes.
+    if (layoutName() === "flightdeck-chat") return div();
     return h_flex().h(30).flex_none().px(12).gap(12).items_center().border_t_1().border_color(k.border).overflow_hidden().text_size(TEXT.xs).text_color(k.mutedFg)
       .children(hints.map(([key, what]) => h_flex().flex_none().gap(4).items_center().child(Kbd(key)).child(what)));
   }

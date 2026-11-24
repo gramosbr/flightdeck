@@ -10,7 +10,7 @@ expression: "render(&mut app, 100, 16)"
  ├─     1 PR of yours failing CI: web#1866
  ├─     5 PRs ready to merge
  ├─     Pull my notes · failed 08:00 · Ended with exit 128.
- └─     Morning sweep · Missed Wed 07:00: cockpit was not running then.
+ └─     Morning sweep · Missed Wed 07:00: flightdeck was not running then.
  ▼   Alerts   4
  ├─      preview preview-quota expires in 1.5 h
 ────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -1,13 +1,13 @@
 //! Keys and clicks: rows, tabs, the selected step's actions, the runbook's own, the filter bar, picking steps for a batch,
 //! the editor, and the palette over all of them.
 
-use cockpit_core::acts::Act;
-use cockpit_core::dialog::Answer;
-use cockpit_core::input::Edit;
-use cockpit_core::keys::{self, Move};
-use cockpit_core::palette::{Entry, Outcome};
-use cockpit_core::pointed::MOVE_FIRST;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind};
+use flightdeck_core::acts::Act;
+use flightdeck_core::dialog::Answer;
+use flightdeck_core::input::Edit;
+use flightdeck_core::keys::{self, Move};
+use flightdeck_core::palette::{Entry, Outcome};
+use flightdeck_core::pointed::MOVE_FIRST;
 use ratatui::layout::Position;
 
 use crate::acts::{book_acts, step_acts};
@@ -89,7 +89,7 @@ impl App {
                         self.act(cmd);
                     }
                 }
-                Outcome::Elsewhere(target) => cockpit_core::hub::go(&target),
+                Outcome::Elsewhere(target) => flightdeck_core::hub::go(&target),
                 Outcome::Open | Outcome::Closed => {}
             }
             return false;
@@ -116,7 +116,7 @@ impl App {
         }
         // A step a focus request selected takes no key that acts until the person moves to it.
         if self.pointed.holds(&key) {
-            self.toasts.push(MOVE_FIRST, cockpit_core::toast::Kind::Note);
+            self.toasts.push(MOVE_FIRST, flightdeck_core::toast::Kind::Note);
             return false;
         }
         if let Some(to) = keys::movement(&key) {
@@ -263,7 +263,7 @@ impl App {
     fn scroll_by(&mut self, lines: f32) {
         if let Some(book) = self.book() {
             let slug = book.slug.clone();
-            let scroll = self.scroll.entry(slug).or_insert_with(|| cockpit_core::anim::Glide::new(0.0, 0.25));
+            let scroll = self.scroll.entry(slug).or_insert_with(|| flightdeck_core::anim::Glide::new(0.0, 0.25));
             scroll.go(scroll.target() + lines);
         }
     }

@@ -82,12 +82,13 @@ fn an_action_runs_in_a_tab_of_the_actions_space() {
     assert_eq!(run[2], "wT:p1");
     let script = script_of(&run[3]);
     assert!(
-        script.contains("exec env COCKPIT_REVIEW_PR=https://github.com/acme/api/pull/4 COCKPIT_REVIEW_BRANCH=me/eng-4-login claude ''\"$(cat \"$P\")\"''"),
+        script
+            .contains("exec env FLIGHTDECK_REVIEW_PR=https://github.com/acme/api/pull/4 FLIGHTDECK_REVIEW_BRANCH=me/eng-4-login claude ''\"$(cat \"$P\")\"''"),
         "{script}"
     );
-    assert_eq!(prompt_of(&run[3]), "/code-review 4", "even a prompt of cockpit's own goes by file");
+    assert_eq!(prompt_of(&run[3]), "/code-review 4", "even a prompt of flightdeck's own goes by file");
     assert_eq!(reply["note"], "started \"review api#4\" in the actions space");
-    let kept = std::fs::read_to_string(sandbox.home().join(".cache/cockpit/actions.json")).unwrap();
+    let kept = std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/actions.json")).unwrap();
     assert_eq!(serde_json::from_str::<Value>(&kept).unwrap()["review api#4"], "wT:p1");
 }
 
@@ -111,7 +112,7 @@ fn continue_moves_the_plan_out_of_the_actions_space() {
     assert!(calls.contains(&["pane", "move", "w9:p2", "--new-workspace", "--label", "eng-401", "--focus"].map(String::from).to_vec()), "{calls:?}");
     assert!(!calls.iter().any(|c| c[0] == "workspace" && c[1] == "create" || c[0] == "pane" && c[1] == "run"), "{calls:?}");
     assert_eq!(reply["note"], "moved the plan of ENG-401 to a space of its own");
-    let kept: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/cockpit/actions.json")).unwrap()).unwrap();
+    let kept: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/actions.json")).unwrap()).unwrap();
     assert!(kept.get("plan eng-401").is_none(), "{kept}");
 }
 
@@ -342,20 +343,20 @@ fn a_mail_s_words_reach_the_agent_by_file_never_typed_into_a_shell() {
 }
 
 #[test]
-fn what_cockpit_focus_or_act_sends_is_never_the_person_s() {
-    // A window command or a notification's click runs `cockpit focus act:…`, which runs `cockpit act …`: neither is the
+fn what_flightdeck_focus_or_act_sends_is_never_the_person_s() {
+    // A window command or a notification's click runs `flightdeck focus act:…`, which runs `flightdeck act …`: neither is the
     // person's hand, so nothing only a person does passes from them, wherever they stand.
     let sandbox = with_herdr("{}");
     let hub = Hub::start(&sandbox, &[(common::PLACE_REAL, "1")]);
     let dir = tempfile::tempdir().unwrap();
     let run = json!({"op": "act", "app": "inbox", "action": "run", "args": [["sh", "-c", "touch owned"]], "armed": null});
     for word in ["focus", "act", "setup-run"] {
-        let reply = common::sent_as_cockpit(dir.path(), word, &sandbox.socket(), &run);
-        assert_eq!(reply["error"], "run: cockpit's own work", "cockpit {word}");
+        let reply = common::sent_as_flightdeck(dir.path(), word, &sandbox.socket(), &run);
+        assert_eq!(reply["error"], "run: flightdeck's own work", "flightdeck {word}");
     }
     // The same binary as one of the person's own commands is not refused for that.
-    let reply = common::sent_as_cockpit(dir.path(), "inbox", &sandbox.socket(), &run);
-    assert!(!reply["error"].as_str().unwrap_or_default().contains("cockpit's own work"), "{reply}");
+    let reply = common::sent_as_flightdeck(dir.path(), "inbox", &sandbox.socket(), &run);
+    assert!(!reply["error"].as_str().unwrap_or_default().contains("flightdeck's own work"), "{reply}");
     drop(hub);
     assert!(!sandbox.root.join("owned").exists());
 }

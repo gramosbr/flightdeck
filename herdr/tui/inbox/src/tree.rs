@@ -5,11 +5,11 @@
 
 use std::collections::{HashMap, HashSet};
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::anim::Effects;
-use cockpit_core::seen::{self, MARK_WIDTH, Seen};
-use cockpit_core::text::width;
-use cockpit_core::theme::{BG, DIM, FG, ORANGE, SURFACE};
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::anim::Effects;
+use flightdeck_core::seen::{self, MARK_WIDTH, Seen};
+use flightdeck_core::text::width;
+use flightdeck_core::theme::{BG, DIM, FG, ORANGE, SURFACE};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};

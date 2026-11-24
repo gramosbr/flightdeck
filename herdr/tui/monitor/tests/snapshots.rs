@@ -4,11 +4,11 @@
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
-use cockpit_core::files::Density;
-use cockpit_core::testing::render;
-use cockpit_monitor::app::{App, Sent};
-use cockpit_monitor::data::{Clock, Doc};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::files::Density;
+use flightdeck_core::testing::render;
+use flightdeck_monitor::app::{App, Sent};
+use flightdeck_monitor::data::{Clock, Doc};
 use serde_json::{Value, json};
 
 fn data() -> Value {
@@ -161,11 +161,11 @@ fn space_folds_and_unfolds() {
 #[test]
 fn the_sidebar_line() {
     let doc = Doc::parse(&data()).unwrap();
-    assert_eq!(cockpit_monitor::pinned::sidebar_text(&doc), ("⚠️ 1 release moved · 1 alert".to_string(), true));
+    assert_eq!(flightdeck_monitor::pinned::sidebar_text(&doc), ("⚠️ 1 release moved · 1 alert".to_string(), true));
     let calm = Doc::parse(&json!({"apps": [{"id": "billing-production", "releases": [{"verdict": {"state": "ok"}}]}]})).unwrap();
-    assert_eq!(cockpit_monitor::pinned::sidebar_text(&calm), ("\u{f0e4}  all good".to_string(), false));
+    assert_eq!(flightdeck_monitor::pinned::sidebar_text(&calm), ("\u{f0e4}  all good".to_string(), false));
     let watching = Doc::parse(&json!({"apps": [{"id": "web-production", "releases": [{"verdict": {"state": "watching"}}]}]})).unwrap();
-    assert_eq!(cockpit_monitor::pinned::sidebar_text(&watching), ("⏳ 1 release watching".to_string(), false));
+    assert_eq!(flightdeck_monitor::pinned::sidebar_text(&watching), ("⏳ 1 release watching".to_string(), false));
 }
 
 #[test]

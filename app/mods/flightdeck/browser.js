@@ -5,17 +5,17 @@ import { run, panes, focused, layout, shared, setShared } from "herdr";
 import { openPanel, closePanel, panelOpen } from "./commands.js";
 import { layoutName, nodeOf } from "./screens.js";
 
-/** The side panel's child that shows the browser (cockpit-chat.json). */
+/** The side panel's child that shows the browser (flightdeck-chat.json). */
 export const BROWSER = "browser";
 
-/** The pane cockpit zoomed for the panel: it only ever unzooms its own. */
-export const ZOOMED = "cockpit.browser.zoomed";
+/** The pane flightdeck zoomed for the panel: it only ever unzooms its own. */
+export const ZOOMED = "flightdeck.browser.zoomed";
 
 /** Set while the Tab screen holds the browser the panel showed, so the panel shows it again with the chat. */
-export const AWAY = "cockpit.browser.away";
+export const AWAY = "flightdeck.browser.away";
 
-/** When cockpit last moved the pane focus with the chat in front: a move takes the keyboard, which the box takes back. */
-export const TOOK = "cockpit.browser.took";
+/** When flightdeck last moved the pane focus with the chat in front: a move takes the keyboard, which the box takes back. */
+export const TOOK = "flightdeck.browser.took";
 
 /** How wide the panel opens for a browser, when it is narrower. */
 const WIDTH = 600;
@@ -32,7 +32,7 @@ export function browserIn(list, tab) {
 
 /**
  * The steps that make the window show the tab's browser in the panel beside the chat, from what it shows now: `inChat`
- * the chat in front, `onTab` the Tab screen, `child` the panel's shown child, `zoomed` the pane cockpit zoomed, `seen`
+ * the chat in front, `onTab` the Tab screen, `child` the panel's shown child, `zoomed` the pane flightdeck zoomed, `seen`
  * the browsers already brought in (a panel the person closes stays closed). Pure, so tests can walk every state.
  */
 export function browserSteps({ inChat, onTab, list, tab, focusedPane, panel, child, zoomed, away, seen }) {
@@ -78,7 +78,7 @@ let settlingUntil = 0;
 /** Runs `browserSteps` on the window as it is, in the reading layout; any other layout gets back the zoom it gave. */
 export function syncBrowser(now = Date.now()) {
   if (now < settlingUntil) return false;
-  if (layoutName() !== "cockpit-chat" || !nodeOf(BROWSER)) return releaseBrowser();
+  if (layoutName() !== "flightdeck-chat" || !nodeOf(BROWSER)) return releaseBrowser();
   const tree = layout();
   const onWork = nodeOf("screen", tree)?.active === "work";
   const view = nodeOf("view", tree)?.active;
@@ -119,7 +119,7 @@ function open(tree) {
   openPanel(BROWSER);
 }
 
-/** Unzooms the pane cockpit zoomed for the panel, if it still is, and gives the keyboard back to the agent's pane. */
+/** Unzooms the pane flightdeck zoomed for the panel, if it still is, and gives the keyboard back to the agent's pane. */
 export function releaseBrowser() {
   const zoomed = shared(ZOOMED);
   if (!zoomed) return false;
@@ -133,7 +133,7 @@ export function releaseBrowser() {
 }
 
 /**
- * Whether the chat's box should take the keyboard back after a move cockpit made with the chat in front (`took`): once
+ * Whether the chat's box should take the keyboard back after a move flightdeck made with the chat in front (`took`): once
  * the move has landed, and not after another moment, so a later click of the person's stands.
  */
 export function boxTakesBack({ took, answered, now }) {

@@ -1,10 +1,10 @@
-// Which screen the window shows, in whichever cockpit layout is on: `cockpit` stacks its screens under `center`,
-// `cockpit-chat` under `screen`. `work` is where you deal with an agent: its panes in one, its conversation in the other.
+// Which screen the window shows, in whichever flightdeck layout is on: `flightdeck` stacks its screens under `center`,
+// `flightdeck-chat` under `screen`. `work` is where you deal with an agent: its panes in one, its conversation in the other.
 
 import { run, shared, setShared, layout, focused, agents } from "herdr";
 import { keyed } from "./person.js";
 
-/** The cockpit apps both layouts stack after their own screens: [child, label, icon]. */
+/** The flightdeck apps both layouts stack after their own screens: [child, label, icon]. */
 const APPS = [
   ["inbox", "Inbox", "inbox"],
   ["runbook", "Runbook", "book"],
@@ -16,17 +16,17 @@ const APPS = [
 ];
 
 /** A screen as the palette, the app strip and the keys sheet name it, with the command its key is bound to. */
-const screen = ([child, label, icon], command = `cockpit.go:${child}`) => ({ child, label, icon, command });
+const screen = ([child, label, icon], command = `flightdeck.go:${child}`) => ({ child, label, icon, command });
 
 const LAYOUTS = {
-  cockpit: {
+  flightdeck: {
     stack: "center",
     work: "work",
     first: "home",
-    list: [screen(["home", "Home", "layout-dashboard"], "cockpit.home"), screen(["work", "Work", "terminal"]), ...APPS.map((a) => screen(a))],
+    list: [screen(["home", "Home", "layout-dashboard"], "flightdeck.home"), screen(["work", "Work", "terminal"]), ...APPS.map((a) => screen(a))],
   },
   // The reading layout puts the conversation and the panes in a stack of their own, beside the side panel.
-  "cockpit-chat": {
+  "flightdeck-chat": {
     stack: "screen",
     work: "chat",
     first: "chat",
@@ -42,8 +42,8 @@ const LAYOUTS = {
 };
 
 /**
- * The cockpit layout a layout is, or is a copy of: its own name, the name its file says it was cloned from, else the
- * longest known name it starts with (`cockpit-chat-copy`); `cockpit` for any other layout.
+ * The flightdeck layout a layout is, or is a copy of: its own name, the name its file says it was cloned from, else the
+ * longest known name it starts with (`flightdeck-chat-copy`); `flightdeck` for any other layout.
  */
 export function baseOf(name, readTree = () => layout()) {
   if (LAYOUTS[name]) return name;
@@ -52,22 +52,22 @@ export function baseOf(name, readTree = () => layout()) {
     from = readTree()?.cloned_from?.name ?? null;
   } catch {}
   if (LAYOUTS[from]) return from;
-  return Object.keys(LAYOUTS).filter((n) => String(name ?? "").startsWith(`${n}-`)).sort((a, b) => b.length - a.length)[0] ?? "cockpit";
+  return Object.keys(LAYOUTS).filter((n) => String(name ?? "").startsWith(`${n}-`)).sort((a, b) => b.length - a.length)[0] ?? "flightdeck";
 }
 
-/** The cockpit layout shown, a copy of one counting as the one it copies. */
+/** The flightdeck layout shown, a copy of one counting as the one it copies. */
 export function layoutName() {
   return baseOf(shared("layout"));
 }
 
 /** The shown layout's own name, whose `layout:<name>` section of keys.json is the one that applies. */
 export function shownLayout() {
-  return shared("layout") ?? "cockpit";
+  return shared("layout") ?? "flightdeck";
 }
 
 /**
- * The screens a layout adds after cockpit's own: children of its screens' stack whose block props carry
- * `screen: {label, icon}`. A mod draws each one and can post its count as `badge.<child>`, as cockpit's apps do.
+ * The screens a layout adds after flightdeck's own: children of its screens' stack whose block props carry
+ * `screen: {label, icon}`. A mod draws each one and can post its count as `badge.<child>`, as flightdeck's apps do.
  */
 export function addedScreens(base, tree) {
   const known = new Set(base.list.map((s) => s.child));
@@ -76,7 +76,7 @@ export function addedScreens(base, tree) {
     .map((c) => ({ ...screen([c.id, c.content.props.screen.label, c.content.props.screen.icon ?? "layout"]), added: true }));
 }
 
-/** A cockpit layout's screens with the ones the shown layout adds. */
+/** A flightdeck layout's screens with the ones the shown layout adds. */
 function withAdded(base) {
   let tree = null;
   try {
@@ -86,12 +86,12 @@ function withAdded(base) {
   return added.length ? { ...base, list: [...base.list, ...added] } : base;
 }
 
-/** The shown layout's screens, the ones it adds last; the cockpit layout's when it is some other layout. */
+/** The shown layout's screens, the ones it adds last; the flightdeck layout's when it is some other layout. */
 export function screens() {
   return withAdded(LAYOUTS[layoutName()]);
 }
 
-/** A named layout's screens, or null when cockpit has no such layout; the shown one's include the screens it adds. */
+/** A named layout's screens, or null when flightdeck has no such layout; the shown one's include the screens it adds. */
 export function screensOf(name) {
   const base = LAYOUTS[name];
   if (!base) return null;
@@ -107,8 +107,8 @@ export function show(child) {
   } else {
     run("layout.select", { stack: s.stack, child });
   }
-  setShared("cockpit.app", child);
-  if (child !== s.work) run(`cockpit.show:${child}`);
+  setShared("flightdeck.app", child);
+  if (child !== s.work) run(`flightdeck.show:${child}`);
 }
 
 /** A node of the shown layout by id, or null. */
@@ -151,7 +151,7 @@ export function frontAgent(f = focused(), more = []) {
 }
 
 /** Whether the reading layout's sidebar is open; it remembers across restarts. */
-export const DOCKED = "cockpit.chat.sidebar";
+export const DOCKED = "flightdeck.chat.sidebar";
 
 /** Narrower than this, Herdr's brand row has folded the sidebar to a rail, which the reading layout's sidebar never draws. */
 const RAIL = 160;
@@ -184,7 +184,7 @@ export function showSidebar(on) {
  * row button) puts it away, and the flag follows a layout changed from elsewhere. Says what it changed, else null.
  */
 export function settleSidebar(tree = layout()) {
-  if (layoutName() !== "cockpit-chat") return null;
+  if (layoutName() !== "flightdeck-chat") return null;
   const node = nodeOf("sidebar", tree);
   if (!node) return null;
   if (!node.hidden && (node.size?.px ?? Infinity) < RAIL) {
@@ -196,36 +196,36 @@ export function settleSidebar(tree = layout()) {
   return "flag";
 }
 
-/** Shows where you deal with the agent: its panes in the cockpit layout, its conversation in the reading one. */
+/** Shows where you deal with the agent: its panes in the flightdeck layout, its conversation in the reading one. */
 export function showWork() {
   show(screens().work);
 }
 
-/** Shows the tab's panes as they are: the work area in the cockpit layout, the Tab screen in the reading one. */
+/** Shows the tab's panes as they are: the work area in the flightdeck layout, the Tab screen in the reading one. */
 export function showPanes() {
   show(screens().inner ? "tab" : "work");
 }
 
 /** Where the reading layout's chat says which agent it follows: a terminal's address or a driven session's key. */
-export const CHAT_SUBJECT = "cockpit.chat.subject";
+export const CHAT_SUBJECT = "flightdeck.chat.subject";
 /** A view the side panel opens on once it follows that view's terminal: `{terminal, name, at}`, for a few seconds. */
-export const PENDING_VIEW = "cockpit.show.pending";
+export const PENDING_VIEW = "flightdeck.show.pending";
 
 /** Where `chat:open` keeps the agent it named, and the agent in front then: the chat stays on it until that changes. */
-export const CHAT_PIN = "cockpit.chat.pinned";
+export const CHAT_PIN = "flightdeck.chat.pinned";
 
-/** A question the Cockpit layout leaves the chat to ask once it is up on that session: {key, what}. */
-export const CHAT_ASK = "cockpit.chat.ask";
+/** A question the Flightdeck layout leaves the chat to ask once it is up on that session: {key, what}. */
+export const CHAT_ASK = "flightdeck.chat.ask";
 
 /**
- * A session cockpit drives, read in Cockpit Chat: that layout in front with the chat on the session, and `ask` a
+ * A session flightdeck drives, read in Flightdeck Chat: that layout in front with the chat on the session, and `ask` a
  * question the chat puts first ("handover"). `person` false: a window command asked, and the chat's keys wait for one.
  */
 export function readInChat(key, ask = null, person = true) {
   pinChat(key);
   if (ask) setShared(CHAT_ASK, { key, what: ask, at: Date.now() });
-  if (layoutName() !== "cockpit-chat") run("layout.switch", { name: "cockpit-chat" });
-  const open = `cockpit.via:chat|chat:open:${key}`;
+  if (layoutName() !== "flightdeck-chat") run("layout.switch", { name: "flightdeck-chat" });
+  const open = `flightdeck.via:chat|chat:open:${key}`;
   run(person ? keyed(open) : open);
 }
 
@@ -238,7 +238,7 @@ export function pinChat(key) {
 
 /**
  * A tab in front with what it holds: in the reading layout its agent's conversation, or its panes on the Tab screen
- * when no agent runs there (a shell, a tab Herdr numbers "3"); in the cockpit layout its panes.
+ * when no agent runs there (a shell, a tab Herdr numbers "3"); in the flightdeck layout its panes.
  */
 export function showTab(id) {
   pinChat(null);

@@ -1,4 +1,4 @@
-//! cockpit's part of herdr's config.toml merged into the person's: every key they set stays, missing ones are added,
+//! flightdeck's part of herdr's config.toml merged into the person's: every key they set stays, missing ones are added,
 //! `[[keys.command]]` entries are added by `key`, and toasts are delivered by herdr so none arrives twice.
 
 use toml_edit::{DocumentMut, InlineTable, Item, Table, Value};
@@ -57,7 +57,7 @@ fn settings(item: &Item) -> usize {
 }
 
 /// A space's count added to the sidebar's spaces rows when they lack it: beside the `beside` token's cell (`$routines`),
-/// else as a row of its own. A config with no rows of its own takes cockpit's whole set from `merge`.
+/// else as a row of its own. A config with no rows of its own takes flightdeck's whole set from `merge`.
 pub fn with_token(text: &str, token: &str, beside: &str) -> Result<String, String> {
     let mut doc: DocumentMut = text.parse().map_err(|e: toml_edit::TomlError| format!("~/.config/herdr/config.toml does not parse: {e}"))?;
     let Some(rows) = doc.get_mut("ui").and_then(|u| u.get_mut("sidebar")).and_then(|s| s.get_mut("spaces")).and_then(|s| s.get_mut("rows")) else {

@@ -6,8 +6,8 @@ use std::collections::HashMap;
 use ratatui::style::{Modifier, Style};
 use serde_json::Value;
 
-use cockpit_core::text::width;
-use cockpit_core::theme::{ORANGE, dim, fg};
+use flightdeck_core::text::width;
+use flightdeck_core::theme::{ORANGE, dim, fg};
 
 const GAP: i64 = 4;
 /// A line cell's directions: up, down, left, right.

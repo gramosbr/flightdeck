@@ -1,10 +1,10 @@
 //! The Chromium side browser's two programs, pinned in `browser/pins.json`: Electron, which runs the shell, and
-//! agent-browser, which agents drive pages with. Each is downloaded once into ~/.cache/cockpit/browser and checked.
+//! agent-browser, which agents drive pages with. Each is downloaded once into ~/.cache/flightdeck/browser and checked.
 
 use std::path::{Path, PathBuf};
 
-use cockpit_core::{browser, files};
-use cockpit_update::pinned;
+use flightdeck_core::{browser, files};
+use flightdeck_update::pinned;
 use serde_json::Value;
 
 /// One pinned program: its version, where it is downloaded from, and its checksum.
@@ -30,9 +30,9 @@ pub fn arch() -> &'static str {
 }
 
 /// The shell's folder: the checkout's browser/ beside the herdr plugin folder, else the one the release packs beside
-/// this binary; COCKPIT_BROWSER_DIR names another one, for a build that lives outside its checkout.
+/// this binary; FLIGHTDECK_BROWSER_DIR names another one, for a build that lives outside its checkout.
 pub fn shell_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("COCKPIT_BROWSER_DIR")
+    if let Ok(dir) = std::env::var("FLIGHTDECK_BROWSER_DIR")
         && !dir.is_empty()
     {
         return PathBuf::from(dir);
@@ -64,24 +64,24 @@ pub fn parse(pins: &Value, arch: &str) -> Result<Pins, String> {
     Ok(Pins { electron, agent, member })
 }
 
-/// The pins of the shell that ships with this cockpit.
+/// The pins of the shell that ships with this flightdeck.
 pub fn pins() -> Result<Pins, String> {
     let file = shell_dir().join("pins.json");
     let json = files::load(&file).ok_or_else(|| format!("no readable {}", file.display()))?;
     parse(&json, arch())
 }
 
-/// The Electron program: COCKPIT_BROWSER_ELECTRON names another one, for a checkout that borrows one.
+/// The Electron program: FLIGHTDECK_BROWSER_ELECTRON names another one, for a checkout that borrows one.
 pub fn electron(pins: &Pins) -> PathBuf {
-    match std::env::var("COCKPIT_BROWSER_ELECTRON") {
+    match std::env::var("FLIGHTDECK_BROWSER_ELECTRON") {
         Ok(path) if !path.is_empty() => PathBuf::from(path),
         _ => browser::cache().join("electron").join(&pins.electron.version).join("Electron.app/Contents/MacOS/Electron"),
     }
 }
 
-/// The agent-browser program: COCKPIT_AGENT_BROWSER names another one.
+/// The agent-browser program: FLIGHTDECK_AGENT_BROWSER names another one.
 pub fn agent_browser(pins: &Pins) -> PathBuf {
-    match std::env::var("COCKPIT_AGENT_BROWSER") {
+    match std::env::var("FLIGHTDECK_AGENT_BROWSER") {
         Ok(path) if !path.is_empty() => PathBuf::from(path),
         _ => browser::cache().join("agent-browser").join(&pins.agent.version).join("agent-browser"),
     }

@@ -1,4 +1,4 @@
-//! An agent's recap: what its session said, read from its transcript (`cockpit_core::transcripts`, any agent), summed up
+//! An agent's recap: what its session said, read from its transcript (`flightdeck_core::transcripts`, any agent), summed up
 //! by an agent run headless and kept out of that agent's history, one at a time per session in the background. Cached
 //! per session with the transcript's size and time, current while the transcript has not changed.
 
@@ -8,10 +8,10 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::time::{Duration, UNIX_EPOCH};
 
-use cockpit_core::agent::{self, Agent, Headless};
-use cockpit_core::files;
-use cockpit_core::run;
-use cockpit_core::transcripts::{self, Role, Transcripts};
+use flightdeck_core::agent::{self, Agent, Headless};
+use flightdeck_core::files;
+use flightdeck_core::run;
+use flightdeck_core::transcripts::{self, Role, Transcripts};
 use serde_json::{Value, json};
 
 static RUNNING: Mutex<Option<HashSet<String>>> = Mutex::new(None);
@@ -148,7 +148,7 @@ fn run(session: &str, cwd: &str, transcript: &Path, model: Option<&str>) -> Resu
     if Path::new(cwd).is_dir() {
         cmd.current_dir(cwd);
     }
-    // The recap belongs to no terminal or parent agent session (`cockpit_core::run`).
+    // The recap belongs to no terminal or parent agent session (`flightdeck_core::run`).
     let out = run::output(&mut cmd, Duration::from_secs(180), 1 << 20, &Default::default())
         .map_err(|e| if e == "it took too long" { "the recap took too long".to_string() } else { format!("{}: {e}", argv[0]) })?;
     if !out.status.success() || out.stdout.is_empty() {
@@ -163,7 +163,7 @@ fn run(session: &str, cwd: &str, transcript: &Path, model: Option<&str>) -> Resu
         return Err(if text.is_empty() { "the agent gave an empty recap".into() } else { text });
     }
     let _ = std::fs::create_dir_all(dir());
-    let at = cockpit_core::seen::now_ms();
+    let at = flightdeck_core::seen::now_ms();
     files::write(
         &kept_at(&dir(), session),
         &json!({"session": session, "text": text, "at": at, "size": size, "modified": modified, "cost": reply["total_cost_usd"]}),

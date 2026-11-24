@@ -4,8 +4,8 @@
 # Exits 2 when they cannot be taken here, so the caller takes them in Chrome instead.
 PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 dir=$(dirname "$0")
-for binary in "$dir/bin/cockpit" "$dir/tui/target/release/cockpit"; do
+for binary in "$dir/bin/flightdeck" "$dir/tui/target/release/flightdeck"; do
   [ -x "$binary" ] && exec "$binary" shots "$@"
 done
-echo "cockpit: no cockpit binary for this machine yet: take these screenshots in Chrome instead" >&2
+echo "flightdeck: no flightdeck binary for this machine yet: take these screenshots in Chrome instead" >&2
 exit 2

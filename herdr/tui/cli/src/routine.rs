@@ -1,4 +1,4 @@
-//! `cockpit routine run <slug>`: a routine run now through the hub, waited for, and how it went, for an agent session
+//! `flightdeck routine run <slug>`: a routine run now through the hub, waited for, and how it went, for an agent session
 //! trying out a routine it just wrote.
 
 use std::time::{Duration, Instant};
@@ -9,11 +9,11 @@ use crate::proc;
 
 const USAGE: &str = "A routine run now, waited for.
 
-    cockpit routine run <slug>    runs it through the hub, then prints how it went, what it called and its output
+    flightdeck routine run <slug>    runs it through the hub, then prints how it went, what it called and its output
                                   (what its precheck said when that skipped it); exits 1 when the run failed";
 
 fn ask(request: Value) -> Value {
-    cockpit_core::hub::request(&request, Duration::from_secs(30)).unwrap_or_else(|error| proc::fail(&format!("cockpit routine: {error}")))
+    flightdeck_core::hub::request(&request, Duration::from_secs(30)).unwrap_or_else(|error| proc::fail(&format!("flightdeck routine: {error}")))
 }
 
 fn doc() -> Value {
@@ -28,7 +28,7 @@ pub fn main(args: &[String]) {
     let before = doc()["runs"][slug.as_str()][0].clone();
     let answer = ask(json!({"op": "act", "app": "routines", "action": "run", "args": [slug]}));
     if let Some(error) = answer["error"].as_str() {
-        proc::fail(&format!("cockpit routine: {error}"));
+        proc::fail(&format!("flightdeck routine: {error}"));
     }
     let timeout = doc()["routines"].as_array().into_iter().flatten().find(|r| r["slug"] == slug.as_str()).and_then(|r| r["timeout"].as_u64()).unwrap_or(30);
     let start = Instant::now();
@@ -43,13 +43,13 @@ pub fn main(args: &[String]) {
         }
         // Neither running nor waiting, and no run of it ended: it was dropped.
         if !busy {
-            proc::fail(&format!("cockpit routine: {slug} did not run; the routines space says why"));
+            proc::fail(&format!("flightdeck routine: {slug} did not run; the routines space says why"));
         }
         if start.elapsed() > Duration::from_secs(timeout * 120 + 60) {
-            proc::fail(&format!("cockpit routine: {slug} still runs after {} min", start.elapsed().as_secs() / 60));
+            proc::fail(&format!("flightdeck routine: {slug} still runs after {} min", start.elapsed().as_secs() / 60));
         }
     };
-    let output = cockpit_core::files::cache().join("routines").join(slug).join(format!("{}.txt", run["id"].as_str().unwrap_or_default()));
+    let output = flightdeck_core::files::cache().join("routines").join(slug).join(format!("{}.txt", run["id"].as_str().unwrap_or_default()));
     for line in report(&run, std::fs::read_to_string(&output).ok().as_deref()) {
         println!("{line}");
     }

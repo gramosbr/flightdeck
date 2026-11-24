@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/browser-grab-payload.ts,
 // src/shared/text/display-text-safety.ts and src/renderer/src/store/slices/browser/annotations/browser-page-annotation.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";

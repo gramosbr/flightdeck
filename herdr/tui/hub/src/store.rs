@@ -1,5 +1,5 @@
 //! The documents the apps, the mod and the hub share: inbox, ci, meetings, brief, monitor, routines, queue, agents and mail. The hub is their
-//! only writer. Each lives in ~/.cache/cockpit/store.redb with a week of its past versions, and is mirrored to
+//! only writer. Each lives in ~/.cache/flightdeck/store.redb with a week of its past versions, and is mirrored to
 //! <name>.json, written whole through a rename, for whatever reads files. Subscribers get each new version pushed, and
 //! leases let one Claude session at a time do a job for all of them, such as fetching the tickets.
 
@@ -38,9 +38,9 @@ pub struct Store {
 
 static STORE: OnceLock<Mutex<Store>> = OnceLock::new();
 
-/// The hub's store, on ~/.cache/cockpit; opened by the first call.
+/// The hub's store, on ~/.cache/flightdeck; opened by the first call.
 pub fn global() -> MutexGuard<'static, Store> {
-    STORE.get_or_init(|| Mutex::new(Store::open(&cockpit_core::files::cache(), OPEN_WAIT))).lock().unwrap_or_else(|e| e.into_inner())
+    STORE.get_or_init(|| Mutex::new(Store::open(&flightdeck_core::files::cache(), OPEN_WAIT))).lock().unwrap_or_else(|e| e.into_inner())
 }
 
 static HANDED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -96,7 +96,7 @@ impl Store {
         let mut store = Store { dir: dir.to_path_buf(), db, docs: HashMap::new(), subscribers: Vec::new(), leases: HashMap::new(), closed: false };
         for name in DOCS {
             let kept = store.read_current(name);
-            if let Some(value) = kept.or_else(|| cockpit_core::files::load(&dir.join(format!("{name}.json")))) {
+            if let Some(value) = kept.or_else(|| flightdeck_core::files::load(&dir.join(format!("{name}.json")))) {
                 store.docs.insert(name.to_string(), value);
             }
         }
@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(store.get("ci"), Value::Null);
         let (before, after) = store.update("ci", |_| json!({"at": 1, "runs": []}));
         assert_eq!((before, &after), (Value::Null, &json!({"at": 1, "runs": []})));
-        assert_eq!(cockpit_core::files::load(&dir.path().join("ci.json")), Some(after.clone()));
+        assert_eq!(flightdeck_core::files::load(&dir.path().join("ci.json")), Some(after.clone()));
         drop(store);
         std::fs::remove_file(dir.path().join("ci.json")).unwrap();
         assert_eq!(open(dir.path()).get("ci"), after);
@@ -312,7 +312,7 @@ mod tests {
         let mut second = open(dir.path());
         assert_eq!(second.get("brief"), json!({"lines": []}));
         second.update("brief", |_| json!({"lines": ["x"]}));
-        assert_eq!(cockpit_core::files::load(&dir.path().join("brief.json")), Some(json!({"lines": ["x"]})));
+        assert_eq!(flightdeck_core::files::load(&dir.path().join("brief.json")), Some(json!({"lines": ["x"]})));
     }
 
     #[test]

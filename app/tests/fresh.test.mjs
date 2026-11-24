@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { ago, chip, chips, failing, narrow, nowOf, signIn, staleAfter, state } from "../mods/cockpit/fresh.js";
+import { ago, chip, chips, failing, narrow, nowOf, signIn, staleAfter, state } from "../mods/flightdeck/fresh.js";
 
 const MIN = 60_000;
 const NOW = Date.UTC(2026, 10, 2, 14, 0);
@@ -12,7 +12,7 @@ const opts = { clock: utc };
 // mail rate-limited.
 const ACME = [
   { source: "github", label: "GitHub", at: NOW - 2 * MIN, every: MIN, next: NOW + MIN, error: null, login: "gh auth login" },
-  { source: "tickets", label: "Linear", at: NOW - 30 * MIN, every: MIN, error: { kind: "auth", message: "HTTP 401: token refused", since: NOW - 25 * MIN }, login: "cockpit connector login Linear" },
+  { source: "tickets", label: "Linear", at: NOW - 30 * MIN, every: MIN, error: { kind: "auth", message: "HTTP 401: token refused", since: NOW - 25 * MIN }, login: "flightdeck connector login Linear" },
   { source: "ci", label: "CI", at: NOW - 60 * MIN, every: 30_000, error: { kind: "network", message: "unreachable: connection refused", since: NOW - 56 * MIN } },
   { source: "calendar", label: "Calendar", at: NOW - 120 * MIN, every: 5 * MIN, error: null },
   { source: "mail", label: "Mail", at: NOW - 3 * MIN, every: MIN, next: NOW + 30 * MIN, error: { kind: "rate", message: "rate limited", since: NOW - 2 * MIN } },
@@ -23,7 +23,7 @@ test("each state reads as its own chip, with its fix", () => {
   assert.deepEqual(all.map((c) => c.text), ["GitHub · 2 min ago", "Linear · sign in again", "CI · offline since 13:04", "Calendar · stale, 2 h ago", "Mail · limited until 14:30"]);
   assert.deepEqual(all.map((c) => c.tone), ["quiet", "bad", "bad", "warn", "bad"]);
   assert.deepEqual(all.map((c) => c.action?.kind ?? null), [null, "sign_in", "refresh", "refresh", "refresh"]);
-  assert.equal(all[1].action.label, "Sign in again: cockpit connector login Linear");
+  assert.equal(all[1].action.label, "Sign in again: flightdeck connector login Linear");
   assert.equal(all[1].action.key, "L");
   assert.equal(all[1].tooltip, "HTTP 401: token refused · since 13:35 · last read 30 min ago");
   assert.equal(all[4].action.label, "Read again at 14:30, when the limit resets");
@@ -39,9 +39,9 @@ test("the other failures and the never-read source", () => {
 });
 
 test("a token from the environment is said as it is, not offered as a sign-in", () => {
-  const said = "cockpit reads GitHub with GH_TOKEN: replace that token where it is set, then refresh";
+  const said = "flightdeck reads GitHub with GH_TOKEN: replace that token where it is set, then refresh";
   const c = chip({ source: "github", label: "GitHub", at: NOW - MIN, every: MIN, error: { kind: "auth", message: "HTTP 401", since: NOW - MIN }, login: said }, NOW, opts);
-  assert.deepEqual([c.action.kind, c.action.label, c.action.key], ["refresh", "Cockpit reads GitHub with GH_TOKEN: replace that token where it is set, then refresh", "R"]);
+  assert.deepEqual([c.action.kind, c.action.label, c.action.key], ["refresh", "Flightdeck reads GitHub with GH_TOKEN: replace that token where it is set, then refresh", "R"]);
 });
 
 test("stale means well past the next read, and recovery is quiet again", () => {

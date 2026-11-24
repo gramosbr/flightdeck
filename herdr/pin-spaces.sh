@@ -10,7 +10,7 @@
       ([.order[] | select($label[.] | endswith("  " + $space.value))][0]) as $found
       | if $found == null or (.order | index($found)) == $space.key then .
         else .order = ((.order - [$found]) | .[:$space.key] + [$found] + .[$space.key:])
-          | .moves += [{id: "cockpit:pin", method: "workspace.move", params: {workspace_id: $found, insert_index: $space.key}}]
+          | .moves += [{id: "flightdeck:pin", method: "workspace.move", params: {workspace_id: $found, insert_index: $space.key}}]
         end)
   | .moves[]' 2>/dev/null |
   while IFS= read -r move; do

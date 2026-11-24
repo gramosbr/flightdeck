@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::config::{self, Config};
@@ -78,7 +78,7 @@ fn full_repo(config: &Config, args: &Value) -> Result<String, String> {
     }
     let org = config.0["github"]["org"].as_str().unwrap_or_default();
     if org.is_empty() {
-        return Err("set github.org in the cockpit config".into());
+        return Err("set github.org in the flightdeck config".into());
     }
     Ok(format!("{org}/{repo}"))
 }
@@ -186,10 +186,10 @@ fn ci_log(config: &Config, args: &Value) -> Result<Value, String> {
             .take(LOG_JOBS)
             .collect();
         if let Some(server) = crate::feed::mcp::server(&raw, &config.0, "ci").filter(|_| !failing.is_empty()) {
-            let mapping = cockpit_connectors::ci::mapping(&raw["ci"]);
+            let mapping = flightdeck_connectors::ci::mapping(&raw["ci"]);
             let (mut jobs, mut lines) = (Vec::new(), Vec::new());
             for (id, job) in &failing {
-                let log = crate::feed::mcp::with(&server, async |c| cockpit_connectors::call_mapped_text(c, &mapping, "logs", &json!({"job": id})).await)?;
+                let log = crate::feed::mcp::with(&server, async |c| flightdeck_connectors::call_mapped_text(c, &mapping, "logs", &json!({"job": id})).await)?;
                 lines.extend(log.lines().map(untrusted));
                 jobs.extend(jobs_of(&log, job, false));
             }

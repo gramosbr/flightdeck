@@ -1,26 +1,26 @@
-//! `cockpit agents`: the agents view from a shell or a herdr key, through the hub. What the Herdr app draws, in text: who
+//! `flightdeck agents`: the agents view from a shell or a herdr key, through the hub. What the Herdr app draws, in text: who
 //! needs you and what they ask, answered by number or words; a recap; snooze, seen, dismiss, fork, the week's time per
 //! ticket.
 
 use std::time::{Duration, Instant};
 
-use cockpit_core::hub;
+use flightdeck_core::hub;
 use serde_json::{Value, json};
 
 const USAGE: &str = "Every agent terminal, through the hub.
 
-    cockpit agents [--json]                      who needs you, then the rest, by whose move
-    cockpit agents answer <terminal> <n|n,m|text> [--asked <fingerprint>]
+    flightdeck agents [--json]                      who needs you, then the rest, by whose move
+    flightdeck agents answer <terminal> <n|n,m|text> [--asked <fingerprint>]
                                                  a choice, ticked choices (then Submit), or words; a permission
                                                  asks you to type its choice's label, or takes the fingerprint
                                                  `--json` showed, and is refused once its screen moved on
-    cockpit agents recap <terminal>              the agent's recap of its session (waits for it)
-    cockpit agents snooze <terminal> <1h|18:00|tomorrow|done|off>
-    cockpit agents seen <terminal>
-    cockpit agents dismiss <terminal> [--undo]   out of Needs you until it asks something new; --undo brings it back
-    cockpit agents fork <terminal> [tab|right|down]
-    cockpit agents week                          agent time per ticket, Monday to Sunday
-    cockpit agents pick                          the list, answered from a prompt (herdr's agents popup)
+    flightdeck agents recap <terminal>              the agent's recap of its session (waits for it)
+    flightdeck agents snooze <terminal> <1h|18:00|tomorrow|done|off>
+    flightdeck agents seen <terminal>
+    flightdeck agents dismiss <terminal> [--undo]   out of Needs you until it asks something new; --undo brings it back
+    flightdeck agents fork <terminal> [tab|right|down]
+    flightdeck agents week                          agent time per ticket, Monday to Sunday
+    flightdeck agents pick                          the list, answered from a prompt (herdr's agents popup)
 
 <terminal> is a handle from the list (app:t3, w9:p1), or its ticket key or tab name.";
 
@@ -32,7 +32,7 @@ fn fail(msg: &str) -> ! {
 fn model() -> Value {
     hub::request(&json!({"op": "view", "name": "agents"}), Duration::from_secs(10))
         .map(|v| v["value"].clone())
-        .unwrap_or_else(|e| fail(&format!("the cockpit hub: {e}")))
+        .unwrap_or_else(|e| fail(&format!("the flightdeck hub: {e}")))
 }
 
 /// The handle a word names: a handle as is, else the one row whose ticket or tab or space it names.
@@ -53,7 +53,7 @@ fn resolve_in(model: &Value, word: &str) -> Result<String, String> {
         .collect();
     match named.as_slice() {
         [one] => Ok(one.to_string()),
-        [] => Err(format!("no agent {word:?}: `cockpit agents` lists them")),
+        [] => Err(format!("no agent {word:?}: `flightdeck agents` lists them")),
         many => Err(format!("{word:?} names {} agents ({}): name one by its handle", many.len(), many.join(", "))),
     }
 }
@@ -65,11 +65,11 @@ fn try_act(action: &str, arg: Value) -> Result<String, String> {
 /// One of the hub's actions on one of its views: its note, or the refusal.
 fn act_on(app: &str, action: &str, arg: Value) -> Result<String, String> {
     let answer = hub::request(&json!({"op": "act", "app": app, "action": action, "args": [arg]}), Duration::from_secs(60))
-        .map_err(|e| format!("the cockpit hub: {e}"))?;
+        .map_err(|e| format!("the flightdeck hub: {e}"))?;
     answer["error"].as_str().filter(|e| !e.is_empty()).map_or_else(|| Ok(answer["note"].as_str().unwrap_or_default().to_string()), |e| Err(e.to_string()))
 }
 
-/// Ends a session cockpit drives: `confirm` says the person agreed to stop the turn it is in.
+/// Ends a session flightdeck drives: `confirm` says the person agreed to stop the turn it is in.
 fn end(key: &str, confirm: bool) -> Result<String, String> {
     act_on("session", "stop", json!({"key": key, "confirm": confirm}))
 }
@@ -145,7 +145,7 @@ pub fn at_a_terminal() -> bool {
 }
 
 fn ago(ms: u64) -> String {
-    let m = cockpit_core::seen::now_ms().saturating_sub(ms) / 60_000;
+    let m = flightdeck_core::seen::now_ms().saturating_sub(ms) / 60_000;
     match m {
         0 => "<1m".into(),
         1..60 => format!("{m}m"),
@@ -160,9 +160,9 @@ fn hours(secs: u64) -> String {
 }
 
 /// The word that stands for a row's agent where the desktop shows its logo (`claude`, `codex`), empty when none is known.
-fn mark_of(r: &Value, table: &[cockpit_core::agent::Agent]) -> String {
+fn mark_of(r: &Value, table: &[flightdeck_core::agent::Agent]) -> String {
     let id = r["agent"].as_str().filter(|a| !a.is_empty()).or_else(|| r["program"].as_str()).unwrap_or_default();
-    if id.is_empty() { String::new() } else { cockpit_core::agent::mark_in(table, id) }
+    if id.is_empty() { String::new() } else { flightdeck_core::agent::mark_in(table, id) }
 }
 
 /// The list as text: stage, then each agent's mark, title, place and facts; a waiting agent's question and its numbered
@@ -171,7 +171,7 @@ pub fn render(model: &Value) -> String {
     let mut out = String::new();
     let mut last = String::new();
     let rows: Vec<&Value> = model["agents"].as_array().into_iter().flatten().collect();
-    let table = cockpit_core::agent::all();
+    let table = flightdeck_core::agent::all();
     let marks: Vec<String> = rows.iter().map(|r| mark_of(r, &table)).collect();
     let mark_w = marks.iter().map(|m| m.chars().count()).max().unwrap_or(0);
     for (r, mark) in rows.into_iter().zip(&marks) {
@@ -260,7 +260,7 @@ enum Asked {
     Help,
     /// Of the n-th working agent.
     Stop(usize),
-    /// Of the n-th session cockpit drives.
+    /// Of the n-th session flightdeck drives.
     Hand(usize),
     End(usize),
     Quit,
@@ -291,7 +291,7 @@ fn asked(line: &str) -> Option<Asked> {
 }
 
 /// The list in a loop at a prompt: `<n> <choice|choices|words>` answers the n-th waiting agent, `r <n>` recaps it, `g
-/// <n>` goes to it, `z <n> <when>` snoozes it, `s <n>` stops the n-th working one, `o <n>` hands the n-th session cockpit
+/// <n>` goes to it, `z <n> <when>` snoozes it, `s <n>` stops the n-th working one, `o <n>` hands the n-th session flightdeck
 /// drives over to a terminal of its own and `end <n>` ends it (asking first while it works), Enter refreshes, `q` leaves.
 fn pick() {
     use std::io::{BufRead, Write};
@@ -313,7 +313,7 @@ fn pick() {
             .filter(|r| r["stoppable"] == true)
             .filter_map(|r| r["terminal"].as_str().map(str::to_string))
             .collect();
-        // The sessions cockpit drives, and whether ending one would stop a turn.
+        // The sessions flightdeck drives, and whether ending one would stop a turn.
         let driven: Vec<String> =
             m["agents"].as_array().into_iter().flatten().filter(|r| r["driven"] == true).filter_map(|r| r["terminal"].as_str().map(str::to_string)).collect();
         let busy = |key: &str| {
@@ -381,7 +381,7 @@ fn pick() {
                 }
                 end(key, working)
             }),
-            // `o <n>` is the hand-over itself: the session leaves cockpit for a terminal of this herdr.
+            // `o <n>` is the hand-over itself: the session leaves flightdeck for a terminal of this herdr.
             Some(Asked::Hand(n)) => driven.get(n - 1).map(|key| act_on("session", "terminal", json!({"key": key, "confirm": true, "frontend": "tui"}))),
             Some(Asked::Answer(n, words)) => nth(n).map(|t| {
                 // The row as this list printed it: its question is the one the answer names.
@@ -438,7 +438,7 @@ pub fn main(args: &[String]) {
         Some("answer") if args.len() >= 3 => {
             let mut words: Vec<String> = args[2..].to_vec();
             let asked = words.iter().position(|w| w == "--asked").map(|i| {
-                let fingerprint = words.get(i + 1).cloned().unwrap_or_else(|| fail("--asked takes the fingerprint `cockpit agents --json` shows"));
+                let fingerprint = words.get(i + 1).cloned().unwrap_or_else(|| fail("--asked takes the fingerprint `flightdeck agents --json` shows"));
                 words.drain(i..i + 2);
                 fingerprint
             });
@@ -452,7 +452,7 @@ pub fn main(args: &[String]) {
                 row["question"][key] = json!(fingerprint);
             }
             let mut confirmed = false;
-            // A permission cockpit cannot show in full is answered in the agent's terminal, from here as from a card.
+            // A permission flightdeck cannot show in full is answered in the agent's terminal, from here as from a card.
             if let Some(why) = row["question"]["terminal_only"].as_str() {
                 fail(why);
             }
@@ -547,7 +547,7 @@ mod tests {
         assert_eq!(asked("s2"), Some(Asked::Stop(2)), "as the list prints it");
         assert_eq!(asked("x 1"), Some(Asked::Dismiss(1)), "x is the apps' done, reopen and dismiss, never a stop");
         assert_eq!((asked("x d2"), asked("?"), asked("x")), (Some(Asked::Restore(2)), Some(Asked::Help), None));
-        assert_eq!(cockpit_core::keys::key_of("dismiss"), Some('x'), "the popup's dismiss is the shared verb's key");
+        assert_eq!(flightdeck_core::keys::key_of("dismiss"), Some('x'), "the popup's dismiss is the shared verb's key");
         assert!(HELP.contains("x <n>                   dismiss it") && HELP.contains("x d<n>") && HELP.contains("z <n>"), "{HELP}");
         let model = json!({"agents": [{"terminal": "app:t41", "stage": "needs_you"}, {"terminal": "app:t48", "stage": "failed"}, {"terminal": "app:t52", "stage": "dismissed"}, {"terminal": "app:t44", "stage": "working"}]});
         assert_eq!(numbered(&model), ["app:t41", "app:t48"], "x <n> reaches one stopped with an error too");
@@ -556,8 +556,8 @@ mod tests {
         assert_eq!(asked("z 1 18:00"), Some(Asked::Snooze(1, "18:00".into())));
         assert_eq!(asked("1 sure, go on"), Some(Asked::Answer(1, "sure, go on".into())));
         assert_eq!((asked("o o1"), asked("end 1"), asked("sure")), (Some(Asked::Hand(1)), Some(Asked::End(1)), None));
-        assert_eq!(cockpit_core::keys::key_of("done"), Some('x'), "the verb x keeps in every app");
-        assert_eq!(cockpit_core::keys::key_of("stop"), None, "stop is the apps' own verb, on s in review and routines");
+        assert_eq!(flightdeck_core::keys::key_of("done"), Some('x'), "the verb x keeps in every app");
+        assert_eq!(flightdeck_core::keys::key_of("stop"), None, "stop is the apps' own verb, on s in review and routines");
     }
 
     #[test]

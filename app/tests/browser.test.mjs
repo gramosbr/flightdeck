@@ -1,11 +1,11 @@
-// The browser beside the agent in Cockpit Chat: a terminal-browser split right of the agent's terminal shows in the side
-// panel, its tab zoomed on it, while the chat stays in front; the Cockpit layout keeps the tab's panes as they are.
+// The browser beside the agent in Flightdeck Chat: a terminal-browser split right of the agent's terminal shows in the side
+// panel, its tab zoomed on it, while the chat stays in front; the Flightdeck layout keeps the tab's panes as they are.
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 const program = (key, name = key) => ({ key, name, icon: null, tint: false, tile: null, color: null, shell: false, agent: key === "claude" });
 const AGENT = { pane: "p62d2", terminal: "t2", tab: "tb1", title: "claude", program: program("claude", "Claude Code"), zoomed: false };
@@ -79,14 +79,14 @@ const plain = (v) => JSON.parse(JSON.stringify(v));
 const base = { inChat: true, onTab: false, list: [AGENT, BROWSER_PANE], tab: "tb1", focusedPane: "p62d2", panel: false, child: "show", zoomed: null, away: false, seen: [] };
 
 test("a browser split beside the agent opens the panel on it and zooms its tab on it", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   assert.deepEqual(plain(browser.browserSteps(base)), [["seen", "pe496"], ["open"], ["zoom", "pe496"], ["track", "pe496"]]);
   assert.equal(browser.isBrowserPane(AGENT), false);
   assert.equal(browser.browserIn([AGENT, BROWSER_PANE], "tb2"), null, "another tab's browser is not this agent's");
 });
 
 test("a panel the person closed stays closed, and the tab gets its panes and its focus back", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   const list = [AGENT, { ...BROWSER_PANE, zoomed: true }];
   const closed = { ...base, list, focusedPane: "pe496", panel: false, child: "browser", zoomed: "pe496", seen: ["pe496"] };
   assert.deepEqual(plain(browser.browserSteps(closed)), [["unzoom", "pe496"], ["focus", "p62d2"], ["track", null]]);
@@ -96,7 +96,7 @@ test("a panel the person closed stays closed, and the tab gets its panes and its
 });
 
 test("something focusing the agent in the zoomed tab hands the panel back to the browser", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   const list = [{ ...AGENT, zoomed: true }, BROWSER_PANE];
   const state = { ...base, list, panel: true, child: "browser", zoomed: "pe496", seen: ["pe496"] };
   assert.deepEqual(plain(browser.browserSteps(state)), [["focus", "pe496"]]);
@@ -104,7 +104,7 @@ test("something focusing the agent in the zoomed tab hands the panel back to the
 });
 
 test("the Tab screen takes the browser back from the panel, and the chat gives it to the panel again", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   const list = [AGENT, { ...BROWSER_PANE, zoomed: true }];
   const onTab = { ...base, inChat: false, onTab: true, list, focusedPane: "pe496", panel: true, child: "browser", zoomed: "pe496", seen: ["pe496"] };
   assert.deepEqual(plain(browser.browserSteps(onTab)), [["close"], ["away", true], ["unzoom", "pe496"], ["focus", "p62d2"], ["track", null]]);
@@ -113,14 +113,14 @@ test("the Tab screen takes the browser back from the panel, and the chat gives i
 });
 
 test("the browser closing closes its panel and forgets the zoom", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   const state = { ...base, list: [AGENT], panel: true, child: "browser", zoomed: "pe496", seen: ["pe496"] };
   assert.deepEqual(plain(browser.browserSteps(state)), [["close"], ["track", null]]);
   assert.deepEqual(plain(browser.browserSteps({ ...state, child: "show" })), [["track", null]], "another panel stays");
 });
 
 test("in the window: the panel opens wide enough on the browser, and leaving the layout unzooms", async () => {
-  const f = await load("cockpit-chat");
+  const f = await load("flightdeck-chat");
   f.world.panes = [AGENT, BROWSER_PANE];
   f.world.focus = { tab: "tb1", pane: "p62d2", terminal: "t2" };
   f.node("screen").active = "work";
@@ -135,15 +135,15 @@ test("in the window: the panel opens wide enough on the browser, and leaving the
   assert.equal(f.browser.syncBrowser(1200), false, "the window answers the zoom before the next step");
   f.world.panes = [{ ...AGENT, zoomed: true }, { ...BROWSER_PANE, zoomed: true }];
   f.world.focus = { tab: "tb1", pane: "pe496", terminal: "t3" };
-  f.state.set("layout", "cockpit");
+  f.state.set("layout", "flightdeck");
   f.browser.releaseBrowser();
   assert.deepEqual(plain(f.ran), [["pane.zoom", { pane: "pe496" }], ["pane.focus", { pane: "p62d2" }]]);
   assert.equal(f.state.get(f.browser.ZOOMED), null);
 });
 
-test("the cockpit layout has no browser panel and never zooms a browser", async () => {
-  const f = await load("cockpit");
-  f.state.set("layout", "cockpit");
+test("the flightdeck layout has no browser panel and never zooms a browser", async () => {
+  const f = await load("flightdeck");
+  f.state.set("layout", "flightdeck");
   f.world.panes = [AGENT, BROWSER_PANE];
   f.world.focus = { tab: "tb1", pane: "p62d2", terminal: "t2" };
   assert.equal(f.node("browser"), null);
@@ -152,7 +152,7 @@ test("the cockpit layout has no browser panel and never zooms a browser", async 
 });
 
 test("the chat's box takes the keyboard back once the panel's move landed, once, and never long after", async () => {
-  const { browser } = await load("cockpit-chat");
+  const { browser } = await load("flightdeck-chat");
   const at = { took: 10_000, answered: null, now: 10_400 };
   assert.equal(browser.boxTakesBack(at), true);
   assert.equal(browser.boxTakesBack({ ...at, answered: 10_000 }), false, "answered already");

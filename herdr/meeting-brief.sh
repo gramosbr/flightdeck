@@ -5,7 +5,7 @@
 PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.claude/local:$PATH"
 . "$(dirname "$0")/lib.sh"
 id=$1
-CACHE="$HOME/.cache/cockpit"
+CACHE="$HOME/.cache/flightdeck"
 DIR="$CACHE/meeting-briefs"
 name=$(printf '%s' "$id" | sed 's/[^A-Za-z0-9_-]/_/g')
 mkdir -p "$DIR"
@@ -22,7 +22,7 @@ tickets=$(jq -r '.tickets // {} | if .enabled then .server // "claude.ai Linear"
 ticket_tools=$(jq -r '(.tickets.tools // {get: {tool: "get_issue"}, comments: {tool: "list_comments"}}) | .get.tool, .comments.tool | select(. != null)' "$SETTINGS")
 prefix() { printf 'mcp__%s' "$(printf '%s' "$1" | sed 's/[^A-Za-z0-9_-]/_/g; s/__*/_/g; s/_$//')"; }
 
-set -- Read Write "$(prefix "$calendar")__$get_event" mcp__cockpit__cockpit_read
+set -- Read Write "$(prefix "$calendar")__$get_event" mcp__flightdeck__flightdeck_read
 [ -n "$tickets" ] && for tool in $ticket_tools; do set -- "$@" "$(prefix "$tickets")__$tool"; done
 for tool in $(jq -r '.meetingBrief.tools // [] | .[]' "$SETTINGS"); do set -- "$@" "$tool"; done
 
@@ -36,11 +36,11 @@ prompt="Write the brief for this meeting to $DIR/$name.md, so I come prepared. M
 $meeting
 
 Read the full event with $get_event (id $id, and the meeting's calendar as calendarId when it names one) for its
-description and attachments; without that tool, cockpit's cockpit_read tool reads it (source calendar, verb getEvent,
+description and attachments; without that tool, flightdeck's flightdeck_read tool reads it (source calendar, verb getEvent,
 values {\"event\": \"$id\", \"calendar\": <the meeting's calendar, if any>}), and tickets the same way (source
 tickets, verb details or comments, values {\"ticket\": \"<key>\"}). Open the Notion pages and tickets it links or names,
 with the tools you have; my assigned tickets and PRs are in $CACHE/inbox.json, and a ticket's runbook,
-when it has one, in ~/.config/cockpit/runbooks/<ticket lowercased>.md. Use nothing else: no Slack, no web.
+when it has one, in ~/.config/flightdeck/runbooks/<ticket lowercased>.md. Use nothing else: no Slack, no web.
 
 Live state of my work, fetched minutes ago: ${live:-{}}
 This live state and the runbooks are current. Memory notes and older documents can be stale: when they disagree
@@ -56,11 +56,11 @@ titles, no filler.
 - ## Bring: up to 2 points or questions for me to raise
 - ## Links: up to 4 '- [short title](url)' lines; attachments you could not read go here by name
 Leave out a section with nothing to say. Write the file, then reply with nothing."
-agent=$(sh "$ROOT/cockpit.sh" agent id --agent "$(jq -r '.meetingBrief.agent // empty' "$SETTINGS")")
+agent=$(sh "$ROOT/flightdeck.sh" agent id --agent "$(jq -r '.meetingBrief.agent // empty' "$SETTINGS")")
 # A model by agent id, or one name, passed only to the agent it belongs to.
 model=$(jq -r --arg a "$agent" '.meetingBrief.model // "sonnet" | if type == "object" then .[$a] // "" else . end' "$SETTINGS")
-line=$(sh "$ROOT/cockpit.sh" agent argv run --agent "$agent" --prompt "$prompt" --model "$model" --edits --dir "$DIR" \
-  --dir "$HOME/.config/cockpit/runbooks" --dir "$CACHE")
+line=$(sh "$ROOT/flightdeck.sh" agent argv run --agent "$agent" --prompt "$prompt" --model "$model" --edits --dir "$DIR" \
+  --dir "$HOME/.config/flightdeck/runbooks" --dir "$CACHE")
 [ -n "$line" ] || exit 1
 # Claude Code is told which tools it may call without asking.
 [ "$agent" = claude ] && line="$line --allowedTools \"\$@\""

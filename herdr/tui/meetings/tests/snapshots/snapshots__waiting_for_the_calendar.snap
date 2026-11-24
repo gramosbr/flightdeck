@@ -2,7 +2,7 @@
 source: meetings/tests/snapshots.rs
 expression: "render(&mut app, 60, 8)"
 ---
-   Meetings   no calendar connected · cockpit setup adds o
+   Meetings   no calendar connected · flightdeck setup adds o
 
 
 

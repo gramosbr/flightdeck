@@ -1,8 +1,8 @@
 //! Dismissing what an agent waits on, against the demo world: it leaves what needs the person and its counts until the
 //! agent waits on something else, the state file keeps it for the next hub, and Undo brings it back.
 
-use cockpit_agents::{gui, state, term};
-use cockpit_core::peer::{Sender, Who};
+use flightdeck_agents::{gui, state, term};
+use flightdeck_core::peer::{Sender, Who};
 use serde_json::{Value, json};
 
 const LIMIT: &str = include_str!("fixtures/screens/claude-limit-no-box.txt");
@@ -47,10 +47,10 @@ fn a_dismissed_agent_leaves_what_needs_you_until_it_waits_on_something_else() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_AGENTS_DEMO", &world);
+        std::env::set_var("FLIGHTDECK_AGENTS_DEMO", &world);
     }
-    // The person's own acts: the test says so, as only cockpit's own code may.
-    cockpit_core::peer::trusted();
+    // The person's own acts: the test says so, as only flightdeck's own code may.
+    flightdeck_core::peer::trusted();
     let before = view();
     assert_eq!(
         (before["counts"]["needs_you"].as_u64(), before["counts"]["failed"].as_u64(), before["counts"]["dismissed"].as_u64()),
@@ -65,7 +65,7 @@ fn a_dismissed_agent_leaves_what_needs_you_until_it_waits_on_something_else() {
     let wait = limit["wait"].as_str().expect("what a dismissal names").to_string();
     assert!(wait.ends_with(":limit"), "{wait}");
     let named = |terminal: &str, wait: &str| gui::act("dismiss", &[json!({"terminal": terminal, "wait": wait})]).unwrap();
-    assert_eq!(named("app:t52", "1:0123456789abcdef"), Err(cockpit_agents::session::CHANGED.into()));
+    assert_eq!(named("app:t52", "1:0123456789abcdef"), Err(flightdeck_agents::session::CHANGED.into()));
     assert_eq!(row(&view(), "app:t52")["stage"], "needs_you", "refused: nothing dismissed");
     // Dismissed: out of Needs you and its counts, with its real status, neither snoozed nor seen.
     assert_eq!(named("app:t52", &wait), Ok("dismissed".into()));
@@ -119,10 +119,10 @@ fn a_dismissed_agent_leaves_what_needs_you_until_it_waits_on_something_else() {
     // It works again and comes back with the same question: a new wait, in need of the person again.
     assert_eq!(dismiss("app:t41", false), Ok("dismissed".into()));
     assert_eq!(row(&view(), "app:t41")["stage"], "dismissed");
-    change("app:t41", |a| (a["status"], a["since"]) = (json!("working"), json!(cockpit_core::seen::now_ms())));
+    change("app:t41", |a| (a["status"], a["since"]) = (json!("working"), json!(flightdeck_core::seen::now_ms())));
     gui::poll();
     assert_eq!(row(&view(), "app:t41")["stage"], "working");
-    change("app:t41", |a| (a["status"], a["since"]) = (json!("blocked"), json!(cockpit_core::seen::now_ms())));
+    change("app:t41", |a| (a["status"], a["since"]) = (json!("blocked"), json!(flightdeck_core::seen::now_ms())));
     gui::poll();
     assert_eq!(row(&view(), "app:t41")["stage"], "needs_you");
 
@@ -137,11 +137,11 @@ fn a_dismissed_agent_leaves_what_needs_you_until_it_waits_on_something_else() {
     assert_eq!(dismiss("app:t99", false), Err("no such agent".into()));
 
     // A person's act alone: an agent's tools dismiss nothing, their own card included.
-    for sender in [Who::Agent("app:t41".into()), Who::Agent("app:t52".into()), Who::Unplaced("cockpit cannot tell who sent it".into())] {
-        let refused = cockpit_core::peer::with(Sender::Placed(sender.clone()), || dismiss("app:t41", false));
+    for sender in [Who::Agent("app:t41".into()), Who::Agent("app:t52".into()), Who::Unplaced("flightdeck cannot tell who sent it".into())] {
+        let refused = flightdeck_core::peer::with(Sender::Placed(sender.clone()), || dismiss("app:t41", false));
         assert!(refused.is_err(), "{sender:?}: {refused:?}");
     }
-    let by_agent = cockpit_core::peer::with(Sender::Placed(Who::Agent("app:t41".into())), || dismiss("app:t41", false));
+    let by_agent = flightdeck_core::peer::with(Sender::Placed(Who::Agent("app:t41".into())), || dismiss("app:t41", false));
     assert_eq!(by_agent, Err("a card is dismissed by a person, not by an agent's tools".into()));
     assert_eq!(row(&view(), "app:t41")["stage"], "needs_you");
 }

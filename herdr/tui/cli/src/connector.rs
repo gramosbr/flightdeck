@@ -1,11 +1,11 @@
-//! `cockpit connector`: an MCP server called by cockpit itself, its login, its tools and my tickets through it.
+//! `flightdeck connector`: an MCP server called by flightdeck itself, its login, its tools and my tickets through it.
 
-use cockpit_connectors::{Server, block_on, client, connect, tickets};
+use flightdeck_connectors::{Server, block_on, client, connect, tickets};
 use serde_json::Value;
 
 use crate::proc;
 
-const USAGE: &str = "usage: cockpit connector login <url or servers key> | logout <url> | tools <server> [--json] | call <server> <tool> [json args] | tickets <server> | ticket <server> <id>
+const USAGE: &str = "usage: flightdeck connector login <url or servers key> | logout <url> | tools <server> [--json] | call <server> <tool> [json args] | tickets <server> | ticket <server> <id>
        | rows <source json> (a show block's Metabase, Datadog or metrics source, as {columns, rows})
        | map <tickets|ci|calendar|platform|observability|code|mail> <servers key> (your default agent maps the server's tools)
        | read <source> <verb> [json values] (a read verb of a source, through the server the config names for it)
@@ -25,7 +25,7 @@ pub fn main(args: &[String]) {
             .map(|()| format!("Logged in to {url}"))
         }
         ["logout", url] => {
-            cockpit_connectors::credentials::Store::new(url).forget();
+            flightdeck_connectors::credentials::Store::new(url).forget();
             Ok(format!("Forgot the login to {url}"))
         }
         ["tools", server, "--json"] => block_on(async {
@@ -48,29 +48,29 @@ pub fn main(args: &[String]) {
             Ok(serde_json::to_string_pretty(&answer?).unwrap_or_default())
         }),
         ["tickets", server] => block_on(async {
-            let config = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+            let config = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
             let mapping = tickets::mapping(&config["tickets"]);
             let c = connect(&resolve(server)).await?;
-            let mine = tickets::mine(&cockpit_connectors::tools::Mapped { connection: &c, section: &mapping }, &mapping).await;
+            let mine = tickets::mine(&flightdeck_connectors::tools::Mapped { connection: &c, section: &mapping }, &mapping).await;
             c.close().await;
             Ok(serde_json::to_string_pretty(&mine?).unwrap_or_default())
         }),
         ["ticket", server, id] => block_on(async {
-            let config = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+            let config = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
             let mapping = tickets::mapping(&config["tickets"]);
             let c = connect(&resolve(server)).await?;
-            let card = tickets::details(&cockpit_connectors::tools::Mapped { connection: &c, section: &mapping }, &mapping, id).await;
+            let card = tickets::details(&flightdeck_connectors::tools::Mapped { connection: &c, section: &mapping }, &mapping, id).await;
             c.close().await;
             Ok(serde_json::to_string_pretty(&card?).unwrap_or_default())
         }),
         ["read", source, verb, rest @ ..] => serde_json::from_str::<Value>(rest.first().copied().unwrap_or("{}"))
             .map_err(|e| format!("values: {e}"))
-            .and_then(|values| cockpit_connectors::reads::read(&raw_config(), source, verb, &values)),
+            .and_then(|values| flightdeck_connectors::reads::read(&raw_config(), source, verb, &values)),
         ["health", service, rest @ ..] => {
             let now = crate::find::now_ms() as i64;
-            let start = |at: usize, default: &str| cockpit_connectors::observability::start_of(rest.get(at).copied().unwrap_or(default), now);
+            let start = |at: usize, default: &str| flightdeck_connectors::observability::start_of(rest.get(at).copied().unwrap_or(default), now);
             let (from, to) = (start(0, "now-1h"), if rest.len() > 1 { start(1, "now-0m") } else { now });
-            cockpit_connectors::reads::health(&raw_config(), service, from, to, now).map(|v| v.to_string())
+            flightdeck_connectors::reads::health(&raw_config(), service, from, to, now).map(|v| v.to_string())
         }
         ["rows", source] => rows(source),
         ["map", section, key] => map(section, key),
@@ -82,26 +82,26 @@ pub fn main(args: &[String]) {
     }
 }
 
-/// The server cockpit reaches for a section or a show source by its config name: `servers.<name>`, ready to call.
+/// The server flightdeck reaches for a section or a show source by its config name: `servers.<name>`, ready to call.
 pub fn configured(name: &str) -> Option<Server> {
-    let raw = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+    let raw = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
     Server::from_entry(&raw["servers"][name]).filter(Server::is_ready)
 }
 
 /// A show block's source as rows, through the server the config names for it.
 fn rows(source: &str) -> Result<String, String> {
-    use cockpit_connectors::sources;
+    use flightdeck_connectors::sources;
     let source: Value = serde_json::from_str(source).map_err(|e| format!("source: {e}"))?;
-    let config = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+    let config = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
     if source["metrics"].is_object() {
-        use cockpit_connectors::observability::{self, Signals};
-        let (server, section) = observability::server(&config).ok_or("no metrics server of cockpit's own (observability or datadog in config.json)")?;
+        use flightdeck_connectors::observability::{self, Signals};
+        let (server, section) = observability::server(&config).ok_or("no metrics server of flightdeck's own (observability or datadog in config.json)")?;
         let queries: Vec<String> = source["metrics"]["queries"].as_array().into_iter().flatten().filter_map(Value::as_str).map(str::to_string).collect();
         let from = source["metrics"]["from"].as_str().unwrap_or("now-1h").to_string();
         let now = crate::find::now_ms() as i64;
         return block_on(async {
             let c = connect(&server).await?;
-            let tools = cockpit_connectors::tools::Mapped { connection: &c, section: &section };
+            let tools = flightdeck_connectors::tools::Mapped { connection: &c, section: &section };
             let signals = if observability::is_datadog(&section, section["server"].as_str().unwrap_or("")) {
                 Signals::Datadog(&tools)
             } else {
@@ -114,10 +114,10 @@ fn rows(source: &str) -> Result<String, String> {
         });
     }
     let name = sources::server(&source, &config);
-    let server = configured(&name).ok_or_else(|| format!("no server of cockpit's own for {name} (servers.{name} in config.json)"))?;
+    let server = configured(&name).ok_or_else(|| format!("no server of flightdeck's own for {name} (servers.{name} in config.json)"))?;
     block_on(async {
         let c = connect(&server).await?;
-        let rows = sources::rows(&cockpit_connectors::tools::Mapped { connection: &c, section: &Value::Null }, &source, &config).await;
+        let rows = sources::rows(&flightdeck_connectors::tools::Mapped { connection: &c, section: &Value::Null }, &source, &config).await;
         c.close().await;
         Ok(rows?.to_string())
     })
@@ -125,17 +125,17 @@ fn rows(source: &str) -> Result<String, String> {
 
 /// Maps a configured server's tools for a section with the agent for headless jobs, and writes the section.
 fn map(section: &str, key: &str) -> Result<String, String> {
-    let path = cockpit_core::files::config_dir().join("config.json");
-    let raw = cockpit_core::files::load(&path).unwrap_or(Value::Null);
+    let path = flightdeck_core::files::config_dir().join("config.json");
+    let raw = flightdeck_core::files::load(&path).unwrap_or(Value::Null);
     let server = Server::from_entry(&raw["servers"][key]).ok_or_else(|| format!("no servers.{key} in config.json"))?;
     let name = raw[section]["name"].as_str().filter(|n| !n.is_empty()).unwrap_or(key).to_string();
-    let (mapping, sample) = crate::mapper::map(section, &server, &name, &cockpit_core::agent::for_headless())?;
+    let (mapping, sample) = crate::mapper::map(section, &server, &name, &flightdeck_core::agent::for_headless())?;
     let mut text = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     for (k, v) in mapping.as_object().into_iter().flatten() {
-        text = cockpit_core::jsonedit::set(&text, &[section], k, v)?;
+        text = flightdeck_core::jsonedit::set(&text, &[section], k, v)?;
     }
     for (k, v) in [("server", Value::from(key)), ("name", Value::from(name)), ("enabled", Value::Bool(true))] {
-        text = cockpit_core::jsonedit::set(&text, &[section], k, &v)?;
+        text = flightdeck_core::jsonedit::set(&text, &[section], k, &v)?;
     }
     std::fs::write(&path, text).map_err(|e| e.to_string())?;
     Ok(format!("Mapped {key} for {section}: {sample}"))
@@ -143,10 +143,10 @@ fn map(section: &str, key: &str) -> Result<String, String> {
 
 /// A server by its `servers` key, else by its URL or command.
 fn resolve(spec: &str) -> Server {
-    let raw = cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
+    let raw = flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null);
     Server::from_entry(&raw["servers"][spec]).unwrap_or_else(|| Server::parse(spec))
 }
 
 fn raw_config() -> Value {
-    cockpit_core::files::load(&cockpit_core::files::config_dir().join("config.json")).unwrap_or(Value::Null)
+    flightdeck_core::files::load(&flightdeck_core::files::config_dir().join("config.json")).unwrap_or(Value::Null)
 }

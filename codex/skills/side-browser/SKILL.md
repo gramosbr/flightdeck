@@ -1,6 +1,6 @@
 ---
 name: side-browser
-description: Use the browser beside this conversation (terminal-browser in herdr or the Herdr app, or cockpit's own Chromium window docked in the Herdr app) to check a front change end to end against the local dev server, on mobile, tablet and desktop sizes, reproduce a bug on a page, read the page the person is looking at, or prepare a review on GitHub for the person to submit. Use it whenever a task needs a real browser and this session runs in herdr or the Herdr app; not when terminal-browser is missing or the person set E2E tests to run in another browser.
+description: Use the browser beside this conversation (terminal-browser in herdr or the Herdr app, or flightdeck's own Chromium window docked in the Herdr app) to check a front change end to end against the local dev server, on mobile, tablet and desktop sizes, reproduce a bug on a page, read the page the person is looking at, or prepare a review on GitHub for the person to submit. Use it whenever a task needs a real browser and this session runs in herdr or the Herdr app; not when terminal-browser is missing or the person set E2E tests to run in another browser.
 ---
 
 The person sees this browser beside the conversation and it keeps their sign-ins, so they watch what you do and the pages
@@ -8,35 +8,35 @@ you open are already logged in.
 
 <!-- agent: codex -->
 **Which browser?** Run `command -v terminal-browser; echo "$HERDR_PANE_ID $HC_TERMINAL_ID"; jq -r '.e2eBrowser // .checksBrowser // "terminal-browser", .sideBrowser // "terminal-browser"'
-~/.config/cockpit/config.json`. With `sideBrowser` at `chromium`, in the Herdr app on macOS, the browser is cockpit's own
+~/.config/flightdeck/config.json`. With `sideBrowser` at `chromium`, in the Herdr app on macOS, the browser is flightdeck's own
 Chromium window docked in the side panel: it needs no terminal-browser, and every command below is the same. Skip the rest of this skill, and use the browser tooling you have, when terminal-browser is
 missing and the side browser is not Chromium, there is neither a herdr pane id nor a Herdr app terminal id, the first
 setting says `chrome`, or the person asks for another browser. The settings are `e2eBrowser` and `sideBrowser` in
-~/.config/cockpit/config.json (`cockpit setup` asks them).
+~/.config/flightdeck/config.json (`flightdeck setup` asks them).
 <!-- /agent -->
 
 <!-- agent: codex -->
-**Not for showing results.** Charts, figures, tables and diagrams go through cockpit's show tool, drawn natively beside
+**Not for showing results.** Charts, figures, tables and diagrams go through flightdeck's show tool, drawn natively beside
 the session; a hand-made HTML page here is only for what no show block can draw, or when the person asks for a page.
 <!-- /agent -->
 
-**Open a page** with `sh ~/.config/cockpit/herdr/browse.sh <url>`, never with `terminal-browser open`. A URL, a
+**Open a page** with `sh ~/.config/flightdeck/herdr/browse.sh <url>`, never with `terminal-browser open`. A URL, a
 `localhost:<port>` or an absolute path to an HTML file all work. It opens the page as a tab of the browser already beside
 you, or brings the tab to the front when that page is already open, or splits a new pane right of yours sized so herdr
-draws it fast (in the Herdr app, a terminal split right of yours, which Cockpit Chat shows in its side panel beside the
+draws it fast (in the Herdr app, a terminal split right of yours, which Flightdeck Chat shows in its side panel beside the
 conversation). In the Chromium window it opens as a tab of your own browser, in the side panel: each session has its
 browser, which the person sees while your session is in front. The keyboard stays with the conversation. `--size 0.6` asks for a wider pane,
 `--reload` reloads the page when it is already open. When it cannot place the browser it says why and opens the page in
 the default browser.
 
-**Drive it** with `sh ~/.config/cockpit/herdr/browse.sh action -- <command>`, which targets the active tab of the browser
+**Drive it** with `sh ~/.config/flightdeck/herdr/browse.sh action -- <command>`, which targets the active tab of the browser
 beside you, whichever browser it is, and names it for you in the Herdr app. The commands are agent-browser's (the
 `terminal-browser` skill has the full list). In the Chromium window, `tab list`, `tab new <url>`, `tab t2` and
 `tab close` act on your browser's tabs, and what would leave or end the browser (`close`, `connect`, `--cdp`) is refused.
 
 `snapshot -i` lists the elements with refs, then `click @e12`,
 `fill @e3 "text"`, `press Enter`, `get text @e5`, `eval "document.title"`, `wait --load networkidle`,
-`screenshot <path>` to look at the result. Run `sh ~/.config/cockpit/herdr/browse.sh action done` after your last
+`screenshot <path>` to look at the result. Run `sh ~/.config/flightdeck/herdr/browse.sh action done` after your last
 action, which clears the "agent in control" banner terminal-browser shows the person.
 
 **Checking a front change**: make sure the dev server runs, open its local URL, walk the flow the change touches, take
@@ -44,7 +44,7 @@ a screenshot at each state that matters and compare it with the Figma frame when
 and what you saw, with the screenshot paths.
 
 **Mobile, tablet and desktop**: emulation sticks to the tab it is set on, so give it a tab of its own:
-`sh ~/.config/cockpit/herdr/browse.sh action -- tab new <url>`, then `… action -- set device "iPhone 16"` (also `iPad`,
+`sh ~/.config/flightdeck/herdr/browse.sh action -- tab new <url>`, then `… action -- set device "iPhone 16"` (also `iPad`,
 `iPad Pro`, `Pixel 9`, `Galaxy S25`) or `set viewport 1440 900` for a desktop width, `reload`, and `screenshot` at each
 size. Close that tab with `… action -- tab close` when done, so the person's tabs keep their own size.
 
@@ -54,11 +54,11 @@ with its selector, its source file when the page is a React dev build, the perso
 picture: open those pictures, then change the code the selectors and sources point to.
 
 <!-- agent: codex -->
-**Before and after, for a PR description**: `sh ~/.config/cockpit/herdr/shots.sh <url> <dir>` screenshots a page at
+**Before and after, for a PR description**: `sh ~/.config/flightdeck/herdr/shots.sh <url> <dir>` screenshots a page at
 phone, tablet and desktop sizes in throwaway tabs (`--sizes mobile,desktop`, `--full` for the whole page) and prints the
-paths. Take it once for before, into `~/.cache/cockpit/shots/<repo>-<branch>/before`: on `main` with the dev server
+paths. Take it once for before, into `~/.cache/flightdeck/shots/<repo>-<branch>/before`: on `main` with the dev server
 still running, or on the production page when the branch must stay checked out. Then once for after, on the branch,
-into `…/after`. Dismiss cookie banners first so both sides match. Show them to the person with cockpit's show
+into `…/after`. Dismiss cookie banners first so both sides match. Show them to the person with flightdeck's show
 tool, one `{type: "compare", title: "Mobile", before, after}` block per size. In the PR description,
 GitHub only takes pictures uploaded through its own editor: open the PR's edit form (or the new PR page) beside you,
 `upload` the screenshots into the description field, check their links appeared, arrange them in a small Before | After

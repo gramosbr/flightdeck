@@ -1,4 +1,4 @@
-//! A newer cockpit announced once, whatever the agent: every six hours the hub reads the published version and the
+//! A newer flightdeck announced once, whatever the agent: every six hours the hub reads the published version and the
 //! changelog's sections above the running one, and a click on the notification runs the update. It shares update.json
 //! with the Claude plugin's check, so none is told twice, and the Herdr app's sidebar draws its tag from the same file.
 
@@ -8,8 +8,8 @@ use super::{http, news};
 use crate::config::Config;
 
 const EVERY_MS: u64 = 6 * 3600 * 1000;
-const PUBLISHED: &str = "https://raw.githubusercontent.com/quaresc/cockpit/main/plugin/.claude-plugin/plugin.json";
-const CHANGELOG: &str = "https://raw.githubusercontent.com/quaresc/cockpit/main/CHANGELOG.md";
+const PUBLISHED: &str = "https://raw.githubusercontent.com/gramosbr/flightdeck/main/plugin/.claude-plugin/plugin.json";
+const CHANGELOG: &str = "https://raw.githubusercontent.com/gramosbr/flightdeck/main/CHANGELOG.md";
 
 /// Whether `a` is a later version than `b`, number by number.
 pub fn is_newer(a: &str, b: &str) -> bool {
@@ -81,7 +81,7 @@ fn failed(state: &Value, current: &str, now: u64, message: &str) -> Value {
 /// look failed. A failed look keeps the last version read.
 fn look(state: &Value, now: u64) -> (Value, Result<Option<String>, String>) {
     let current = env!("CARGO_PKG_VERSION");
-    let base = http::base("COCKPIT_PUBLISHED_URL", PUBLISHED);
+    let base = http::base("FLIGHTDECK_PUBLISHED_URL", PUBLISHED);
     let latest = match http::get(&base, &[]) {
         Ok(published) => published["version"].as_str().map(str::to_string).ok_or_else(|| "what GitHub published names no version".to_string()),
         Err(failure) => Err(why(&failure)),
@@ -95,30 +95,30 @@ fn look(state: &Value, now: u64) -> (Value, Result<Option<String>, String>) {
         found.remove("error");
     }
     // A checkout running its own build updates by building again, so the sidebar is told to leave its tag out.
-    next["dev"] = json!(cockpit_update::dev_build(&cockpit_core::files::herdr_dir()));
+    next["dev"] = json!(flightdeck_update::dev_build(&flightdeck_core::files::herdr_dir()));
     next["notes"] = match is_newer(&latest, current) {
-        true => json!(http::text(&http::base("COCKPIT_CHANGELOG_URL", CHANGELOG), &[]).map(|text| notes(&text, current)).unwrap_or_default()),
+        true => json!(http::text(&http::base("FLIGHTDECK_CHANGELOG_URL", CHANGELOG), &[]).map(|text| notes(&text, current)).unwrap_or_default()),
         false => json!([]),
     };
     (next, Ok(announce))
 }
 
 fn path() -> std::path::PathBuf {
-    cockpit_core::files::cache().join("update.json")
+    flightdeck_core::files::cache().join("update.json")
 }
 
 pub fn check(config: &Config, now: u64) {
-    let state = cockpit_core::files::load(&path()).unwrap_or(json!({"at": 0}));
+    let state = flightdeck_core::files::load(&path()).unwrap_or(json!({"at": 0}));
     if now.saturating_sub(state["at"].as_u64().unwrap_or(0)) < EVERY_MS {
         return;
     }
-    if http::base("COCKPIT_PUBLISHED_URL", PUBLISHED) == "off" {
+    if http::base("FLIGHTDECK_PUBLISHED_URL", PUBLISHED) == "off" {
         return;
     }
     let (next, looked) = look(&state, now);
-    let _ = cockpit_core::files::write(&path(), &next);
+    let _ = flightdeck_core::files::write(&path(), &next);
     if let Ok(Some(latest)) = looked {
-        news::notify(config, &format!("⬆️ Cockpit {latest}"), &format!("You run {}: click for the update.", env!("CARGO_PKG_VERSION")), "update", &[]);
+        news::notify(config, &format!("⬆️ Flightdeck {latest}"), &format!("You run {}: click for the update.", env!("CARGO_PKG_VERSION")), "update", &[]);
     }
 }
 
@@ -159,16 +159,16 @@ fn asked_look(before: &Value, mut next: Value, now: u64, person: bool) -> Value 
 /// A look now for whoever asks, the last answer again within `FLOOR_MS`: update.json is written, nothing is announced
 /// (the answer is the news), and a failure says why.
 pub fn check_now(now: u64) -> Result<String, String> {
-    if http::base("COCKPIT_PUBLISHED_URL", PUBLISHED) == "off" {
-        return Err("Update checks are turned off here (COCKPIT_PUBLISHED_URL=off)".into());
+    if http::base("FLIGHTDECK_PUBLISHED_URL", PUBLISHED) == "off" {
+        return Err("Update checks are turned off here (FLIGHTDECK_PUBLISHED_URL=off)".into());
     }
-    let state = cockpit_core::files::load(&path()).unwrap_or(json!({"at": 0}));
+    let state = flightdeck_core::files::load(&path()).unwrap_or(json!({"at": 0}));
     if let Some(answer) = recent(&state, now) {
         return answer;
     }
     let (next, looked) = look(&state, now);
-    let next = asked_look(&state, next, now, cockpit_core::peer::person("update check").is_ok());
-    let _ = cockpit_core::files::write(&path(), &next);
+    let next = asked_look(&state, next, now, flightdeck_core::peer::person("update check").is_ok());
+    let _ = flightdeck_core::files::write(&path(), &next);
     looked.map(|_| said(next["latest"].as_str().unwrap_or_default(), env!("CARGO_PKG_VERSION")))
 }
 

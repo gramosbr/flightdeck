@@ -1,11 +1,11 @@
-// Cockpit Chat's two edges: the sidebar and the side panel, each open or put away behind its drawer, on a stand-in
+// Flightdeck Chat's two edges: the sidebar and the side panel, each open or put away behind its drawer, on a stand-in
 // Herdr that applies the layout commands to the shipped layout file.
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 /** A node of a layout tree by id (the first one: the reading layout names two nodes `work`). */
 function find(node, id) {
@@ -18,10 +18,10 @@ function find(node, id) {
   return null;
 }
 
-async function fixture({ layoutName = "cockpit-chat", shared: given = {} } = {}) {
+async function fixture({ layoutName = "flightdeck-chat", shared: given = {} } = {}) {
   const tree = JSON.parse(await readFile(new URL(`../layouts/${layoutName}.json`, import.meta.url), "utf8"));
   const calls = [];
-  const state = new Map(Object.entries({ layout: layoutName, "cockpit.app": "chat", ...given }));
+  const state = new Map(Object.entries({ layout: layoutName, "flightdeck.app": "chat", ...given }));
   // Herdr's layout commands, as the window applies them to its tree; a resize keeps the size, whatever the node's min.
   const run = (name, args = {}) => {
     calls.push([name, args]);
@@ -94,7 +94,7 @@ async function fixture({ layoutName = "cockpit-chat", shared: given = {} } = {})
 
 test("closing a file restores the panel the layout actually showed, even with a stale shared flag", async () => {
   for (const [open, flag] of [[true, false], [false, true]]) {
-    const f = await fixture({ shared: { "cockpit.panel.open": flag } });
+    const f = await fixture({ shared: { "flightdeck.panel.open": flag } });
     f.node("panel").hidden = !open;
     f.node("panel-body").active = "show";
     await f.openCode("/acme/api/README.md");
@@ -116,7 +116,7 @@ test("Herdr's brand row folding the sidebar to a rail puts it away behind its dr
   assert.equal(f.screens.settleSidebar(), "folded");
   assert.equal(f.node("sidebar").hidden, true, "put away: the chat takes the whole window");
   assert.equal(f.node("sidebar").size.px, 300, "it comes back at the width it had");
-  assert.equal(f.state.get("cockpit.chat.sidebar"), false, "the drawer on the edge stands in for it");
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), false, "the drawer on the edge stands in for it");
   assert.equal(f.state.get("sidebar.collapsed"), false);
   assert.equal(f.screens.settleSidebar(), null, "settled: nothing more to do");
   // Pinned again from the drawer, it opens at that width.
@@ -136,56 +136,56 @@ test("a fold to a rail never leaves a sidebar narrower than this layout's minimu
 });
 
 test("the flag follows the layout: hidden or shown from elsewhere, the drawer and the bar read the layout", async () => {
-  const f = await fixture({ shared: { "cockpit.chat.sidebar": true } });
+  const f = await fixture({ shared: { "flightdeck.chat.sidebar": true } });
   f.node("sidebar").hidden = true;
   assert.equal(f.screens.sidebarShown(), false);
   assert.equal(f.screens.settleSidebar(), "flag");
-  assert.equal(f.state.get("cockpit.chat.sidebar"), false);
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), false);
   assert.ok(f.top.lightsRoom() > 12, "the traffic lights get room on the bar once the sidebar is away");
   f.node("sidebar").hidden = false;
   assert.equal(f.screens.settleSidebar(), "flag");
-  assert.equal(f.state.get("cockpit.chat.sidebar"), true);
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), true);
   assert.equal(f.top.lightsRoom(), 12);
 });
 
 test("⌘B toggles what the window shows, even when the flag says otherwise", async () => {
-  const f = await fixture({ shared: { "cockpit.chat.sidebar": false } });
+  const f = await fixture({ shared: { "flightdeck.chat.sidebar": false } });
   // The layout shows the sidebar although the flag says it is away (a click on the layout, a restart).
   f.node("sidebar").hidden = false;
   f.screens.toggleSidebar();
   assert.equal(f.node("sidebar").hidden, true);
-  assert.equal(f.state.get("cockpit.chat.sidebar"), false);
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), false);
   f.screens.toggleSidebar();
   assert.equal(f.node("sidebar").hidden, false);
-  assert.equal(f.state.get("cockpit.chat.sidebar"), true);
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), true);
 });
 
 test("the left drawer draws nothing while the sidebar is in the window, whatever the flag says", async () => {
-  const f = await fixture({ shared: { "cockpit.chat.sidebar": false } });
+  const f = await fixture({ shared: { "flightdeck.chat.sidebar": false } });
   const peek = Object.create(f.SidePeek.prototype);
   f.node("sidebar").hidden = false;
   assert.equal(peek.render().made.length, 0, "a stale flag never draws the drawer over an open sidebar");
   f.screens.settleSidebar();
-  assert.equal(f.state.get("cockpit.chat.sidebar"), true, "and the flag follows the layout");
+  assert.equal(f.state.get("flightdeck.chat.sidebar"), true, "and the flag follows the layout");
 });
 
-test("the Cockpit layout's sidebar is never settled: it folds to its own rail", async () => {
-  const f = await fixture({ layoutName: "cockpit" });
+test("the Flightdeck layout's sidebar is never settled: it folds to its own rail", async () => {
+  const f = await fixture({ layoutName: "flightdeck" });
   f.node("sidebar").size = { px: 76 };
   assert.equal(f.screens.settleSidebar(), null);
   assert.equal(f.node("sidebar").hidden, undefined);
 });
 
 test("the right drawer is there from the first frame when this layout's panel is closed, whatever the flag says", async () => {
-  // The Cockpit layout left its own panel open: the flag says open, the reading layout's panel is closed.
-  const f = await fixture({ shared: { "cockpit.panel.open": true, "cockpit.panel.child": "show" } });
+  // The Flightdeck layout left its own panel open: the flag says open, the reading layout's panel is closed.
+  const f = await fixture({ shared: { "flightdeck.panel.open": true, "flightdeck.panel.child": "show" } });
   assert.equal(f.node("panel").hidden, true);
   const peek = Object.create(f.PanelPeek.prototype);
   peek.show = null;
   peek.sync({ notify() {} });
   assert.ok(peek.show, "the drawer holds its view from the start");
   assert.equal(f.commands.settlePanel(), true);
-  assert.equal(f.state.get("cockpit.panel.open"), false, "the flag follows the layout");
+  assert.equal(f.state.get("flightdeck.panel.open"), false, "the flag follows the layout");
   // Pinned open from the drawer, the drawer stands down.
   f.commands.openPanel(null);
   assert.equal(f.node("panel").hidden, false);
@@ -194,7 +194,7 @@ test("the right drawer is there from the first frame when this layout's panel is
 });
 
 test("an open panel the flag calls closed has no drawer over it, and ⌘⌥B closes it at the first press", async () => {
-  const f = await fixture({ shared: { "cockpit.panel.open": false } });
+  const f = await fixture({ shared: { "flightdeck.panel.open": false } });
   f.node("panel").hidden = false;
   const peek = Object.create(f.PanelPeek.prototype);
   peek.show = null;
@@ -202,16 +202,16 @@ test("an open panel the flag calls closed has no drawer over it, and ⌘⌥B clo
   assert.equal(peek.show, null);
   f.commands.togglePanel(null);
   assert.equal(f.node("panel").hidden, true);
-  assert.equal(f.state.get("cockpit.panel.open"), false);
+  assert.equal(f.state.get("flightdeck.panel.open"), false);
 });
 
 test("⌘⌥B opens a closed panel at the first press, even when the other layout left the flag open", async () => {
-  const f = await fixture({ shared: { "cockpit.panel.open": true, "cockpit.panel.child": "review" } });
+  const f = await fixture({ shared: { "flightdeck.panel.open": true, "flightdeck.panel.child": "review" } });
   f.commands.togglePanel(null);
   assert.equal(f.node("panel").hidden, false, "opened, not closed again");
   // On another child it switches to it; on the one it shows it closes.
   f.commands.togglePanel("files");
-  assert.equal(f.node("panel-body").active, "project-files", "cockpit's Files, chat.projectPanels being on unless set off");
+  assert.equal(f.node("panel-body").active, "project-files", "flightdeck's Files, chat.projectPanels being on unless set off");
   assert.equal(f.node("panel").hidden, false);
   f.commands.togglePanel("files");
   assert.equal(f.node("panel").hidden, true);

@@ -1,18 +1,18 @@
 //! The duties of the app running in the monitor space: how production does on the space's sidebar row, and the app a
-//! notification click asks for (monitor-focus.json, written by `cockpit focus monitor:<app>`).
+//! notification click asks for (monitor-focus.json, written by `flightdeck focus monitor:<app>`).
 
 use std::process::Command;
 use std::time::SystemTime;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
 use crate::data::{Doc, State};
 
 pub const ICON: &str = "\u{f0e4}";
 
-/// Run by `cockpit space monitor` in the monitor space: the sidebar row is this app's then.
+/// Run by `flightdeck space monitor` in the monitor space: the sidebar row is this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 fn plural(n: usize, one: &str) -> String {
@@ -53,7 +53,7 @@ pub fn report(text: String, bad: bool) {
     let (token, other) = if bad { ("monitor_bad", "monitor") } else { ("monitor", "monitor_bad") };
     std::thread::spawn(move || {
         let _ = Command::new(bin)
-            .args(["workspace", "report-metadata", &workspace, "--source", "cockpit-monitor", "--token", &format!("{token}={text}"), "--clear-token", other])
+            .args(["workspace", "report-metadata", &workspace, "--source", "flightdeck-monitor", "--token", &format!("{token}={text}"), "--clear-token", other])
             .output();
     });
 }

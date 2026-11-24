@@ -1,4 +1,4 @@
-//! `cockpit hub`: answers the apps on ~/.cache/cockpit/hub.sock (see cockpit_core::hub for the protocol), is the only
+//! `flightdeck hub`: answers the apps on ~/.cache/flightdeck/hub.sock (see flightdeck_core::hub for the protocol), is the only
 //! writer of the documents they share (see store) and runs the routines. One runs at a time, detached from the app that
 //! started it, and exits after 30 minutes with no request, no subscriber and no routine to run on its own.
 
@@ -35,11 +35,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
-/// Seconds with no request before the hub exits; COCKPIT_HUB_IDLE_SECS shortens it for tests.
+/// Seconds with no request before the hub exits; FLIGHTDECK_HUB_IDLE_SECS shortens it for tests.
 fn idle_limit() -> u64 {
-    std::env::var("COCKPIT_HUB_IDLE_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(30 * 60)
+    std::env::var("FLIGHTDECK_HUB_IDLE_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(30 * 60)
 }
 
 /// Serves until idle; returns at once when another hub already answers on the socket. Run with HUB_TASK set, it indexes
@@ -52,15 +52,15 @@ pub fn run() {
     // Its own session: closing the pane of the app that started it does not take the hub down.
     // SAFETY: setsid has no memory effects; it fails harmlessly when the hub already leads a group.
     unsafe { libc::setsid() };
-    let socket = cockpit_core::hub::socket();
+    let socket = flightdeck_core::hub::socket();
     if UnixStream::connect(&socket).is_ok() {
         return;
     }
-    // Before anything is touched: a hub without its TCP side is one `cockpit hub start` stops.
+    // Before anything is touched: a hub without its TCP side is one `flightdeck hub start` stops.
     let tcp = match listen() {
         Ok(tcp) => tcp,
         Err(why) => {
-            eprintln!("cockpit hub: cannot listen on COCKPIT_HUB_LISTEN: {why}");
+            eprintln!("flightdeck hub: cannot listen on FLIGHTDECK_HUB_LISTEN: {why}");
             return;
         }
     };
@@ -71,16 +71,16 @@ pub fn run() {
     }
     let listener = match UnixListener::bind(&socket) {
         Ok(listener) => listener,
-        // Said on stderr, which the app that started the hub points at ~/.cache/cockpit/hub.log.
+        // Said on stderr, which the app that started the hub points at ~/.cache/flightdeck/hub.log.
         Err(why) => {
-            eprintln!("cockpit hub: cannot listen on {}: {why}", socket.display());
+            eprintln!("flightdeck hub: cannot listen on {}: {why}", socket.display());
             return;
         }
     };
     let inode = std::fs::metadata(&socket).map(|m| m.ino()).unwrap_or_default();
-    let _ = cockpit_core::notify::GUI.set(views::notify);
-    // Only the hub asks agents which models they list, and not in the demo world or with COCKPIT_HUB_MODELS=off.
-    cockpit_core::models::ask_agents();
+    let _ = flightdeck_core::notify::GUI.set(views::notify);
+    // Only the hub asks agents which models they list, and not in the demo world or with FLIGHTDECK_HUB_MODELS=off.
+    flightdeck_core::models::ask_agents();
     // The store opens before the first request, waiting out a hub that hands over to this one.
     drop(store::global());
     for start in STARTED.lock().unwrap_or_else(|e| e.into_inner()).iter().copied() {
@@ -94,7 +94,7 @@ pub fn run() {
     std::thread::spawn(watch);
     std::thread::spawn(search::sessions::keep);
     std::thread::spawn(routines::keep);
-    std::thread::spawn(cockpit_core::resume::keep);
+    std::thread::spawn(flightdeck_core::resume::keep);
     // A start the hub runs itself would be cut short by a hand-over or an idle exit.
     keep_alive(act::start_running);
     usage::start();
@@ -102,10 +102,10 @@ pub fn run() {
     on_signals(socket.clone(), inode);
     std::thread::spawn(move || {
         let dir = files::herdr_dir();
-        cockpit_update::keep_current(&dir, |binary| hand_over(&dir, binary, &socket, inode));
+        flightdeck_update::keep_current(&dir, |binary| hand_over(&dir, binary, &socket, inode));
     });
     if let Err(error) = serve_tcp(tcp, last.clone()) {
-        eprintln!("cockpit hub: cannot start TCP: {error}");
+        eprintln!("flightdeck hub: cannot start TCP: {error}");
     }
     let gate = server::Gate { token: None, frontend: None, read_only: false };
     for stream in listener.incoming().flatten() {
@@ -116,7 +116,7 @@ pub fn run() {
         let (last, gate) = (last.clone(), gate.clone());
         let pid = peer_pid(&stream);
         std::thread::spawn(move || {
-            cockpit_core::peer::set(pid);
+            flightdeck_core::peer::set(pid);
             server::serve(stream, last, gate)
         });
     }
@@ -161,12 +161,12 @@ fn token() -> std::io::Result<String> {
     Ok(bytes.iter().map(|b| format!("{b:02x}")).collect())
 }
 
-/// Takes the desktop protocol's port on loopback, or on COCKPIT_HUB_LISTEN's explicit interface.
+/// Takes the desktop protocol's port on loopback, or on FLIGHTDECK_HUB_LISTEN's explicit interface.
 fn listen() -> std::io::Result<(TcpListener, std::net::IpAddr)> {
-    let host = std::env::var("COCKPIT_HUB_LISTEN").unwrap_or_else(|_| "127.0.0.1".into());
-    let host: std::net::IpAddr = host.parse().map_err(|_| std::io::Error::other("COCKPIT_HUB_LISTEN must be an IP address"))?;
+    let host = std::env::var("FLIGHTDECK_HUB_LISTEN").unwrap_or_else(|_| "127.0.0.1".into());
+    let host: std::net::IpAddr = host.parse().map_err(|_| std::io::Error::other("FLIGHTDECK_HUB_LISTEN must be an IP address"))?;
     if host.is_unspecified() || host.is_multicast() {
-        return Err(std::io::Error::other("COCKPIT_HUB_LISTEN must name one interface, not a wildcard or multicast address"));
+        return Err(std::io::Error::other("FLIGHTDECK_HUB_LISTEN must name one interface, not a wildcard or multicast address"));
     }
     Ok((TcpListener::bind((host, 0))?, host))
 }
@@ -181,7 +181,7 @@ fn serve_tcp((listener, host): (TcpListener, std::net::IpAddr), last: Arc<Atomic
     let _ = std::fs::remove_file(&tmp);
     let written = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600).open(&tmp).and_then(|mut f| f.write_all(info.to_string().as_bytes()));
     written.and_then(|_| std::fs::rename(&tmp, &path))?;
-    let gate = server::Gate { token: Some(token), frontend: Some(cockpit_core::frontend::Frontend::App), read_only: !host.is_loopback() };
+    let gate = server::Gate { token: Some(token), frontend: Some(flightdeck_core::frontend::Frontend::App), read_only: !host.is_loopback() };
     std::thread::spawn(move || {
         for stream in listener.incoming().flatten() {
             if STOPPING.load(Ordering::SeqCst) {
@@ -192,8 +192,8 @@ fn serve_tcp((listener, host): (TcpListener, std::net::IpAddr), last: Arc<Atomic
             let from = stream.peer_addr().ok().map(|a| a.port());
             std::thread::spawn(move || {
                 match from {
-                    Some(from) => cockpit_core::peer::set_tcp(from, port),
-                    None => cockpit_core::peer::set(None),
+                    Some(from) => flightdeck_core::peer::set_tcp(from, port),
+                    None => flightdeck_core::peer::set(None),
                 }
                 server::serve(stream, last, gate)
             });
@@ -212,7 +212,7 @@ fn drop_tcp_file() {
 
 /// A newer binary went into bin/: a hub run from it takes the socket over, the space apps restart on it, this one ends.
 fn hand_over(dir: &Path, binary: &Path, socket: &Path, inode: u64) {
-    // A session cockpit drives would end with this process: the next look hands over once none is left.
+    // A session flightdeck drives would end with this process: the next look hands over once none is left.
     if kept() {
         return;
     }
@@ -222,14 +222,14 @@ fn hand_over(dir: &Path, binary: &Path, socket: &Path, inode: u64) {
     }
     store::global().close();
     let _ = std::process::Command::new(binary).arg("hub").stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn();
-    cockpit_update::restart_apps(dir);
+    flightdeck_update::restart_apps(dir);
     std::process::exit(0);
 }
 
 /// Whether a pinned space's app runs, which keeps the hub fetching for it, requests or not. Only this hub's own count:
 /// one under another HOME (a test sandbox) talks to a hub of its own.
 fn space_apps_running() -> bool {
-    let pattern = format!("cockpit ({}) cockpit-space", cockpit_core::SPACE_APPS.join("|"));
+    let pattern = format!("flightdeck ({}) flightdeck-space", flightdeck_core::SPACE_APPS.join("|"));
     let Ok(out) = std::process::Command::new("pgrep").args(["-f", &pattern]).output() else {
         return false;
     };
@@ -261,14 +261,14 @@ pub fn on_start(start: fn()) {
     STARTED.lock().unwrap_or_else(|e| e.into_inner()).push(start);
 }
 
-/// What keeps the hub running though nothing asks of it, registered from outside the hub crate: a session cockpit drives
+/// What keeps the hub running though nothing asks of it, registered from outside the hub crate: a session flightdeck drives
 /// lives in the hub's process and ends with it.
 static KEEP: std::sync::Mutex<Vec<fn() -> bool>> = std::sync::Mutex::new(Vec::new());
 
 /// Set once a signal ends the hub: the listeners take no more requests.
 static STOPPING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-/// SIGTERM (`cockpit hub stop`), SIGINT and SIGHUP end the hub: no new request is served and the socket goes, the
+/// SIGTERM (`flightdeck hub stop`), SIGINT and SIGHUP end the hub: no new request is served and the socket goes, the
 /// sidebar's token is cleared while hub.json still names this hub, then hub.json and the store close.
 fn on_signals(socket: PathBuf, inode: u64) {
     let Ok(mut signals) = signal_hook::iterator::Signals::new([libc::SIGTERM, libc::SIGINT, libc::SIGHUP]) else { return };

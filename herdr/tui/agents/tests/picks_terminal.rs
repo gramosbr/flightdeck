@@ -1,7 +1,7 @@
 //! A model, an effort level or fast mode for an agent in a terminal, on the demo's made-up agents: each row says what its
 //! agent offers and how, and a change is typed only as its own command, only while it rests, never one it changes by hand.
 
-use cockpit_agents::gui;
+use flightdeck_agents::gui;
 use serde_json::{Value, json};
 
 fn agent(terminal: &str, program: &str, status: &str) -> Value {
@@ -19,9 +19,9 @@ fn a_terminal_takes_its_own_command_only_at_rest_and_never_one_changed_by_hand()
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_AGENTS_DEMO", &world);
+        std::env::set_var("FLIGHTDECK_AGENTS_DEMO", &world);
     }
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
     let view = gui::view(&json!({}), &|_| Value::Null);
     let row = |t: &str| view["agents"].as_array().unwrap().iter().find(|r| r["terminal"] == t).cloned().unwrap();
     let claude = row("app:t46")["picks"].clone();
@@ -48,10 +48,10 @@ fn a_terminal_takes_its_own_command_only_at_rest_and_never_one_changed_by_hand()
     // At rest, a value it takes goes on to delivery: here no window answers, so the words are refused there.
     let typed = pick("app:t46", "effort", json!("high")).unwrap_err();
     assert!(!typed.contains("rests") && !typed.contains("takes no"), "past every check: {typed}");
-    let log = std::fs::read_to_string(home.path().join(".cache/cockpit/agents/answers.log")).unwrap();
+    let log = std::fs::read_to_string(home.path().join(".cache/flightdeck/agents/answers.log")).unwrap();
     assert!(log.contains("app:t46 from test:click"), "{log}");
     // A connection that names no process turns nothing on.
-    cockpit_core::peer::set(None);
+    flightdeck_core::peer::set(None);
     assert!(pick("app:t46", "fast", json!(true)).unwrap_err().contains("cannot tell"));
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
 }

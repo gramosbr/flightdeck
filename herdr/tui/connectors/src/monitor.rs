@@ -13,7 +13,7 @@ const BINS: usize = 20;
 /// Monitors come in pages well under what an MCP answer may hold.
 const MONITOR_PAGES: usize = 8;
 const MONITOR_PAGE_TOKENS: u32 = 8000;
-const INTENT: &str = "cockpit monitor space: health of recent releases";
+const INTENT: &str = "flightdeck monitor space: health of recent releases";
 
 /// What the document is built from besides the tools: the mapped platform section, the monitor settings, and who I am.
 pub struct Context<'a> {
@@ -158,7 +158,7 @@ fn field_line(line: &str) -> Option<(bool, &str, &str)> {
     (!value.contains(['\r', '\u{2028}', '\u{2029}'])).then_some((is_item, &rest[..key_len], value))
 }
 
-/// The Error Tracking issues of a search, which answers a YAML list: the fields cockpit shows, a message to its first
+/// The Error Tracking issues of a search, which answers a YAML list: the fields flightdeck shows, a message to its first
 /// line, new when first seen since `since` (ms).
 pub fn parse_issues(body: &str, since: i64) -> Vec<Value> {
     let mut items: Vec<serde_json::Map<String, Value>> = Vec::new();

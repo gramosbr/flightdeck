@@ -5,13 +5,13 @@
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::{Duration, Instant};
 
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::{Answer, Dialog};
-use cockpit_core::input::{Edit, Input};
-use cockpit_core::term;
-use cockpit_core::text::wrap;
-use cockpit_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::{Answer, Dialog};
+use flightdeck_core::input::{Edit, Input};
+use flightdeck_core::term;
+use flightdeck_core::text::wrap;
+use flightdeck_core::theme::{BG, DIM, FG, GREEN, LINE, ORANGE, RED, SURFACE, bold, dim, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
@@ -495,7 +495,7 @@ impl Form {
             self.asked += 1;
             let (n, tx, request) = (self.asked, self.plans.0.clone(), self.request());
             std::thread::spawn(move || {
-                let plan = cockpit_core::hub::fetch("start_work", json!({"request": request})).unwrap_or_else(|e| json!({"error": e}));
+                let plan = flightdeck_core::hub::fetch("start_work", json!({"request": request})).unwrap_or_else(|e| json!({"error": e}));
                 let _ = tx.send((n, plan));
                 term::wake();
             });
@@ -519,7 +519,7 @@ impl Form {
             let (tx, id) = (self.runs.0.clone(), self.id.clone());
             std::thread::spawn(move || {
                 let asked = json!({"op": "view", "name": "start", "args": {"id": id}});
-                let run = cockpit_core::hub::request(&asked, Duration::from_secs(2)).map(|v| v["value"]["run"].clone()).unwrap_or(Value::Null);
+                let run = flightdeck_core::hub::request(&asked, Duration::from_secs(2)).map(|v| v["value"]["run"].clone()).unwrap_or(Value::Null);
                 let _ = tx.send(run);
                 term::wake();
             });
@@ -623,7 +623,7 @@ impl Form {
         }
         let (text, style) = self.value_of(field);
         let room = inner.saturating_sub(label_w + 4);
-        let text = cockpit_core::text::fit(&text, room).trim_end().to_string();
+        let text = flightdeck_core::text::fit(&text, room).trim_end().to_string();
         let label_style = if focused { fg(ORANGE) } else { dim() };
         if self.is_text(field) {
             return Line::from(vec![Span::styled(label, label_style), Span::styled(text, style)]);
@@ -650,7 +650,7 @@ impl Form {
 
     /// One plan or progress line per step, a blocker's fixes under it, then the notes.
     fn plan_lines(&self, inner: usize) -> Vec<Line<'static>> {
-        let home = cockpit_core::files::home().to_string_lossy().into_owned();
+        let home = flightdeck_core::files::home().to_string_lossy().into_owned();
         let short = |t: &str| if home.len() > 1 { t.replace(&home, "~") } else { t.to_string() };
         let mut out = Vec::new();
         let push = |mark: Span<'static>, text: String, style: Style, out: &mut Vec<Line<'static>>| {
@@ -754,7 +754,7 @@ impl Form {
             Some(t) => format!("Start work · {t}"),
             None => "Start work".into(),
         };
-        let mut lines = vec![Line::styled(cockpit_core::text::fit(&title, inner).trim_end().to_string(), bold(ORANGE)), Line::raw("")];
+        let mut lines = vec![Line::styled(flightdeck_core::text::fit(&title, inner).trim_end().to_string(), bold(ORANGE)), Line::raw("")];
         let mut focus = 0;
         let options = if self.started() { Vec::new() } else { self.options() };
         if !(self.started() && self.plan.is_null()) {
@@ -772,7 +772,7 @@ impl Form {
                 };
                 let resolved = self.plan["title"].as_str().filter(|t| !t.is_empty() && !self.source.text.trim().is_empty());
                 if let Some(t) = resolved.filter(|_| kind != "prompt") {
-                    let text = cockpit_core::text::fit(&format!("→ {kind} · {t}"), inner.saturating_sub(label_w)).trim_end().to_string();
+                    let text = flightdeck_core::text::fit(&format!("→ {kind} · {t}"), inner.saturating_sub(label_w)).trim_end().to_string();
                     lines.push(Line::from(vec![Span::raw(" ".repeat(label_w)), Span::styled(text, fg(GREEN))]));
                 }
                 if !options.is_empty() {
@@ -846,14 +846,14 @@ impl Form {
 // ---------------------------------------------------------------------------------------------------------------------
 // The popup on its own
 
-/// `cockpit start-work [source]`: the form alone, for the global chord; it quits when the form closes.
+/// `flightdeck start-work [source]`: the form alone, for the global chord; it quits when the form closes.
 pub struct Popup {
     pub form: Form,
 }
 
 impl term::App for Popup {
     fn draw(&mut self, frame: &mut Frame) {
-        frame.render_widget(Block::new().style(cockpit_core::theme::base()), frame.area());
+        frame.render_widget(Block::new().style(flightdeck_core::theme::base()), frame.area());
         self.form.render(frame, frame.area());
     }
 

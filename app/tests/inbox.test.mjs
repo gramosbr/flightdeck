@@ -6,9 +6,9 @@ import { test } from "node:test";
 /** inbox.js with every native import stubbed: only the cleanup's own logic runs. */
 async function load() {
   const context = createContext({ console });
-  const imports = { herdr: { shared: () => "cockpit", settings: () => ({}) }, net: { default: {} } };
+  const imports = { herdr: { shared: () => "flightdeck", settings: () => ({}) }, net: { default: {} } };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");

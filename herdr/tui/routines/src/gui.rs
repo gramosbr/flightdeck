@@ -1,12 +1,12 @@
-//! The routines for the Herdr app's cockpit mod: the view model the hub pushes (tiles for the week, the run inbox, each
+//! The routines for the Herdr app's flightdeck mod: the view model the hub pushes (tiles for the week, the run inbox, each
 //! routine with its state, next runs, history and runs) with the actions each row offers, the same ones the TUI's rows
 //! have, ready to send; and `routines-when`, what a schedule typed in the form means and when it runs next.
 
 use std::path::{Path, PathBuf};
 
 use chrono::{Datelike, Duration};
-use cockpit_core::files::{self, Density};
-use cockpit_core::routines::{self, TEMPLATES, TRIGGERS, When};
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::routines::{self, TEMPLATES, TRIGGERS, When};
 use serde_json::{Value, json};
 
 use crate::app::{App, Cmd};

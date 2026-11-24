@@ -6,22 +6,22 @@ use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use cockpit_core::acts::Act;
-use cockpit_core::anim::{self, Effects};
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::files::{self, Density};
-use cockpit_core::hub::{self, Docs};
-use cockpit_core::input::Input;
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::seen::Seen;
-use cockpit_core::term;
-use cockpit_core::theme::base;
-use cockpit_core::toast::{Kind as Toast, Toasts};
-use cockpit_core::widgets::filter_line;
-use cockpit_core::{focus, header};
 use crossterm::event::{Event, KeyEventKind};
+use flightdeck_core::acts::Act;
+use flightdeck_core::anim::{self, Effects};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::hub::{self, Docs};
+use flightdeck_core::input::Input;
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::seen::Seen;
+use flightdeck_core::term;
+use flightdeck_core::theme::base;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::widgets::filter_line;
+use flightdeck_core::{focus, header};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::Line;
@@ -50,7 +50,7 @@ const QUEUED: &str = "queued";
 
 /// Where the worktrees stand: a change any process said, and the background scans that finished since.
 fn worktrees_seen() -> u64 {
-    crate::worktrees::generation().wrapping_add(cockpit_core::cleanup::generation())
+    crate::worktrees::generation().wrapping_add(flightdeck_core::cleanup::generation())
 }
 
 pub(crate) enum Command {
@@ -252,7 +252,7 @@ impl App {
         self.bare = top.iter().all(|row| row.children.is_empty());
         if self.bare {
             // Nothing to show: the doctor's report says what is left of getting started.
-            cockpit_core::started::refresh();
+            flightdeck_core::started::refresh();
         }
         self.tree.replace(top);
         self.picked.keep_known(&self.tree);
@@ -458,7 +458,7 @@ fn period() -> u64 {
 
 impl term::App for App {
     /// Idle only: `?` must type into the filter or a dialog when one is open.
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         let busy = self.editing || self.tree.filtering() || self.dialog.is_some() || self.palette.is_open || self.start.is_some();
         (!busy).then(|| ("the inbox".to_string(), Vec::new()))
     }
@@ -477,7 +477,7 @@ impl term::App for App {
         }
         if self.bare {
             // What is left of getting started, from the doctor's last report.
-            head.extend(cockpit_core::started::lines(&cockpit_core::started::steps(&self.inputs.started), area.width.saturating_sub(2) as usize));
+            head.extend(flightdeck_core::started::lines(&flightdeck_core::started::steps(&self.inputs.started), area.width.saturating_sub(2) as usize));
         }
         let since = |ms: u64| crate::facts::clock(&Value::from(ms));
         if let Some(line) = self.looked.head(area.width.saturating_sub(2) as usize, since) {

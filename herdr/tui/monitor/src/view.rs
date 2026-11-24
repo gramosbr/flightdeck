@@ -2,13 +2,13 @@
 //! marked, the selected row's panel (or, compact, its buttons on the row itself), the footer, and the dialog, toasts
 //! and palette over them.
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::files::Density;
-use cockpit_core::seen;
-use cockpit_core::sources;
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{BLUE, DIM, FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
-use cockpit_core::widgets;
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::files::Density;
+use flightdeck_core::seen;
+use flightdeck_core::sources;
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{BLUE, DIM, FG, GREEN, LINE, ORANGE, PANEL, RED, base, bold, dim, fg};
+use flightdeck_core::widgets;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style};
@@ -86,7 +86,7 @@ impl App {
         if self.timeline {
             spans.push(Span::styled("   releases, newest first", fg(ORANGE)));
         }
-        let mut lines = cockpit_core::header::lines(Line::from(spans), &doc.sources, cells);
+        let mut lines = flightdeck_core::header::lines(Line::from(spans), &doc.sources, cells);
         let since = |ms: u64| chrono::DateTime::from_timestamp_millis(ms as i64).map(|at| self.clock.hm(at)).unwrap_or_default();
         lines.extend(self.looked.head(cells, since));
         // One line for what failed to fetch, however much did: the first, and how many more.
@@ -112,7 +112,7 @@ impl App {
                 &[sources::Source::Platform],
                 "No monitor data yet",
                 "the hub reads your deploy platform and monitoring, then this fills in.",
-                "no deploy platform or monitoring is connected · cockpit setup adds them.",
+                "no deploy platform or monitoring is connected · flightdeck setup adds them.",
             );
             let text = if self.doc.is_some() { "No app in the monitor." } else { waiting.as_str() };
             frame.render_widget(Paragraph::new(Line::styled(text, dim())).wrap(Wrap { trim: false }), area);

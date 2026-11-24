@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/brief.json": {
+    "home/.cache/flightdeck/brief.json": {
       "at": 0,
       "date": "2026-10-28",
       "dismissed": true,

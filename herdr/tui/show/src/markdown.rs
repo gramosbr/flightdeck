@@ -13,8 +13,8 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use regex::Regex;
 
-use cockpit_core::text::width;
-use cockpit_core::theme::{BLUE, DIM, FG, GREEN, ORANGE, PANEL, PINK, RED, bold, dim, fg};
+use flightdeck_core::text::width;
+use flightdeck_core::theme::{BLUE, DIM, FG, GREEN, ORANGE, PANEL, PINK, RED, bold, dim, fg};
 
 use crate::highlight;
 use crate::row::{Act, Row};

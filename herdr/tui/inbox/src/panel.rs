@@ -1,9 +1,9 @@
 //! What frames the tree: the header with its error lines, the filter bar, the highlighted row's details and buttons
 //! (or the picked rows' shared ones) under it, and the footer of key hints.
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::text::{width, wrap};
-use cockpit_core::theme::{DIM, FG, ORANGE, PANEL, bold, fg};
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::text::{width, wrap};
+use flightdeck_core::theme::{DIM, FG, ORANGE, PANEL, bold, fg};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::Style;

@@ -1,10 +1,10 @@
-//! The mail for the Herdr app's cockpit mod: the `mail` view (the messages grouped "Unread" above "Read", each with
+//! The mail for the Herdr app's flightdeck mod: the `mail` view (the messages grouped "Unread" above "Read", each with
 //! its age and actions) and the `mail-thread` view (one message's thread, its HTML sanitized, for the reading panel).
 
 use std::path::PathBuf;
 
 use chrono::{DateTime, Local, Utc};
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::model::{GROUPS, Group, Mail, Message, age};
@@ -64,7 +64,7 @@ pub fn model(data: Option<&Value>, config: &Value, now: DateTime<Utc>) -> Value 
         "enabled": enabled,
         "updated": updated,
         "error": mail.error,
-        "sources": cockpit_core::header::json(&mail.sources, cockpit_core::header::now()),
+        "sources": flightdeck_core::header::json(&mail.sources, flightdeck_core::header::now()),
         "counts": {"unread": mail.unread(), "read": ids(Group::Read).len(), "total": mail.messages.len()},
         "groups": GROUPS.iter().map(|(group, key, label)| json!({"key": key, "label": label, "ids": ids(*group)})).collect::<Vec<_>>(),
         "messages": messages,

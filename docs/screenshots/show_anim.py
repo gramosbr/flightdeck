@@ -1,6 +1,6 @@
 """The show tool, animated: an agent opens a chart beside the conversation, q hides it to a footer chip, the chip brings it
 back, drawn by the Rust app (built in herdr/tui) from fictional data, its charts laid over from the pictures it saves to
-COCKPIT_SHOT_DIR."""
+FLIGHTDECK_SHOT_DIR."""
 import base64, json, os, shutil, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from term2svg import BAR, CW, LH, PAD, animate, run, screen_of
@@ -12,19 +12,19 @@ OUT = os.path.join(HERE, "..")
 COLS, ROWS, LEFT = 150, 30, 76
 PANE = COLS - LEFT - 1
 ORANGE, DIMC, INK, QUIET, WHITE, LINE = "FFC799", "707070", "101010", "2C2C30", "D2D2D2", "2C2C30"
-env = {"HOME": HOME, "TERM": "xterm-256color", "HERDR_BIN_PATH": "/usr/bin/true", "COCKPIT_HERDR_DIR": APPS,
-       "COCKPIT_HUB_IDLE_SECS": "20"}
+env = {"HOME": HOME, "TERM": "xterm-256color", "HERDR_BIN_PATH": "/usr/bin/true", "FLIGHTDECK_HERDR_DIR": APPS,
+       "FLIGHTDECK_HUB_IDLE_SECS": "20"}
 SHOTS = os.path.join(HOME, "show-shots")
 
 
 def pane(name, spec, cols, rows, keys=(), wait=2.0):
     """The show screen for this spec, at this size, its pictures saved to SHOTS."""
-    os.makedirs(os.path.join(HOME, ".cache", "cockpit", "show"), exist_ok=True)
-    json.dump({**spec, "at": int(time.time() * 1000)}, open(os.path.join(HOME, ".cache", "cockpit", "show", f"{name}.json"), "w"))
+    os.makedirs(os.path.join(HOME, ".cache", "flightdeck", "show"), exist_ok=True)
+    json.dump({**spec, "at": int(time.time() * 1000)}, open(os.path.join(HOME, ".cache", "flightdeck", "show", f"{name}.json"), "w"))
     shutil.rmtree(SHOTS, ignore_errors=True)
     os.makedirs(SHOTS)
-    argv, wait = [os.path.join(APPS, "tui", "target", "release", "cockpit"), "show", name], wait + 3
-    env["COCKPIT_SHOT_DIR"] = SHOTS
+    argv, wait = [os.path.join(APPS, "tui", "target", "release", "flightdeck"), "show", name], wait + 3
+    env["FLIGHTDECK_SHOT_DIR"] = SHOTS
     return screen_of(run(argv, cols, rows, env, keys, wait=wait, cwd=APPS), cols, rows)
 
 

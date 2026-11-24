@@ -1,6 +1,6 @@
 {
   "calls": [],
-  "error": "claude.plugin has no fix to run: /plugin install cockpit --marketplace quaresc/cockpit",
+  "error": "claude.plugin has no fix to run: /plugin install flightdeck --marketplace gramosbr/flightdeck",
   "files": {},
   "note": "",
   "pending": {},

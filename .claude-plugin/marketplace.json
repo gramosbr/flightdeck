@@ -3,10 +3,10 @@
   "owner": {
     "name": "gramosbr"
   },
-  "description": "cockpit, with screens a layout adds (an SRE home beside the coding Home). Upstream: quaresc/cockpit",
+  "description": "flightdeck, with screens a layout adds (an SRE home beside the coding Home). Upstream: quaresc/cockpit",
   "plugins": [
     {
-      "name": "cockpit",
+      "name": "flightdeck",
       "source": "./plugin",
       "description": "Every coding agent beside its work: Claude Code, Codex and every agent Herdr runs, each next to its ticket, PR, CI and deploy, with your inbox, runbooks, meetings and releases one key away"
     }

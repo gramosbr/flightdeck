@@ -1,12 +1,12 @@
-//! Words for any agent, the one way cockpit sends them: as its next prompt in its terminal, or handed to a session
-//! cockpit drives through the handler the cli registers. Nothing goes while the agent waits on a question or a
+//! Words for any agent, the one way flightdeck sends them: as its next prompt in its terminal, or handed to a session
+//! flightdeck drives through the handler the cli registers. Nothing goes while the agent waits on a question or a
 //! permission, since Enter in a menu picks its highlighted choice.
 
 use std::sync::OnceLock;
 
 use crate::frontend::{self, APP};
 
-/// A session cockpit drives takes the words itself: None when the handle is not one of its sessions.
+/// A session flightdeck drives takes the words itself: None when the handle is not one of its sessions.
 pub type Driven = fn(&str, &str) -> Option<Result<(), String>>;
 
 /// Types into a terminal's agent through `send` unless it waits on a question, looking and typing under the lock its
@@ -46,7 +46,7 @@ pub fn deliver(handle: &str, text: &str) -> Result<(), String> {
         _ if text.trim().is_empty() => Err("nothing to send".into()),
         _ => {
             let request = serde_json::json!({"op": "act", "app": "agents", "action": "deliver", "args": [{"terminal": handle, "text": text}]});
-            let answer = crate::hub::request(&request, std::time::Duration::from_secs(30)).map_err(|e| format!("the cockpit hub: {e}"))?;
+            let answer = crate::hub::request(&request, std::time::Duration::from_secs(30)).map_err(|e| format!("the flightdeck hub: {e}"))?;
             match answer["error"].as_str() {
                 Some(why) => Err(why.to_string()),
                 None => Ok(()),

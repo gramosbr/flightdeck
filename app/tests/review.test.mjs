@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-import { agentsIn, menuItems, nameOf, newAgentRequest, plainError, recipient, recipientLabel } from "../mods/cockpit/sendto.js";
+import { agentsIn, menuItems, nameOf, newAgentRequest, plainError, recipient, recipientLabel } from "../mods/flightdeck/sendto.js";
 
 // The acme agents: a blocked terminal, a working one and a driven session in the api checkout; one in web; one in a
 // worktree nested inside the api checkout, which git calls a repository of its own.
@@ -95,7 +95,7 @@ async function diffModule({ draw = false } = {}) {
     for (const name of ["h_flex", "v_flex"]) natives["gpui-base"][name] = () => element();
   }
   const sources = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -201,7 +201,7 @@ async function reviewModule(answers) {
   const context = createContext({ console, performance });
   const natives = { "./hub.js": { view: async () => { const a = answers.shift(); if (a instanceof Error) throw a; return a; } } };
   const sources = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -232,7 +232,7 @@ async function reviewModule(answers) {
 
 test("the review reads the changes again by itself once the hub is back, and the error goes even when nothing changed", async () => {
   const model = { scope: "uncommitted", hash: "h1", files: [] };
-  const answers = [model, new Error("the cockpit hub was stopped on purpose"), { same: true, hash: "h1" }];
+  const answers = [model, new Error("the flightdeck hub was stopped on purpose"), { same: true, hash: "h1" }];
   const { Review } = await reviewModule(answers);
   const r = Object.create(Review.prototype);
   Object.assign(r, { repo: API, scope: "uncommitted", model: null, error: null, loading: false, next: 0, fresh: false, rows: [], loaded: new Set(), step: 0, diff: { whole: () => [], set() {} }, applyStep() {} });

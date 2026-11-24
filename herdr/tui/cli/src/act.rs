@@ -1,19 +1,19 @@
-//! `cockpit act`: what a notification's button does, through the hub's inbox and routines actions and the inbox cache. Pressed from a
+//! `flightdeck act`: what a notification's button does, through the hub's inbox and routines actions and the inbox cache. Pressed from a
 //! notification, nobody reads stderr: a failure comes back as a notification too.
 
 use std::time::Duration;
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 const USAGE: &str = "What a notification's button does, with the inbox app's own actions and the inbox cache.
 
-    cockpit act review <PR url>       an agent's review of the PR in the actions space
-    cockpit act ci <PR url>           an agent's investigation of the PR's failing CI in a new space
-    cockpit act rerun <PR url>        the PR's failed CI jobs rerun
-    cockpit act plan <ticket id>      an agent's plan for the ticket in the actions space
-    cockpit act merge <PR url>        the PR merged (or queued) by its repo's preferred method
-    cockpit act routine <slug>        the routine's last agent run resumed in the actions space";
+    flightdeck act review <PR url>       an agent's review of the PR in the actions space
+    flightdeck act ci <PR url>           an agent's investigation of the PR's failing CI in a new space
+    flightdeck act rerun <PR url>        the PR's failed CI jobs rerun
+    flightdeck act plan <ticket id>      an agent's plan for the ticket in the actions space
+    flightdeck act merge <PR url>        the PR merged (or queued) by its repo's preferred method
+    flightdeck act routine <slug>        the routine's last agent run resumed in the actions space";
 
 pub fn main(args: &[String]) {
     match press(args) {
@@ -21,7 +21,7 @@ pub fn main(args: &[String]) {
         Ok(_) => {}
         Err(message) => {
             let cut: String = message.chars().take(200).collect();
-            cockpit_core::notify::post("⚠️ Cockpit", &cut, "space:inbox", &[]);
+            flightdeck_core::notify::post("⚠️ Flightdeck", &cut, "space:inbox", &[]);
             crate::proc::fail(&message);
         }
     }
@@ -54,9 +54,9 @@ fn press(args: &[String]) -> Result<String, String> {
     }
 }
 
-const HUB_USAGE: &str = "cockpit hub act review|runbook <action> <JSON list of arguments> [armed]";
+const HUB_USAGE: &str = "flightdeck hub act review|runbook <action> <JSON list of arguments> [armed]";
 
-/// `cockpit hub act <app> <action> <args> [armed]`: a remote desk's review or runbook action, run on the runner through
+/// `flightdeck hub act <app> <action> <args> [armed]`: a remote desk's review or runbook action, run on the runner through
 /// Herdr's machine connection and handed to the hub on its unix socket, `{note}` printed as JSON.
 pub fn hub_act(args: &[String]) {
     match runner_act(args) {
@@ -107,9 +107,9 @@ fn runner_act(args: &[String]) -> Result<String, String> {
 fn act(app: &str, action: &str, args: Vec<Value>, armed: Option<String>) -> Result<String, String> {
     let env = json!({"HERDR_PANE_ID": std::env::var("HERDR_PANE_ID").unwrap_or_default()});
     let request = json!({"op": "act", "app": app, "action": action, "args": args, "armed": armed, "env": env});
-    let answer = cockpit_core::hub::request(&request, Duration::from_secs(120))?;
+    let answer = flightdeck_core::hub::request(&request, Duration::from_secs(120))?;
     if answer["unknown"] == true {
-        return Err(format!("the cockpit hub has no {app} action {action}"));
+        return Err(format!("the flightdeck hub has no {app} action {action}"));
     }
     if let Some(error) = answer["error"].as_str() {
         return Err(error.to_string());

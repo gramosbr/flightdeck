@@ -9,12 +9,12 @@ import { showWork, pinChat, readInChat } from "./screens.js";
 /** The stages, in the order the Home board shows them. */
 export const STAGES = ["needs", "working", "ready", "done"];
 
-/** The statuses cockpit draws. */
+/** The statuses flightdeck draws. */
 const KNOWN = ["working", "blocked", "failed", "done", "idle"];
 
 /**
  * An agent's status as every view reads it, from Herdr's or the hub's word: `error` is failed (stopped with an error),
- * the five cockpit knows stay, and one it does not know is drawn as blocked, so it is looked at rather than missed.
+ * the five flightdeck knows stay, and one it does not know is drawn as blocked, so it is looked at rather than missed.
  */
 export function agentStatus(raw) {
   if (raw === "error") return "failed";
@@ -130,7 +130,7 @@ export function fleet(rows, home) {
     const agent = {
       remote: r.remote,
       address: a.address,
-      // A session cockpit drives is its own handle; a Herdr terminal's is its address.
+      // A session flightdeck drives is its own handle; a Herdr terminal's is its address.
       handle: r.driven ? r.terminal : `app:${a.address}`,
       driven: Boolean(r.driven),
       // Herdr's word can stay blocked after the prompt went: the hub read the agent's screen and transcript since.
@@ -197,8 +197,8 @@ export const badgeText = (n, on = true) => (on && n > 0 ? String(n) : null);
  */
 export function showBadge(n, on = true) {
   const text = badgeText(n, on);
-  if (globalThis.cockpitBadge === text) return;
-  globalThis.cockpitBadge = text;
+  if (globalThis.flightdeckBadge === text) return;
+  globalThis.flightdeckBadge = text;
   herdr.setBadge?.(text);
 }
 
@@ -218,7 +218,7 @@ export function stageOf(a) {
   return green ? "ready" : "done";
 }
 
-/** The agent's terminal in front: the work area, its tab, its pane focused; a session cockpit drives is read in the chat. */
+/** The agent's terminal in front: the work area, its tab, its pane focused; a session flightdeck drives is read in the chat. */
 export function goToAgent(agent, person = true) {
   if (!agent) return;
   if (agent.driven) return readInChat(agent.handle ?? agent.terminal, null, person);
@@ -231,7 +231,7 @@ export function goToAgent(agent, person = true) {
 /** Explains why a remote row cannot run tab commands: its tab ids belong to the runner, not this desktop. */
 export function refuseRemoteAgent(agent) {
   if (!agent?.remote) return false;
-  notify({ title: "Read-only remote desk", body: "Archiving a runner's agent needs a local cockpit installation.", level: "info" });
+  notify({ title: "Read-only remote desk", body: "Archiving a runner's agent needs a local flightdeck installation.", level: "info" });
   return true;
 }
 

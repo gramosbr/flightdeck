@@ -16,8 +16,8 @@ import { myTickets } from './tickets'
 
 type $ = EngineInterface
 
-const inbox = atom({ plugin: 'cockpit', key: 'inbox' } as const, null)
-const muted = atom({ plugin: 'cockpit', key: 'muted' } as const, [])
+const inbox = atom({ plugin: 'flightdeck', key: 'inbox' } as const, null)
+const muted = atom({ plugin: 'flightdeck', key: 'muted' } as const, [])
 
 // The inbox: GitHub + tickets, cached on disk so every session shares one fetch; the herdr inbox app draws it. The hub
 // fetches GitHub (and tickets, given a Linear token) itself: while its part is fresh, the mod fetches only the rest.
@@ -129,7 +129,7 @@ async function fetchGithub($: $) {
 // Repos whose team and bot review requests are hidden (muted.json, which the inbox app writes).
 async function loadMuted($: $) {
   try {
-    const list = JSON.parse(await $.fs.read(`${await home($)}/.config/cockpit/muted.json`)) as string[]
+    const list = JSON.parse(await $.fs.read(`${await home($)}/.config/flightdeck/muted.json`)) as string[]
     await update($, muted, () => list)
   } catch {
     await update($, muted, () => [])
