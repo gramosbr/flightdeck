@@ -14,8 +14,28 @@ pub fn cache() -> PathBuf {
     home().join(".cache/flightdeck")
 }
 
+/// The config folder; the first time it is asked for with no folder of its own, it adopts cockpit's `config.json`.
 pub fn config_dir() -> PathBuf {
-    home().join(".config/flightdeck")
+    let home = home();
+    adopt_cockpit_config(&home);
+    home.join(".config/flightdeck")
+}
+
+/// Copies `~/.config/cockpit/config.json` into a new `~/.config/flightdeck` when that folder does not exist yet. Nothing of
+/// cockpit's is changed or moved, and its cache and other files are left behind; a failed copy leaves no folder, so the next run tries again.
+pub fn adopt_cockpit_config(home: &Path) {
+    let dest = home.join(".config/flightdeck");
+    let source = home.join(".config/cockpit/config.json");
+    if dest.exists() || !source.is_file() {
+        return;
+    }
+    // Built beside the destination and renamed into place, so a second process never sees the folder without its config.
+    let staging = home.join(format!(".config/.flightdeck-adopt-{}", std::process::id()));
+    let staged =
+        std::fs::create_dir_all(&staging).and_then(|()| std::fs::copy(&source, staging.join("config.json"))).and_then(|_| std::fs::rename(&staging, &dest));
+    if staged.is_err() {
+        let _ = std::fs::remove_dir_all(&staging);
+    }
 }
 
 /// The herdr plugin folder, where its scripts live: app.sh says so, else the binary's own place.
@@ -157,6 +177,54 @@ pub fn herdr(args: &[&str]) -> Option<Value> {
 mod tests {
     use super::*;
     use std::time::{Duration, Instant};
+
+    fn cockpit_home() -> tempfile::TempDir {
+        let home = tempfile::tempdir().unwrap();
+        let old = home.path().join(".config/cockpit");
+        std::fs::create_dir_all(&old).unwrap();
+        std::fs::write(old.join("config.json"), r#"{"reposDir": "/x"}"#).unwrap();
+        std::fs::write(old.join("todo.md"), "- a task\n").unwrap();
+        std::fs::create_dir_all(home.path().join(".cache/cockpit")).unwrap();
+        std::fs::write(home.path().join(".cache/cockpit/hub.json"), "{}").unwrap();
+        home
+    }
+
+    #[test]
+    fn the_first_run_copies_only_cockpits_config_json_and_leaves_cockpit_alone() {
+        let home = cockpit_home();
+        adopt_cockpit_config(home.path());
+        let new = home.path().join(".config/flightdeck");
+        assert_eq!(std::fs::read_to_string(new.join("config.json")).unwrap(), r#"{"reposDir": "/x"}"#);
+        assert_eq!(std::fs::read_dir(&new).unwrap().count(), 1, "nothing but config.json comes along");
+        assert!(!home.path().join(".cache/flightdeck").exists(), "the cache is never copied");
+        assert_eq!(std::fs::read_to_string(home.path().join(".config/cockpit/config.json")).unwrap(), r#"{"reposDir": "/x"}"#);
+        assert!(home.path().join(".config/cockpit/todo.md").exists() && home.path().join(".cache/cockpit/hub.json").exists());
+    }
+
+    #[test]
+    fn a_config_folder_that_exists_is_never_touched_and_the_copy_happens_once() {
+        let home = cockpit_home();
+        let new = home.path().join(".config/flightdeck");
+        std::fs::create_dir_all(&new).unwrap();
+        adopt_cockpit_config(home.path());
+        assert!(!new.join("config.json").exists(), "an existing folder, even an empty one, is the person's own");
+
+        let other = cockpit_home();
+        adopt_cockpit_config(other.path());
+        let copied = other.path().join(".config/flightdeck/config.json");
+        std::fs::write(&copied, "{}").unwrap();
+        adopt_cockpit_config(other.path());
+        assert_eq!(std::fs::read_to_string(&copied).unwrap(), "{}", "a second run does not copy over");
+    }
+
+    #[test]
+    fn without_a_cockpit_config_nothing_is_made() {
+        let home = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(home.path().join(".config/cockpit")).unwrap();
+        adopt_cockpit_config(home.path());
+        assert!(!home.path().join(".config/flightdeck").exists());
+        assert_eq!(std::fs::read_dir(home.path().join(".config")).unwrap().count(), 1, "no staging folder is left behind");
+    }
 
     #[test]
     fn a_lock_that_cannot_be_made_runs_the_write_unlocked_at_once() {
