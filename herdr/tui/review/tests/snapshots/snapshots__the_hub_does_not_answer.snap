@@ -6,8 +6,8 @@ expression: "render(&mut app, 90, 10)"
 
 
  The flightdeck hub did not answer
- the flightdeck hub did not start; what it said is in ~/.cache/flightdeck/hub.log. R asks the
- hub again, starting it when it is not running.
+ the flightdeck hub did not start; what it said is in ~/.cache/flightdeck/hub.log. R
+ asks the hub again, starting it when it is not running.
 
 
 

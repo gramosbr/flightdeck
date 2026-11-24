@@ -111,7 +111,7 @@ mod tests {
         let shown: Vec<String> = lines(&found, 80).iter().map(text).collect();
         assert_eq!(shown[1], "Getting started   1 of 3 done · flightdeck doctor --all says more");
         assert_eq!(shown[2], " ✓ Set up flightdeck");
-        assert_eq!(shown[3], " ○ Sign in to GitHub                  gh auth login");
+        assert_eq!(shown[3], " ○ Sign in to GitHub                     gh auth login");
         let narrow: Vec<String> = lines(&found, 30).iter().skip(2).map(text).collect();
         assert!(narrow.iter().all(|l| width(l) <= 30 && !l.contains("gh auth login")), "a narrow pane drops the fixes first: {narrow:?}");
     }
