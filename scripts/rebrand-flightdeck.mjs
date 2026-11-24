@@ -22,10 +22,18 @@ process.chdir(root);
 const SELF = "scripts/rebrand-flightdeck.mjs";
 
 /** Files whose text keeps upstream's name: attribution, history, and what cargo regenerates. */
-const KEEP_CONTENT = new Set(["LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", "herdr/tui/Cargo.lock", SELF]);
+const KEEP_CONTENT = new Set([
+  "LICENSE",
+  "THIRD_PARTY_NOTICES.md",
+  "CHANGELOG.md",
+  "herdr/tui/Cargo.lock",
+  // Its first-run adoption of cockpit's config.json names cockpit on purpose; review upstream changes to it by hand.
+  "herdr/tui/core/src/files.rs",
+  SELF,
+]);
 
 /** Exact snippets that name upstream on purpose and survive the rewrite. */
-const KEEP_SNIPPETS = ["Upstream: quaresc/cockpit"];
+const KEEP_SNIPPETS = ["Upstream: quaresc/cockpit", '<a href="https://github.com/quaresc/cockpit">cockpit</a> (MIT)'];
 
 const BINARY = /\.(png|jpe?g|gif|ico|icns|woff2?|ttf|otf|wasm|mp4|mov|webm|pdf|zip|gz|tar)$/i;
 

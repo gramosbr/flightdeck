@@ -102,7 +102,7 @@ export const ALIASES = { "flightdeck.diagnostics": "flightdeck.settings:health" 
 
 /** What the palette runs for an entry: a view's command goes through the runner, which shows that view's screen first. */
 export function paletteAction(e) {
-  return e.screen ? `flightdeck.via:${e.screen}|${e.command.slice(8)}` : e.command;
+  return e.screen ? `flightdeck.via:${e.screen}|${e.command.slice("flightdeck.".length)}` : e.command;
 }
 
 /** Herdr's own names for its commands: [command, args, group, title, keywords]. */

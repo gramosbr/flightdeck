@@ -187,7 +187,7 @@ async function check(keys, mod) {
     const views = await layoutViews(layout);
     for (const [k, action] of Object.entries(map)) {
       if (!action.startsWith("flightdeck.")) continue;
-      const handlers = handlersOf(action.slice(8), layout, views, mod);
+      const handlers = handlersOf(action.slice("flightdeck.".length), layout, views, mod);
       if (handlers.length !== 1) problems.push({ layout, keys: k, action, handlers });
     }
   }
@@ -232,11 +232,11 @@ async function paletteProblems(mod, layout) {
   const views = await layoutViews(layout);
   const commands = [
     ...mod.screensOf(layout).list.map((s) => `flightdeck.go:${s.child}`),
-    ...mod.CATALOGUE.filter((e) => !["flightdeck.palette", "flightdeck.keys"].includes(e.command) && mod.available(layout, e.command.slice(8), { driven: true })).map((e) => mod.paletteAction(e)),
+    ...mod.CATALOGUE.filter((e) => !["flightdeck.palette", "flightdeck.keys"].includes(e.command) && mod.available(layout, e.command.slice("flightdeck.".length), { driven: true })).map((e) => mod.paletteAction(e)),
   ];
   const out = [];
   for (const action of commands) {
-    const c = action.slice(8);
+    const c = action.slice("flightdeck.".length);
     if (c.startsWith("via:")) {
       const [screen, inner] = [c.slice(4, c.indexOf("|")), c.slice(c.indexOf("|") + 1)];
       if (!mod.handles(layout, c) || !views.some((v) => v.app === screen && v.exact.has(inner))) out.push(`${action} 0`);
