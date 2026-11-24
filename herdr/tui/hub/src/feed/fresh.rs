@@ -4,8 +4,8 @@
 
 use std::collections::BTreeMap;
 
-use cockpit_connectors::Server;
-use cockpit_core::fresh::{Freshness, Kind};
+use flightdeck_connectors::Server;
+use flightdeck_core::fresh::{Freshness, Kind};
 use serde_json::{Value, json};
 
 use super::http::Failure;
@@ -164,7 +164,7 @@ pub fn kind(failure: &Failure) -> Kind {
             _ => Kind::Other,
         };
     }
-    // A refused or lapsed MCP login, as cockpit's connector and the MCP client word it.
+    // A refused or lapsed MCP login, as flightdeck's connector and the MCP client word it.
     let auth = [
         "connector login",
         "not logged in",
@@ -206,7 +206,7 @@ fn message(failure: &Failure) -> String {
 
 /// This binary, which the commands it hands out run.
 fn exe() -> String {
-    std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "cockpit".into())
+    std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|_| "flightdeck".into())
 }
 
 fn join(words: &[String]) -> String {
@@ -223,9 +223,9 @@ fn section(source: &str) -> &str {
 }
 
 /// The command that signs a source in again, as it is read (`via`: the server that failed): a connector login, `gh auth
-/// login`, else `cockpit setup`. Err says what to do instead when no command does it, like a refused GH_TOKEN.
+/// login`, else `flightdeck setup`. Err says what to do instead when no command does it, like a refused GH_TOKEN.
 pub fn login(source: &str, raw: &Value, config: &Value, via: Option<&str>) -> Result<Vec<String>, String> {
-    let cockpit = |args: &[&str]| std::iter::once(exe()).chain(args.iter().map(|a| a.to_string())).collect::<Vec<_>>();
+    let flightdeck = |args: &[&str]| std::iter::once(exe()).chain(args.iter().map(|a| a.to_string())).collect::<Vec<_>>();
     // A server counts only when the config's `servers` block holds it: the source is read through it, not a token.
     let name = |section: &str| {
         let name = raw[section]["server"].as_str().or(config[section]["server"].as_str()).filter(|s| !s.is_empty())?;
@@ -241,11 +241,11 @@ pub fn login(source: &str, raw: &Value, config: &Value, via: Option<&str>) -> Re
         "ci" if name("ci").is_none() => return gh(),
         other => name(section(other)),
     };
-    let Some(server) = server else { return Ok(cockpit(&["setup"])) };
+    let Some(server) = server else { return Ok(flightdeck(&["setup"])) };
     match Server::from_entry(&raw["servers"][&server]) {
-        Some(Server::Http(_) | Server::App { .. }) => Ok(cockpit(&["connector", "login", &server])),
+        Some(Server::Http(_) | Server::App { .. }) => Ok(flightdeck(&["connector", "login", &server])),
         Some(Server::Keyed { bearer_command, .. }) if bearer_command.first().is_some_and(|p| p == "gh" || p.ends_with("/gh")) => gh(),
-        _ => Ok(cockpit(&["setup"])),
+        _ => Ok(flightdeck(&["setup"])),
     }
 }
 
@@ -257,14 +257,14 @@ fn token_var() -> Option<&'static str> {
 /// GitHub's sign-in: `gh auth login`, or what to do when the token comes from `var`.
 fn gh(var: Option<&str>) -> Result<Vec<String>, String> {
     match var {
-        Some(var) => Err(format!("cockpit reads GitHub with {var}: replace that token where it is set, then refresh")),
+        Some(var) => Err(format!("flightdeck reads GitHub with {var}: replace that token where it is set, then refresh")),
         None => Ok(vec!["gh".into(), "auth".into(), "login".into()]),
     }
 }
 
-/// The command as the person would type it: `cockpit`, not this binary's path.
+/// The command as the person would type it: `flightdeck`, not this binary's path.
 pub fn shown(argv: &[String]) -> String {
-    let words: Vec<String> = argv.iter().enumerate().map(|(i, w)| if i == 0 && *w == exe() { "cockpit".to_string() } else { w.clone() }).collect();
+    let words: Vec<String> = argv.iter().enumerate().map(|(i, w)| if i == 0 && *w == exe() { "flightdeck".to_string() } else { w.clone() }).collect();
     join(&words)
 }
 
@@ -288,7 +288,7 @@ mod tests {
             Failure::Other("https://mcp.example.com/mcp: error sending request for url".into()),
             Failure::Other("HTTP 404: Not Found".into()),
             Failure::Other("HTTP 502: bad gateway".into()),
-            Failure::Other("cockpit is not logged in to https://mcp.example.com → cockpit connector login https://mcp.example.com".into()),
+            Failure::Other("flightdeck is not logged in to https://mcp.example.com → flightdeck connector login https://mcp.example.com".into()),
             Failure::Other("no token: run gh auth login, or set GH_TOKEN".into()),
             Failure::Other("HTTP 400: Authentication required, not authenticated".into()),
             Failure::Other("the calendar address answered with no calendar".into()),
@@ -384,24 +384,24 @@ mod tests {
             json!({"Linear": {"url": "https://mcp.example.com/linear"}, "mail": {"command": "mail-mcp"}, "Datadog": {"url": "https://mcp.example.com/dd"}});
         let raw = json!({"tickets": {"server": "Linear"}, "mail": {"server": "mail"}, "observability": {"server": "Datadog"}, "ci": {"token": "t"}, "servers": servers});
         let line = |source: &str, raw: &Value, via: Option<&str>| login(source, raw, &Value::Null, via).map(|argv| shown(&argv)).unwrap_or_else(|say| say);
-        assert_eq!(line("tickets", &raw, None), "cockpit connector login Linear");
-        assert_eq!(line("mail", &raw, None), "cockpit setup", "a server run as a command has no browser login");
-        assert_eq!(line("monitor", &raw, None), "cockpit connector login Datadog");
-        assert_eq!(line("ci", &raw, None), "cockpit setup", "a CircleCI token is asked again");
-        assert_eq!(line("calendar", &raw, None), "cockpit setup");
+        assert_eq!(line("tickets", &raw, None), "flightdeck connector login Linear");
+        assert_eq!(line("mail", &raw, None), "flightdeck setup", "a server run as a command has no browser login");
+        assert_eq!(line("monitor", &raw, None), "flightdeck connector login Datadog");
+        assert_eq!(line("ci", &raw, None), "flightdeck setup", "a CircleCI token is asked again");
+        assert_eq!(line("calendar", &raw, None), "flightdeck setup");
         let gh_way = gh(token_var()).map(|argv| shown(&argv)).unwrap_or_else(|say| say);
         assert_eq!(line("github", &raw, None), gh_way);
         assert_eq!(line("ci", &Value::Null, None), gh_way, "GitHub's checks sign in as GitHub does");
         let code = json!({"code": {"server": "GitLab"}, "servers": {"GitLab": {"url": "https://mcp.example.com/gitlab"}}});
-        assert_eq!(line("tickets", &json!({"tickets": {"server": "claude.ai Linear", "token": "t"}}), None), "cockpit setup", "a token, no server");
-        assert_eq!(line("github", &code, None), "cockpit connector login GitLab");
+        assert_eq!(line("tickets", &json!({"tickets": {"server": "claude.ai Linear", "token": "t"}}), None), "flightdeck setup", "a token, no server");
+        assert_eq!(line("github", &code, None), "flightdeck connector login GitLab");
         let keyed = json!({"code": {"server": "gh"}, "servers": {"gh": {"url": "https://api.example.com/mcp", "bearerCommand": ["gh", "auth", "token"]}}});
         assert_eq!(line("github", &keyed, None), gh_way, "a token gh prints is renewed by gh");
         let both = json!({"servers": {"platform": {"url": "https://mcp.example.com/platform"}, "Datadog": {"command": "dd-mcp"}},
                           "platform": {"server": "platform"}, "observability": {"server": "Datadog"}});
-        assert_eq!(line("monitor", &both, Some("platform")), "cockpit connector login platform", "the server that failed");
-        assert_eq!(line("monitor", &both, None), "cockpit setup");
-        assert_eq!(gh(Some("GH_TOKEN")), Err("cockpit reads GitHub with GH_TOKEN: replace that token where it is set, then refresh".into()));
+        assert_eq!(line("monitor", &both, Some("platform")), "flightdeck connector login platform", "the server that failed");
+        assert_eq!(line("monitor", &both, None), "flightdeck setup");
+        assert_eq!(gh(Some("GH_TOKEN")), Err("flightdeck reads GitHub with GH_TOKEN: replace that token where it is set, then refresh".into()));
     }
 
     #[test]
@@ -415,13 +415,13 @@ mod tests {
         let monitor = &doc["hub"]["fresh"]["monitor"];
         assert_eq!(
             (&monitor["state"], &monitor["via"], &monitor["login"]),
-            (&json!("failing"), &json!("platform"), &json!("cockpit connector login platform"))
+            (&json!("failing"), &json!("platform"), &json!("flightdeck connector login platform"))
         );
         assert_eq!((doc.get("at"), &monitor["error"]["since"]), (None, &json!(3 * MIN)), "no numbers yet, only the record of the first failure");
         sources.record("monitor", "Monitor", &other("platform: connection refused"), 5 * MIN, 120, 420);
         assert_eq!(sources.of_doc("monitor", &raw, &Value::Null, 5 * MIN)["monitor"]["error"]["since"], 3 * MIN, "the streak keeps its start");
         sources.failed_through("monitor", "Datadog");
-        assert_eq!(sources.of_doc("monitor", &raw, &Value::Null, 5 * MIN)["monitor"]["login"], "cockpit connector login Datadog");
+        assert_eq!(sources.of_doc("monitor", &raw, &Value::Null, 5 * MIN)["monitor"]["login"], "flightdeck connector login Datadog");
     }
 
     #[test]

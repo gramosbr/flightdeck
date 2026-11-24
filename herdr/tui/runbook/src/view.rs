@@ -1,13 +1,13 @@
 //! The frame: the header, a tab per runbook with its progress (or its matches while filtering every runbook), the steps
 //! and notes, the selected step's panel unless compact, the filter bar, the footer, and the editor over them.
 
-use cockpit_core::acts;
-use cockpit_core::agent;
-use cockpit_core::anim::Glide;
-use cockpit_core::files::Density;
-use cockpit_core::text::{width, wrap};
-use cockpit_core::theme::{DIM, FG, GREEN, LINE, ORANGE, PANEL, base, bold, dim, fg};
-use cockpit_core::widgets::filter_line;
+use flightdeck_core::acts;
+use flightdeck_core::agent;
+use flightdeck_core::anim::Glide;
+use flightdeck_core::files::Density;
+use flightdeck_core::text::{width, wrap};
+use flightdeck_core::theme::{DIM, FG, GREEN, LINE, ORANGE, PANEL, base, bold, dim, fg};
+use flightdeck_core::widgets::filter_line;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::Style;

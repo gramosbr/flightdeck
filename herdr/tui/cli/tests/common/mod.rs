@@ -27,7 +27,7 @@ pub fn executable(path: &Path, content: &str) {
 }
 
 /// A fake command answering by the first matching prefix of its arguments (`*` for any), each call logged as
-/// `<name> <args>`; COCKPIT_TEST_ENV names variables logged with it.
+/// `<name> <args>`; FLIGHTDECK_TEST_ENV names variables logged with it.
 pub fn fake(name: &str, log: &Path, answers: &[(&str, &str)]) -> String {
     let mut script = format!("#!/bin/sh\nprintf '%s\\n' \"{name} $*\" >> '{}'\ncase \"$*\" in\n", log.display());
     for (prefix, answer) in answers {
@@ -44,9 +44,9 @@ pub fn says(json: &str) -> String {
 
 impl Sandbox {
     pub fn new() -> Self {
-        let dir = tempfile::Builder::new().prefix("cockpit-cli").tempdir().unwrap();
+        let dir = tempfile::Builder::new().prefix("flightdeck-cli").tempdir().unwrap();
         let root = std::fs::canonicalize(dir.path()).unwrap();
-        for sub in ["home/.cache/cockpit", "home/.config/cockpit", "bin", "herdr"] {
+        for sub in ["home/.cache/flightdeck", "home/.config/flightdeck", "bin", "herdr"] {
             std::fs::create_dir_all(root.join(sub)).unwrap();
         }
         std::fs::write(root.join("calls.log"), "").unwrap();
@@ -74,7 +74,7 @@ impl Sandbox {
     }
 
     pub fn cache(&self) -> PathBuf {
-        self.home().join(".cache/cockpit")
+        self.home().join(".cache/flightdeck")
     }
 
     /// herdr answering these prefixes, `{"result": {}}` to anything else.
@@ -99,11 +99,11 @@ impl Sandbox {
         std::fs::write(path, content).unwrap();
     }
 
-    /// The test's environment without what ties it to a herdr pane, cockpit settings or the terminal app, then the
+    /// The test's environment without what ties it to a herdr pane, flightdeck settings or the terminal app, then the
     /// sandbox's own.
     pub fn env(&self) -> Vec<(String, String)> {
-        let inherited =
-            std::env::vars().filter(|(k, _)| !["HERDR_", "HC_", "COCKPIT_", "CLAUDE", "PATH", "HOME", "__CFBundleIdentifier"].iter().any(|p| k.starts_with(p)));
+        let inherited = std::env::vars()
+            .filter(|(k, _)| !["HERDR_", "HC_", "FLIGHTDECK_", "CLAUDE", "PATH", "HOME", "__CFBundleIdentifier"].iter().any(|p| k.starts_with(p)));
         // jq's own folder too, which the scripts need, without the rest of the folders where real herdr lives.
         let jq = std::env::var("PATH").unwrap_or_default().split(':').find(|d| Path::new(d).join("jq").is_file()).unwrap_or("/usr/bin").to_string();
         let path = format!("{}:/usr/bin:/bin:/usr/sbin:/sbin:{jq}", self.root.join("bin").display());
@@ -112,21 +112,21 @@ impl Sandbox {
                 ("HOME".into(), self.home().to_string_lossy().into_owned()),
                 ("PATH".into(), path),
                 ("HERDR_BIN_PATH".into(), self.root.join("bin/herdr").to_string_lossy().into_owned()),
-                ("COCKPIT_HERDR_DIR".into(), self.root.join("herdr").to_string_lossy().into_owned()),
-                ("COCKPIT_TERMINAL_BROWSER".into(), self.root.join("bin/terminal-browser").to_string_lossy().into_owned()),
+                ("FLIGHTDECK_HERDR_DIR".into(), self.root.join("herdr").to_string_lossy().into_owned()),
+                ("FLIGHTDECK_TERMINAL_BROWSER".into(), self.root.join("bin/terminal-browser").to_string_lossy().into_owned()),
                 // Notifications reach the fake receiver instead of the screen.
-                ("COCKPIT_NOTIFY_PROGRAM".into(), self.root.join("bin/notify").to_string_lossy().into_owned()),
+                ("FLIGHTDECK_NOTIFY_PROGRAM".into(), self.root.join("bin/notify").to_string_lossy().into_owned()),
                 // A hub started here indexes sessions without downloading the search model.
-                ("COCKPIT_EMBED".into(), "off".into()),
+                ("FLIGHTDECK_EMBED".into(), "off".into()),
                 // Nor does it ask the agents installed on this machine which models they list.
-                ("COCKPIT_HUB_MODELS".into(), "off".into()),
+                ("FLIGHTDECK_HUB_MODELS".into(), "off".into()),
             ])
             .collect()
     }
 
-    /// Runs the cockpit binary with these arguments and extra variables.
-    pub fn cockpit(&self, args: &[&str], extra: &[(&str, &str)]) -> Output {
-        Command::new(env!("CARGO_BIN_EXE_cockpit"))
+    /// Runs the flightdeck binary with these arguments and extra variables.
+    pub fn flightdeck(&self, args: &[&str], extra: &[(&str, &str)]) -> Output {
+        Command::new(env!("CARGO_BIN_EXE_flightdeck"))
             .args(args)
             .env_clear()
             .envs(self.env())

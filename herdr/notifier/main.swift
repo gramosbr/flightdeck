@@ -1,7 +1,7 @@
-// Cockpit's macOS notifications: the cockpit logo, a click that opens a URL or runs `cockpit focus` with the action, and
+// Flightdeck's macOS notifications: the flightdeck logo, a click that opens a URL or runs `flightdeck focus` with the action, and
 // buttons that do the same with their own action.
-//   cockpit-notify post <title> <body> [action] [<label>=<action> ...]
-//   cockpit-notify status    prints whether macOS lets Cockpit notify
+//   flightdeck-notify post <title> <body> [action] [<label>=<action> ...]
+//   flightdeck-notify status    prints whether macOS lets Flightdeck notify
 import Cocoa
 import UserNotifications
 
@@ -32,7 +32,7 @@ final class Notifier: NSObject, NSApplicationDelegate, UNUserNotificationCenterD
 
     func post(title: String, body: String, action: String, buttons: [(String, String)]) {
         center.requestAuthorization(options: [.alert, .sound]) { granted, error in
-            if !granted { FileHandle.standardError.write("cockpit-notify: not allowed (\(error?.localizedDescription ?? "denied in System Settings"))\n".data(using: .utf8)!) }
+            if !granted { FileHandle.standardError.write("flightdeck-notify: not allowed (\(error?.localizedDescription ?? "denied in System Settings"))\n".data(using: .utf8)!) }
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
@@ -54,7 +54,7 @@ final class Notifier: NSObject, NSApplicationDelegate, UNUserNotificationCenterD
                 self.whenRegistered(category, tries: buttons.isEmpty ? 0 : 20) {
                     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
                     self.center.add(request) { error in
-                        if let error { FileHandle.standardError.write("cockpit-notify: \(error.localizedDescription)\n".data(using: .utf8)!) }
+                        if let error { FileHandle.standardError.write("flightdeck-notify: \(error.localizedDescription)\n".data(using: .utf8)!) }
                         self.quit(after: 0.3)
                     }
                 }
@@ -80,7 +80,7 @@ final class Notifier: NSObject, NSApplicationDelegate, UNUserNotificationCenterD
         } else {
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/bin/sh")
-            task.arguments = [NSHomeDirectory() + "/.config/cockpit/herdr/cockpit.sh", "focus", action]
+            task.arguments = [NSHomeDirectory() + "/.config/flightdeck/herdr/flightdeck.sh", "focus", action]
             try? task.run()
             task.waitUntilExit()
         }

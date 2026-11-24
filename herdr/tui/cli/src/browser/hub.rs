@@ -9,9 +9,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
-use cockpit_core::browser::{self, Engine};
-use cockpit_core::{files, frontend, options, peer};
-use cockpit_hub::views::{self, Def};
+use flightdeck_core::browser::{self, Engine};
+use flightdeck_core::{files, frontend, options, peer};
+use flightdeck_hub::views::{self, Def};
 use serde_json::{Map, Value, json};
 
 use super::{install, ports};
@@ -44,8 +44,8 @@ fn token() -> &'static str {
 /// The view the mod's slot reads, and what keeps the hub while the browser runs.
 pub fn register() {
     views::register(Def { name: "browser", docs: &[], dirs: Vec::new, build: view, act });
-    cockpit_hub::on_start(adopt);
-    cockpit_hub::keep_alive(running);
+    flightdeck_hub::on_start(adopt);
+    flightdeck_hub::keep_alive(running);
 }
 
 fn running() -> bool {
@@ -79,7 +79,7 @@ pub fn ensure() -> Result<(), String> {
     let pins = install::pins()?;
     let electron = install::electron(&pins);
     if !electron.is_file() {
-        return Err("the Chromium side browser is not installed: run cockpit browser install".into());
+        return Err("the Chromium side browser is not installed: run flightdeck browser install".into());
     }
     let run = browser::cache().join("run");
     std::fs::create_dir_all(&run).map_err(|e| e.to_string())?;
@@ -96,10 +96,10 @@ pub fn ensure() -> Result<(), String> {
         .arg(install::shell_dir())
         // Never a worktree's folder: a program working in one keeps it from being removed.
         .current_dir(&run)
-        .env("COCKPIT_BROWSER_SOCKET", browser::socket())
-        .env("COCKPIT_BROWSER_TOKEN", token())
-        .env("COCKPIT_BROWSER_OPTIONS", shell_options().to_string())
-        .env("COCKPIT_BIN", std::env::current_exe().unwrap_or_default())
+        .env("FLIGHTDECK_BROWSER_SOCKET", browser::socket())
+        .env("FLIGHTDECK_BROWSER_TOKEN", token())
+        .env("FLIGHTDECK_BROWSER_OPTIONS", shell_options().to_string())
+        .env("FLIGHTDECK_BIN", std::env::current_exe().unwrap_or_default())
         .env_remove("ELECTRON_RUN_AS_NODE")
         .stdin(std::process::Stdio::null())
         .stdout(log())
@@ -119,13 +119,13 @@ pub fn ensure() -> Result<(), String> {
             return Ok(());
         }
     }
-    Err("the Chromium side browser did not start; what it said is in ~/.cache/cockpit/browser/browser.out".into())
+    Err("the Chromium side browser did not start; what it said is in ~/.cache/flightdeck/browser/browser.out".into())
 }
 
 /// Whether the other end of a connection is the shell this hub, or one before it, started.
 fn is_ours(stream: &std::os::unix::net::UnixStream) -> bool {
     let recorded = files::load(&record_file()).and_then(|r| r["pid"].as_u64());
-    recorded.is_some() && cockpit_hub::peer_pid(stream).map(u64::from) == recorded
+    recorded.is_some() && flightdeck_hub::peer_pid(stream).map(u64::from) == recorded
 }
 
 /// Reads the shell's events on a thread of its own, one at a time, until the shell goes away.
@@ -142,7 +142,7 @@ fn follow() {
                     let mut held = state();
                     held["running"] = json!(true);
                     // Which run of the shell this is: a slot told to the run before is told again.
-                    held["run"] = json!(cockpit_core::seen::now_ms());
+                    held["run"] = json!(flightdeck_core::seen::now_ms());
                 }
                 seed();
                 views::touch("browser");
@@ -190,7 +190,7 @@ fn heard(event: &Value, ours: bool) {
             }
         }
         "grab.send" => {
-            let sent = if ours { send_notes(event) } else { Err("cockpit cannot check which program asked, so nothing was sent".into()) };
+            let sent = if ours { send_notes(event) } else { Err("flightdeck cannot check which program asked, so nothing was sent".into()) };
             let answer = match &sent {
                 Ok(()) => json!({"op": "notes.sent", "owner": event["owner"], "ok": true}),
                 Err(why) => json!({"op": "notes.sent", "owner": event["owner"], "ok": false, "error": why}),
@@ -207,7 +207,7 @@ fn heard(event: &Value, ours: bool) {
 fn send_notes(event: &Value) -> Result<(), String> {
     let handle = event["owner"].as_str().filter(|h| h.starts_with(frontend::APP)).ok_or("this browser belongs to no agent session")?;
     let text = event["markdown"].as_str().filter(|t| !t.trim().is_empty()).ok_or("nothing to send")?;
-    peer::with(peer::Sender::InProcess, || cockpit_core::deliver::deliver(handle, text))
+    peer::with(peer::Sender::InProcess, || flightdeck_core::deliver::deliver(handle, text))
 }
 
 /// A folder's worktree and the repo it belongs to, remembered for half a minute.
@@ -241,7 +241,7 @@ fn place(cwd: &Path) -> (PathBuf, PathBuf) {
 
 /// The folder an agent session works in, as the agents document has it.
 fn session_cwd(session: &str) -> Option<PathBuf> {
-    let doc = cockpit_hub::store::global().get("agents");
+    let doc = flightdeck_hub::store::global().get("agents");
     doc.as_object()?.values().find(|f| f["session"] == session)?["cwd"].as_str().map(PathBuf::from)
 }
 
@@ -296,7 +296,7 @@ fn close_ended() {
 /// The Herdr app's process, the one at the other end of its control socket.
 fn host_pid() -> Option<u32> {
     let stream = std::os::unix::net::UnixStream::connect(frontend::app_home().join("herdr-app.sock")).ok()?;
-    cockpit_hub::peer_pid(&stream)
+    flightdeck_hub::peer_pid(&stream)
 }
 
 /// The servers listening in each worktree, looked up off the request's thread and kept a quarter of a minute.
@@ -402,7 +402,7 @@ fn open(arg: &Value) -> Result<Value, String> {
         false,
     )?;
     // The mod brings the side panel to the browser when this session is the one in front.
-    state()["opened"] = json!({"owner": owner, "at": cockpit_core::seen::now_ms()});
+    state()["opened"] = json!({"owner": owner, "at": flightdeck_core::seen::now_ms()});
     views::touch("browser");
     Ok(answer)
 }
@@ -416,7 +416,7 @@ fn slot(arg: &Value) -> Result<Value, String> {
     close_ended();
     let mut slot = arg.as_object().cloned().unwrap_or_default();
     slot.insert("hostPid".into(), json!(host_pid()));
-    slot.insert("frames".into(), json!(frontend::app_home().join("data/cockpit/browser")));
+    slot.insert("frames".into(), json!(frontend::app_home().join("data/flightdeck/browser")));
     slot.insert("owner".into(), json!(owner_of(arg).ok()));
     if let Some(cwd) = arg["cwd"].as_str().filter(|c| c.starts_with('/')) {
         let (root, repo) = place(Path::new(cwd));

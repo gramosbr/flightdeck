@@ -4,8 +4,8 @@
 use ratatui::style::{Modifier, Style};
 use serde_json::Value;
 
-use cockpit_core::files;
-use cockpit_core::theme::{GREEN, ORANGE, RED, dim, fg};
+use flightdeck_core::files;
+use flightdeck_core::theme::{GREEN, ORANGE, RED, dim, fg};
 
 use crate::markdown::Segment;
 use crate::{mermaid, sequence};

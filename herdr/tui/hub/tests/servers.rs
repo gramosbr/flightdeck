@@ -29,10 +29,10 @@ fn wait_for(path: &Path, ready: impl Fn(&Value) -> bool) -> Value {
 /// An ISO time this many minutes from now.
 fn at(minutes: i64) -> String {
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64;
-    cockpit_iso(now + minutes * 60)
+    flightdeck_iso(now + minutes * 60)
 }
 
-fn cockpit_iso(secs: i64) -> String {
+fn flightdeck_iso(secs: i64) -> String {
     let days = secs.div_euclid(86_400);
     let rest = secs.rem_euclid(86_400);
     // Days since 1970-01-01 to a civil date.
@@ -203,14 +203,14 @@ fn every_source_reads_through_its_server() {
             "queries": {"errors": "sum(errors{service=\"{service}\"})", "hits": "sum(hits{service=\"{service}\"})", "p95": "histogram_quantile(0.95, x)"}},
         "spaces": ["inbox", "monitor"]
     });
-    let path = sandbox.home().join(".config/cockpit/config.json");
+    let path = sandbox.home().join(".config/flightdeck/config.json");
     let mut current = read(&path);
     for (k, v) in config.as_object().unwrap() {
         current[k] = v.clone();
     }
     std::fs::write(&path, current.to_string()).unwrap();
-    let cache = sandbox.home().join(".cache/cockpit");
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on")]);
+    let cache = sandbox.home().join(".cache/flightdeck");
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on")]);
     hub.request(&json!({"op": "ping"}));
 
     let inbox = wait_for(&cache.join("inbox.json"), |v| v["hub"]["tickets"].is_number() && v["hub"]["github"].is_number() && v["hub"]["platform"].is_number());
@@ -253,16 +253,16 @@ fn requests_and_ticket_actions_go_out_through_the_servers() {
             "get_thread": {"messages": [{"id": "m1", "sender": "Ana <ana@acme.io>", "date": at(-5), "htmlBody": "<p>Here they are</p>", "plaintextBody": "Here they are"}]}
         }),
     );
-    let mut config = read(&sandbox.home().join(".config/cockpit/config.json"));
+    let mut config = read(&sandbox.home().join(".config/flightdeck/config.json"));
     config["github"] = json!({"enabled": false});
     config["servers"] = json!({"jira": jira, "circleci": ci, "fastmail": mail});
     config["mail"] = json!({"enabled": true, "name": "Fastmail", "server": "fastmail",
         "tools": {"listInbox": {"tool": "mail_search"}, "get": {"tool": "get_thread", "args": {"threadId": "{thread}"}}}});
     config["tickets"] = jira_section();
     config["ci"] = json!({"enabled": true, "name": "CircleCI", "server": "circleci", "imageJob": ""});
-    std::fs::write(sandbox.home().join(".config/cockpit/config.json"), config.to_string()).unwrap();
-    let cache = sandbox.home().join(".cache/cockpit");
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_FEED", "on")]);
+    std::fs::write(sandbox.home().join(".config/flightdeck/config.json"), config.to_string()).unwrap();
+    let cache = sandbox.home().join(".cache/flightdeck");
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_FEED", "on")]);
     hub.request(&json!({"op": "ping"}));
 
     let requests = cache.join("requests");
@@ -274,9 +274,9 @@ fn requests_and_ticket_actions_go_out_through_the_servers() {
     let refused = wait_for(&requests.join("results/2-rerun.req"), |v| v["state"].is_string());
     assert_eq!(refused["state"], "refused", "a rerun names its workflow");
     assert_eq!(calls(&sandbox, "circleci").iter().find(|c| c["tool"] == "rerun_workflow").unwrap()["args"]["workflow"], "w1");
-    // The handshake cockpit opens with: the newest protocol version that has one, under cockpit's own name.
+    // The handshake flightdeck opens with: the newest protocol version that has one, under flightdeck's own name.
     let handshake = calls(&sandbox, "circleci").into_iter().find(|c| c["tool"] == "initialize").expect("a handshake");
-    assert_eq!((&handshake["args"]["protocolVersion"], &handshake["args"]["clientInfo"]["name"]), (&json!("2025-11-25"), &json!("cockpit")));
+    assert_eq!((&handshake["args"]["protocolVersion"], &handshake["args"]["clientInfo"]["name"]), (&json!("2025-11-25"), &json!("flightdeck")));
 
     // A thread asked of a session is read by the hub when it reaches the mail server, and kept where the mail space looks.
     std::fs::write(requests.join("3-mail-get.req"), json!({"type": "mail-get", "label": "Quota numbers", "message": "t1"}).to_string()).unwrap();

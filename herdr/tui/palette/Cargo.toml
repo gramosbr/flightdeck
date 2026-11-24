@@ -1,6 +1,6 @@
 [package]
-name = "cockpit-palette"
-description = "The launcher herdr opens as a popup over any pane: every app's items, the week's events and past sessions, and cockpit's own commands."
+name = "flightdeck-palette"
+description = "The launcher herdr opens as a popup over any pane: every app's items, the week's events and past sessions, and flightdeck's own commands."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,8 +9,8 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-agents = { path = "../agents" }
-cockpit-core.workspace = true
+flightdeck-agents = { path = "../agents" }
+flightdeck-core.workspace = true
 chrono.workspace = true
 crossterm.workspace = true
 ratatui.workspace = true

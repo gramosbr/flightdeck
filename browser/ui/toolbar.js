@@ -2,7 +2,7 @@
 // sends and sends back what the person does; it decides nothing.
 
 const $ = (id) => document.getElementById(id);
-const send = (type, more = {}) => window.cockpit.send({ type, ...more });
+const send = (type, more = {}) => window.flightdeck.send({ type, ...more });
 const tabs = $("tabs");
 const address = $("address");
 const suggestions = $("suggestions");
@@ -268,7 +268,7 @@ draft.addEventListener("keydown", (event) => {
   closeDraft(true);
 });
 
-window.cockpit.onState((next) => {
+window.flightdeck.onState((next) => {
   state = next;
   draw();
 });

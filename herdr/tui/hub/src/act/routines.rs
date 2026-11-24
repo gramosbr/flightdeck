@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use cockpit_core::routines::{self, When};
+use flightdeck_core::routines::{self, When};
 use serde_json::{Value, json};
 
 use super::inbox::{Launch, start_action};
@@ -13,7 +13,7 @@ use super::{Ctx, arg, opt};
 use crate::routines::{self as runner, HandRun, Setup, now_ms};
 use crate::store::{self, Store};
 use crate::value::{Res, cut, quote, text, truthy};
-use cockpit_core::{agent, frontend};
+use flightdeck_core::{agent, frontend};
 
 fn slug(args: &[Value]) -> Res<String> {
     let slug = text(arg(args, 0)?);
@@ -156,11 +156,11 @@ fn model(setup: &Setup, agent: &str, name: &str) -> Res<String> {
     let name = name.trim().to_string();
     let id = if agent.is_empty() { setup.default_agent.as_str() } else { agent };
     if let Some(named) = setup.agents.iter().find(|a| a.id == id && a.model_listing().is_none() && !a.offered.is_empty()) {
-        let (name, known) = (name.to_lowercase(), cockpit_core::models::for_routine(named, || {}));
+        let (name, known) = (name.to_lowercase(), flightdeck_core::models::for_routine(named, || {}));
         return if known.contains(&name) { Ok(name) } else { Err(format!("no model {name:?}: one of {}", known[1..].join(", "))) };
     }
     // Typed after its switch as one word: never one an agent would read as a switch of its own.
-    if name.is_empty() || cockpit_core::agent::model_id(&name) { Ok(name) } else { Err(format!("no model {name:?}")) }
+    if name.is_empty() || flightdeck_core::agent::model_id(&name) { Ok(name) } else { Err(format!("no model {name:?}")) }
 }
 
 /// The routine's model: one its agent takes (`model`), or empty for the agent's default.
@@ -320,7 +320,7 @@ pub fn talk(ctx: &mut Ctx, args: &[Value]) -> Res {
     };
     // A run from before runs named their agent was Claude Code's.
     let Some(agent) = agent::get(run["agent"].as_str().unwrap_or("claude")) else {
-        return Err(format!("{slug} ran an agent cockpit no longer knows"));
+        return Err(format!("{slug} ran an agent flightdeck no longer knows"));
     };
     if agent.resume.is_empty() {
         ctx.note(format!("{} cannot resume a session: talk to it yourself", agent.name));
@@ -380,7 +380,7 @@ pub fn open_worktree(ctx: &mut Ctx, args: &[Value]) -> Res {
     Ok(())
 }
 
-/// Removes run worktrees, never by force: given a run, its own; else every one nothing keeps (`cockpit_core::cleanup`'s
+/// Removes run worktrees, never by force: given a run, its own; else every one nothing keeps (`flightdeck_core::cleanup`'s
 /// rules), the note naming what keeps the others.
 pub fn cleanup(ctx: &mut Ctx, args: &[Value]) -> Res {
     let (only, id) = (opt(args, 0).as_str().map(str::to_string), opt(args, 1).as_str().map(str::to_string));
@@ -400,7 +400,7 @@ pub fn cleanup(ctx: &mut Ctx, args: &[Value]) -> Res {
 fn clean(store: &mut Store, only: Option<&str>, id: Option<&str>, now: u64) -> Res<String> {
     let doc = store.get(runner::DOC);
     let (mut removed, mut kept, mut errors) = (Vec::new(), Vec::new(), Vec::new());
-    let facts = cockpit_core::cleanup::Facts::now();
+    let facts = flightdeck_core::cleanup::Facts::now();
     for (slug, runs) in doc["runs"].as_object().into_iter().flatten() {
         for run in runs.as_array().into_iter().flatten() {
             let wt = &run["worktree"];
@@ -411,7 +411,7 @@ fn clean(store: &mut Store, only: Option<&str>, id: Option<&str>, now: u64) -> R
             // A run picked by hand is held by the same rules as all the others.
             let blockers = runner::kept_by(wt, &facts);
             if !blockers.is_empty() {
-                kept.push(format!("{} ({})", text(&wt["branch"]), cockpit_core::cleanup::said(&blockers)));
+                kept.push(format!("{} ({})", text(&wt["branch"]), flightdeck_core::cleanup::said(&blockers)));
                 continue;
             }
             match runner::remove_worktree(wt) {
@@ -657,7 +657,7 @@ mod tests {
         }
         let (ok, said) = clean();
         assert!(!ok, "merged work kept unsaved needs a look: {said}");
-        assert!(said.contains("wt-dirty: 1 uncommitted change"), "said as cockpit's cleanup says it: {said}");
+        assert!(said.contains("wt-dirty: 1 uncommitted change"), "said as flightdeck's cleanup says it: {said}");
         assert!(!path("wt merged").exists(), "merged: {said}");
         assert!(path("wt-squashed").exists(), "a branch merely gone is no merge: {said}");
         for kept in ["wt-fresh", "wt-open", "wt-dirty", "wt-ignored", "wt-recent"] {
@@ -677,10 +677,10 @@ mod tests {
         git(&repo, &["update-ref", "refs/remotes/origin/main", "main"]);
         assert!(Command::new("find").arg(path("wt-codex")).args(["-exec", "touch", "-t", "202601010000", "{}", "+"]).status().unwrap().success());
         let home = dir.path().join("home");
-        std::fs::create_dir_all(home.join(".cache/cockpit")).unwrap();
+        std::fs::create_dir_all(home.join(".cache/flightdeck")).unwrap();
         let cwd = std::fs::canonicalize(path("wt-codex")).unwrap();
         let row = json!({"app:t9": {"at": now_ms(), "agent": "codex", "cwd": cwd}, "w2:p1": {"cwd": "/w/elsewhere", "at": now_ms()}});
-        std::fs::write(home.join(".cache/cockpit/agents.json"), row.to_string()).unwrap();
+        std::fs::write(home.join(".cache/flightdeck/agents.json"), row.to_string()).unwrap();
         let out = Command::new("sh").args(["-c", t.body]).current_dir(&repos).env("PATH", &path_var).env("HOME", &home).output().unwrap();
         let said = String::from_utf8_lossy(&out.stdout).into_owned();
         assert!(said.contains("wt-codex: Codex still runs in it"), "{said}");

@@ -18,7 +18,7 @@ import { Dock } from "./dock.js";
 
 /** How many tabs a page may open by itself in one browser before the next is refused. */
 const POPUP_BUDGET = 24;
-const NEW_TAB = "cockpit://newtab";
+const NEW_TAB = "flightdeck://newtab";
 
 export class Shell {
   constructor({ options = {}, token = "", log = () => {} } = {}) {
@@ -220,7 +220,7 @@ export class Shell {
   open({ owner, worktree = "", repo = "", url, reload = false, background = false, fresh = false, show = true }) {
     const wt = this.browser(owner, { root: worktree, repo });
     const target = url ? typedUrl(url) : NEW_TAB;
-    if (target !== NEW_TAB && !allowedUrl(target)) throw new Error(`cockpit's browser does not open ${target.split(":")[0]}: pages`);
+    if (target !== NEW_TAB && !allowedUrl(target)) throw new Error(`flightdeck's browser does not open ${target.split(":")[0]}: pages`);
     const found = target !== NEW_TAB && !fresh ? tabShowing(wt, target) : null;
     let id = found?.id;
     if (found) {
@@ -348,7 +348,7 @@ export class Shell {
     }
     this.applyViewport(record, tab.viewport);
     this.design?.mark(record);
-    wc.executeJavaScriptInIsolatedWorld(991, [{ code: "addEventListener('input', () => { window.__cockpitEdited = true }, { capture: true, passive: true })" }]).catch(() => {});
+    wc.executeJavaScriptInIsolatedWorld(991, [{ code: "addEventListener('input', () => { window.__flightdeckEdited = true }, { capture: true, passive: true })" }]).catch(() => {});
   }
 
   visit(record) {
@@ -424,7 +424,7 @@ export class Shell {
     await this.prune();
     const tabs = [];
     for (const record of this.live.values()) {
-      const edited = await record.view.webContents.executeJavaScriptInIsolatedWorld(991, [{ code: "!!window.__cockpitEdited" }]).catch(() => false);
+      const edited = await record.view.webContents.executeJavaScriptInIsolatedWorld(991, [{ code: "!!window.__flightdeckEdited" }]).catch(() => false);
       tabs.push({ id: record.id, shown: this.window.page === record.view, hiddenAt: record.hiddenAt, audible: record.audible, devtools: !!record.devtools, edited, loading: record.loading, agentAt: record.agentAt });
     }
     for (const id of toSleep(tabs, now, idleMsOf(this.options.idleMinutes))) await this.sleep(id);
@@ -485,7 +485,7 @@ export class Shell {
     const tab = this.tabOf(owner, id);
     if (!tab) throw new Error("no such tab");
     const url = typedUrl(text);
-    if (!allowedUrl(url)) throw new Error(`cockpit's browser does not open ${url.split(":")[0]}: pages`);
+    if (!allowedUrl(url)) throw new Error(`flightdeck's browser does not open ${url.split(":")[0]}: pages`);
     const record = this.ensureView(owner, tab.id);
     this.put(withTabFields(this.browser(owner), tab.id, { url, scroll: null }));
     this.load(record, url);

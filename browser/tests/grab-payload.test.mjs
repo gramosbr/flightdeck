@@ -277,19 +277,19 @@ test("an awaitClick result reads as a click, a right-click or a cancelled pick",
   assert.equal(selected.kind, "selected");
   assert.equal(selected.payload.page.sanitizedUrl, "http://localhost:3000/signin");
 
-  const context = readGrabSelection({ __cockpitContextMenu: true, payload: raw() });
+  const context = readGrabSelection({ __flightdeckContextMenu: true, payload: raw() });
   assert.equal(context.kind, "context-selected");
   assert.equal(context.payload.target.tagName, "a");
 
-  assert.deepEqual(readGrabSelection({ __cockpitCancelled: true }), { kind: "cancelled" });
+  assert.deepEqual(readGrabSelection({ __flightdeckCancelled: true }), { kind: "cancelled" });
   assert.deepEqual(readGrabSelection({ message: "cancelled" }), { kind: "cancelled" });
   for (const value of [null, undefined, true, "cancelled"]) assert.deepEqual(readGrabSelection(value), { kind: "cancelled" });
 });
 
 test("a page cannot fake a cancellation or a selection", () => {
   assert.equal(readGrabSelection({ ...raw(), message: "cancelled" }).kind, "selected");
-  assert.equal(readGrabSelection({ ...raw(), __cockpitContextMenu: "yes" }).kind, "selected");
-  assert.deepEqual(readGrabSelection({ __cockpitContextMenu: true, payload: "x" }), { kind: "error", reason: "The page returned an invalid payload" });
+  assert.equal(readGrabSelection({ ...raw(), __flightdeckContextMenu: "yes" }).kind, "selected");
+  assert.deepEqual(readGrabSelection({ __flightdeckContextMenu: true, payload: "x" }), { kind: "error", reason: "The page returned an invalid payload" });
   assert.deepEqual(readGrabSelection({ page: {} }), { kind: "error", reason: "The page returned an invalid payload" });
 });
 

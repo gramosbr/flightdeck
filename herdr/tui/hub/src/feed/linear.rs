@@ -13,7 +13,7 @@ const QUERY: &str = r#"query { viewer { assignedIssues(first: 100, orderBy: upda
   nodes { identifier title url state { name type } parent { identifier } project { name } } } } }"#;
 
 pub fn fetch(token: &str) -> Fetched<Vec<Value>> {
-    let api = http::base("COCKPIT_LINEAR_API", "https://api.linear.app");
+    let api = http::base("FLIGHTDECK_LINEAR_API", "https://api.linear.app");
     let body = http::post(&format!("{api}/graphql"), &[("Authorization", token)], &json!({"query": QUERY}))?;
     if body["data"].is_null() {
         return Err(Failure::Other(http::message(&body)));

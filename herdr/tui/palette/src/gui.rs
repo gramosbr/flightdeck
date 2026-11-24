@@ -5,9 +5,9 @@
 use std::path::PathBuf;
 use std::time::SystemTime;
 
-use cockpit_core::files;
-use cockpit_core::frontend::APP;
-use cockpit_core::hub::Found;
+use flightdeck_core::files;
+use flightdeck_core::frontend::APP;
+use flightdeck_core::hub::Found;
 use serde_json::{Value, json};
 
 use crate::report::Report;
@@ -19,11 +19,11 @@ use crate::{Jump, Over, into_session, jumps, listed};
 pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
     match args["report"].as_str() {
         Some("doctor") => {
-            let exe = std::env::current_exe().unwrap_or_else(|_| "cockpit".into());
+            let exe = std::env::current_exe().unwrap_or_else(|_| "flightdeck".into());
             match std::process::Command::new(exe).arg("doctor").stdin(std::process::Stdio::null()).output() {
                 Ok(out) => Report::doctor_done(&String::from_utf8_lossy(&out.stdout)).json(),
                 Err(error) => {
-                    json!({"title": "Cockpit doctor", "rows": [{"mark": "✗", "tone": "bad", "text": format!("cockpit doctor did not run: {error}")}]})
+                    json!({"title": "Flightdeck doctor", "rows": [{"mark": "✗", "tone": "bad", "text": format!("flightdeck doctor did not run: {error}")}]})
                 }
             }
         }
@@ -32,12 +32,12 @@ pub fn view(args: &Value, doc: &dyn Fn(&str) -> Value) -> Value {
             Report::brief(&brief, &chrono::Local::now().format("%Y-%m-%d").to_string()).json()
         }
         _ => {
-            let mut out = json!({"pinned": cockpit_core::actions::pinned()});
+            let mut out = json!({"pinned": flightdeck_core::actions::pinned()});
             if let Some(frontend) = args["agents"].as_str() {
                 let only = Some(frontend).filter(|f| *f != "all");
                 let model = match &args["rows"] {
                     Value::Array(rows) => json!({"agents": rows}),
-                    _ => cockpit_agents::gui::view(&json!({"frontend": only}), doc),
+                    _ => flightdeck_agents::gui::view(&json!({"frontend": only}), doc),
                 };
                 let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or_default();
                 let list = jumps(&model, only, now);
@@ -67,9 +67,9 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     // Words asked of an agent reach it only from a person or its own tools; typing into its prompt takes the window and a
     // fork starts an agent, which only a person does.
     let checked = match key {
-        'a' => cockpit_agents::gui::may_touch(&over.pane),
-        'r' => cockpit_agents::gui::by_a_person("an agent's prompt is typed into by a person, not by an agent's tools"),
-        _ => cockpit_agents::gui::by_a_person("an agent is started by a person, not by an agent's tools"),
+        'a' => flightdeck_agents::gui::may_touch(&over.pane),
+        'r' => flightdeck_agents::gui::by_a_person("an agent's prompt is typed into by a person, not by an agent's tools"),
+        _ => flightdeck_agents::gui::by_a_person("an agent is started by a person, not by an agent's tools"),
     };
     if let Err(why) = checked {
         return Some(Err(why));
@@ -89,7 +89,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     let done = match key {
         'r' => {
             let mut failed = None;
-            let typed = cockpit_agents::gui::waiting(&over.pane, &mut || match then.run() {
+            let typed = flightdeck_agents::gui::waiting(&over.pane, &mut || match then.run() {
                 Ok(()) => true,
                 Err(why) => {
                     failed = Some(why);
@@ -115,14 +115,14 @@ fn text(v: &Value) -> String {
 /// else for Claude Code its folder's latest transcript.
 pub fn over_of(over: &Value) -> Over {
     let cwd = text(&over["cwd"]);
-    let agent = cockpit_core::agent::of_program(over["agent"].as_str().unwrap_or("claude")).map(|a| a.id);
+    let agent = flightdeck_core::agent::of_program(over["agent"].as_str().unwrap_or("claude")).map(|a| a.id);
     let latest = || latest_session(&projects_dir(), &cwd).filter(|_| agent.as_deref() == Some("claude"));
     let session = over["session"].as_str().filter(|s| !s.is_empty()).map(str::to_string).or_else(latest);
     Over { pane: format!("{APP}{}", text(&over["terminal"])), agent, session, cwd, title: text(&over["title"]) }
 }
 
 fn projects_dir() -> PathBuf {
-    cockpit_core::transcripts::claude_home().join("projects")
+    flightdeck_core::transcripts::claude_home().join("projects")
 }
 
 /// The id of the newest transcript Claude keeps for this folder (`<projects>/<folder, each other character a dash>/`).

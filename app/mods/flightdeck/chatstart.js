@@ -1,4 +1,4 @@
-// Cockpit Chat's empty box is Start work: with no agent to read, what is typed there is a prompt, a ticket's key or a
+// Flightdeck Chat's empty box is Start work: with no agent to read, what is typed there is a prompt, a ticket's key or a
 // PR's URL, the chips under it pick the repo, the worktree and the agent, and ⏎ starts it through `start_work`.
 
 import { div } from "gpui-kit";
@@ -39,7 +39,7 @@ export class ChatStart {
     return agentOf(this.plan, this.s);
   }
 
-  /** Whether the agent is one cockpit drives itself, so it runs as a session of this chat; else in a terminal. */
+  /** Whether the agent is one flightdeck drives itself, so it runs as a session of this chat; else in a terminal. */
   driven() {
     return this.agent()?.drives === true;
   }

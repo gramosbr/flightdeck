@@ -1,5 +1,5 @@
 // A menu (shadcn's <ContextMenu>), opened by ui.js's openMenu() at the pointer or under the control a key opened it
-// from: each item runs `cockpit.<command>`, which reaches the shown views' command(), and an `info` item only says
+// from: each item runs `flightdeck.<command>`, which reaches the shown views' command(), and an `info` item only says
 // something. An item's `logo` (an agent's icon name) draws in place of its icon, `check` marks the one picked. ↑/↓ and Enter work, Esc closes;
 // one a window command opened (`clickOnly`) takes a click only, since the person's keys were meant for something else.
 
@@ -17,7 +17,7 @@ export default class Menu {
 
   choose(item) {
     closeOverlay(props().overlay);
-    if (item?.command) run(`cockpit.${item.command}`);
+    if (item?.command) run(`flightdeck.${item.command}`);
   }
 
   render() {

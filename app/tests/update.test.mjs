@@ -6,7 +6,7 @@ import { test } from "node:test";
 /** The hub's `options` view after an update from 0.40.3 to 0.41.0, in the acme world. */
 const VIEW = {
   next: "0.41.0",
-  layout: "cockpit-chat",
+  layout: "flightdeck-chat",
   update: { from: "0.40.3", to: "0.41.0", notes: [{ version: "0.41.0", date: "2026-11-20", changes: ["Quotas grouped by provider"] }], shown: false },
   options: [
     { key: "queue.drain", since: "0.41.0", title: "Send queued prompts on their own", description: "A prompt goes once the agent rests.", default: true, kind: "toggle", value: true, seen: false, new: true },
@@ -16,7 +16,7 @@ const VIEW = {
 };
 
 /** update.js on a fake hub and Herdr: `acts` every hub action, `ran` every Herdr command, `notices` the toasts. */
-async function fixture({ layout = "cockpit", view = VIEW, saveWait = null } = {}) {
+async function fixture({ layout = "flightdeck", view = VIEW, saveWait = null } = {}) {
   const acts = [], ran = [], notices = [], overlays = [], closed = [];
   const shared = { layout };
   const context = createContext({ console });
@@ -41,11 +41,11 @@ async function fixture({ layout = "cockpit", view = VIEW, saveWait = null } = {}
       install: async () => ({ cache: "/tmp/acme-cache", version: "0.41.0" }),
       sleep: async () => {},
       openUrl: () => {},
-      cockpit: async () => ({ code: 0, stdout: "", stderr: "" }),
+      flightdeck: async () => ({ code: 0, stdout: "", stderr: "" }),
     },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -97,9 +97,9 @@ test("the steps say what changed, the options the update brought, and the layout
   const f = await fixture();
   const after = f.update.afterOf(VIEW, null);
   assert.deepEqual(plain(after.options.map((o) => o.key)), ["queue.drain", "chat.nextSteps"], "only what the update brought");
-  assert.deepEqual(plain(f.update.afterSteps(after, "cockpit")), ["news", "options", "layout"]);
-  assert.deepEqual(plain(f.update.afterSteps(after, "cockpit-chat")), ["news", "options"], "no layout to offer on that layout");
-  assert.deepEqual(plain(f.update.afterSteps({ notes: [], options: [], layout: null }, "cockpit")), ["news"], "always one step");
+  assert.deepEqual(plain(f.update.afterSteps(after, "flightdeck")), ["news", "options", "layout"]);
+  assert.deepEqual(plain(f.update.afterSteps(after, "flightdeck-chat")), ["news", "options"], "no layout to offer on that layout");
+  assert.deepEqual(plain(f.update.afterSteps({ notes: [], options: [], layout: null }, "flightdeck")), ["news"], "always one step");
   // A hub not restarted yet notes nothing: the install the dialog followed says from and to.
   const followed = f.update.afterOf({ update: null, options: VIEW.options }, { from: "0.40.3", to: "0.41.0", notes: [{ version: "0.41.0" }] });
   assert.deepEqual(plain([followed.from, followed.to, followed.notes.length, followed.options.length, followed.layout]), ["0.40.3", "0.41.0", 1, 2, null]);
@@ -108,12 +108,12 @@ test("the steps say what changed, the options the update brought, and the layout
 
 test("the window asks once, only while an update with something to say was not shown", async () => {
   const f = await fixture();
-  assert.equal(f.update.worthAsking(VIEW, "cockpit"), true);
-  assert.equal(f.update.worthAsking({ ...VIEW, update: { ...VIEW.update, shown: true } }, "cockpit"), false);
+  assert.equal(f.update.worthAsking(VIEW, "flightdeck"), true);
+  assert.equal(f.update.worthAsking({ ...VIEW, update: { ...VIEW.update, shown: true } }, "flightdeck"), false);
   const quiet = { ...VIEW, update: { ...VIEW.update, notes: [] }, options: VIEW.options.map((o) => ({ ...o, new: false })) };
-  assert.equal(f.update.worthAsking(quiet, "cockpit"), true, "the layout to try is something to say");
-  assert.equal(f.update.worthAsking(quiet, "cockpit-chat"), false, "nothing new on the layout it offers");
-  assert.equal(f.update.worthAsking(null, "cockpit"), false);
+  assert.equal(f.update.worthAsking(quiet, "flightdeck"), true, "the layout to try is something to say");
+  assert.equal(f.update.worthAsking(quiet, "flightdeck-chat"), false, "nothing new on the layout it offers");
+  assert.equal(f.update.worthAsking(null, "flightdeck"), false);
 });
 
 test("opened by the person, the steps note the update shown and the options seen", async () => {
@@ -211,13 +211,13 @@ test("Skip keeps the options as they are; Try switches the layout and says how t
   dialog.key({ keystroke: "enter", is_held: true }, c);
   assert.deepEqual(f.ran, [], "nor a held one");
   dialog.key({ keystroke: "enter" }, c);
-  assert.deepEqual(plain(f.ran), [["layout.switch", { name: "cockpit-chat" }]]);
+  assert.deepEqual(plain(f.ran), [["layout.switch", { name: "flightdeck-chat" }]]);
   assert.deepEqual(plain(f.closed), ["dialog-1"]);
   assert.match(f.notices[0].body, /⌘⇧L/);
 });
 
-test("on Cockpit Chat the last step is the options, and saving closes with a toast", async () => {
-  const f = await fixture({ layout: "cockpit-chat" });
+test("on Flightdeck Chat the last step is the options, and saving closes with a toast", async () => {
+  const f = await fixture({ layout: "flightdeck-chat" });
   const { dialog, c } = await opened(f);
   assert.deepEqual(plain(dialog.steps), ["news", "options"]);
   dialog.next(c);

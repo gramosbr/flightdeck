@@ -1,12 +1,12 @@
 //! Keys and clicks: the template picker and the form first, then the dialog and the palette, then rows, the selected
 //! row's actions (a delete asked first), folds, and adding a routine.
 
-use cockpit_core::acts::Act;
-use cockpit_core::dialog::{Answer, Dialog};
-use cockpit_core::keys::{self, Move};
-use cockpit_core::palette::{Entry, Outcome};
-use cockpit_core::pointed::MOVE_FIRST;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind};
+use flightdeck_core::acts::Act;
+use flightdeck_core::dialog::{Answer, Dialog};
+use flightdeck_core::keys::{self, Move};
+use flightdeck_core::palette::{Entry, Outcome};
+use flightdeck_core::pointed::MOVE_FIRST;
 use ratatui::layout::Position;
 
 use crate::app::{App, Cmd};
@@ -129,7 +129,7 @@ impl App {
                         self.press(None, cmd);
                     }
                 }
-                Outcome::Elsewhere(target) => cockpit_core::hub::go(&target),
+                Outcome::Elsewhere(target) => flightdeck_core::hub::go(&target),
                 _ => {}
             }
             return false;
@@ -147,7 +147,7 @@ impl App {
         }
         // A routine or run a focus request selected takes no key that acts until the person moves to it.
         if self.pointed.holds(&key) {
-            self.toasts.push(MOVE_FIRST, cockpit_core::toast::Kind::Note);
+            self.toasts.push(MOVE_FIRST, flightdeck_core::toast::Kind::Note);
             return false;
         }
         if let Some(to) = keys::movement(&key) {

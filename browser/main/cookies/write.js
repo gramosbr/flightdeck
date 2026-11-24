@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/browser-cookie-import-write.ts,
 // imports/import-validated-cookies.ts and imports/cookie-import-contracts.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { boundedCommandSender, writeIdentityWithCdp } from "./cdp.js";
 import { withCookieMutationLock } from "./lock.js";

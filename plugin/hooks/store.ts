@@ -1,10 +1,10 @@
 import type { EngineInterface } from 'claude-code'
 
-import { cacheDir, cockpitCommand } from './config'
+import { cacheDir, flightdeckCommand } from './config'
 
 type $ = EngineInterface
 
-// The documents the hub keeps for everyone (inbox, ci, meetings, brief, monitor) and its leases, through `cockpit store`. The hub
+// The documents the hub keeps for everyone (inbox, ci, meetings, brief, monitor) and its leases, through `flightdeck store`. The hub
 // is their only writer and mirrors each to <name>.json, which the mod reads as before.
 
 const LEASE_TTL_S = 120
@@ -13,10 +13,10 @@ const LEASE_BEAT_MS = 30_000
 export type Doc = 'inbox' | 'ci' | 'meetings' | 'brief' | 'monitor' | 'agents' | 'mail'
 
 async function store($: $, args: string[]) {
-  const command = (await cockpitCommand($)) ?? ['false']
+  const command = (await flightdeckCommand($)) ?? ['false']
   const { exitCode, stdout, stderr } = await $.process.run([...command, 'store', ...args], { timeoutMs: 20_000 })
-  // cockpit.sh says nothing when the plugin has no binary yet: /cockpit:doctor tells why.
-  if (exitCode !== 0 || stdout.trim() === '') throw new Error(`cockpit store ${args[0]}: ${stderr.trim() || 'no cockpit binary'}`)
+  // flightdeck.sh says nothing when the plugin has no binary yet: /flightdeck:doctor tells why.
+  if (exitCode !== 0 || stdout.trim() === '') throw new Error(`flightdeck store ${args[0]}: ${stderr.trim() || 'no flightdeck binary'}`)
   return stdout.trim()
 }
 

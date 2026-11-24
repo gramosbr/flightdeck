@@ -1,16 +1,16 @@
-//! `cockpit options`: every option with its value and how to set it, what the last update brought, and herdr's popup
+//! `flightdeck options`: every option with its value and how to set it, what the last update brought, and herdr's popup
 //! that asks about its new options; and the hub's `options` view, whose actions only a person's click takes.
 
 use std::io::{IsTerminal, Write};
 
-use cockpit_core::text::clean;
-use cockpit_core::{files, frontend, options};
-use cockpit_hub::views::Doc;
+use flightdeck_core::text::clean;
+use flightdeck_core::{files, frontend, options};
+use flightdeck_hub::views::Doc;
 use serde_json::{Map, Value};
 
 use crate::proc;
 
-const USAGE: &str = "usage: cockpit options [--json | set <key> <value> | seen [<key>...] | new | ask | pending] (cockpit options --help)";
+const USAGE: &str = "usage: flightdeck options [--json | set <key> <value> | seen [<key>...] | new | ask | pending] (flightdeck options --help)";
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -21,7 +21,7 @@ pub fn main(args: &[String]) {
         [] => print!("{}", listed(&files::config(), &state)),
         ["--json"] => println!("{}", options::view(&files::config(), &state)),
         ["set", key, word] => {
-            let (setting, value) = to_set(key, word, cockpit_agents::cli::at_a_terminal()).unwrap_or_else(|e| proc::fail(&e));
+            let (setting, value) = to_set(key, word, flightdeck_agents::cli::at_a_terminal()).unwrap_or_else(|e| proc::fail(&e));
             options::save(&[(setting.key, value.clone())]).unwrap_or_else(|e| proc::fail(&e));
             println!("{}: {}", setting.title, options::words(setting, &value));
         }
@@ -42,10 +42,10 @@ pub fn main(args: &[String]) {
 /// The option `set <key> <value>` names and its new value, checked as the option takes it, from a person at a terminal
 /// only: a script or an agent's tools, with no terminal on the input, are told to ask the person.
 fn to_set(key: &str, word: &str, at_a_terminal: bool) -> Result<(&'static options::Setting, Value), String> {
-    let Some(setting) = options::get(key) else { return Err(format!("no option {key:?}: cockpit options lists them")) };
+    let Some(setting) = options::get(key) else { return Err(format!("no option {key:?}: flightdeck options lists them")) };
     let value = options::parsed(setting, word).map_err(|e| format!("{e}\n{USAGE}"))?;
     if !at_a_terminal {
-        return Err("an option is set by a person: run this at a terminal, or set it in Cockpit settings, under Options".into());
+        return Err("an option is set by a person: run this at a terminal, or set it in Flightdeck settings, under Options".into());
     }
     Ok((setting, value))
 }
@@ -63,7 +63,7 @@ const fn word(on: bool) -> &'static str {
     if on { "on" } else { "off" }
 }
 
-/// What to type after `cockpit options set <key>` for an option as it stands: the other state of a switch, the next
+/// What to type after `flightdeck options set <key>` for an option as it stands: the other state of a switch, the next
 /// value of a choice, else what the field takes.
 fn example(o: &Value) -> String {
     match o["kind"].as_str().unwrap_or_default() {
@@ -97,7 +97,7 @@ fn mark_shown(state: &Value) {
 fn listed(config: &Value, state: &Value) -> String {
     let view = options::view(config, state);
     let all: Vec<&Value> = view["options"].as_array().into_iter().flatten().collect();
-    let mut out = String::from("Options, in ~/.config/cockpit/config.json:\n");
+    let mut out = String::from("Options, in ~/.config/flightdeck/config.json:\n");
     for section in options::SECTIONS {
         out.push_str(&format!("\n{section}\n\n"));
         for o in all.iter().filter(|o| o["section"] == section) {
@@ -113,7 +113,7 @@ fn listed(config: &Value, state: &Value) -> String {
             let value = if o["by_hand"] == true { "set by hand in config.json".to_string() } else { options::words(setting, &o["value"]) };
             out.push_str(&format!("  {}: {value} ({})\n", o["title"].as_str().unwrap_or_default(), notes.join(", ")));
             out.push_str(&format!("       {}\n", o["description"].as_str().unwrap_or_default()));
-            out.push_str(&format!("       cockpit options set {key} {}\n\n", example(o)));
+            out.push_str(&format!("       flightdeck options set {key} {}\n\n", example(o)));
         }
     }
     out.push_str("In config.json only\n\n");
@@ -127,9 +127,9 @@ fn listed(config: &Value, state: &Value) -> String {
 fn news(state: &Value, config: &Value) -> String {
     let update = &state["update"];
     let (Some(from), Some(to)) = (update["from"].as_str(), update["to"].as_str()) else {
-        return "No update since cockpit last ran here. Every option: cockpit options\n".into();
+        return "No update since flightdeck last ran here. Every option: flightdeck options\n".into();
     };
-    let mut out = format!("Cockpit {to} is installed (you ran {from}).\n");
+    let mut out = format!("Flightdeck {to} is installed (you ran {from}).\n");
     let notes = update["notes"].as_array().cloned().unwrap_or_default();
     if !notes.is_empty() {
         out.push_str("\nWhat's new\n");
@@ -150,13 +150,13 @@ fn news(state: &Value, config: &Value) -> String {
             out.push_str(&format!("  {}: {}{}\n", s.title, options::words(s, &value), if value == options::default_of(s) { " (the default)" } else { "" }));
             out.push_str(&format!("    {}\n", s.description));
             let other = if s.kind == options::Kind::Toggle { word(value != true).to_string() } else { "<value>".to_string() };
-            out.push_str(&format!("    cockpit options set {} {other}\n", s.key));
+            out.push_str(&format!("    flightdeck options set {} {other}\n", s.key));
         }
     }
     if let Some(layout) = offered_layout(state) {
-        out.push_str(&format!("\nTry Cockpit Chat\n  In Herdr desktop: herdr-app do layout.switch '{{\"name\":\"{layout}\"}}'\n  Switch back with ⌘⇧L.\n"));
+        out.push_str(&format!("\nTry Flightdeck Chat\n  In Herdr desktop: herdr-app do layout.switch '{{\"name\":\"{layout}\"}}'\n  Switch back with ⌘⇧L.\n"));
     }
-    out.push_str("\nEvery option: cockpit options\n");
+    out.push_str("\nEvery option: flightdeck options\n");
     out
 }
 
@@ -170,7 +170,7 @@ fn ask_layout(state: &Value, lines: &mut impl Iterator<Item = String>, out: &mut
     if offered_layout(state).is_none() {
         return false;
     }
-    let _ = write!(out, "\nTry Cockpit Chat in the Herdr desktop app? (y/n) [n] ");
+    let _ = write!(out, "\nTry Flightdeck Chat in the Herdr desktop app? (y/n) [n] ");
     let _ = out.flush();
     lines.next().is_some_and(|line| switch(line.trim()) == Some(true))
 }
@@ -190,9 +190,9 @@ fn ask(state: &Value) {
         if frontend::app_home().join("layouts").join(format!("{name}.json")).is_file()
             && frontend::app_do("layout.switch", &serde_json::json!({"name": name})).is_some()
         {
-            println!("\nOpened Cockpit Chat. Switch back with ⌘⇧L.");
+            println!("\nOpened Flightdeck Chat. Switch back with ⌘⇧L.");
         } else {
-            println!("\nOpen Herdr desktop and pick Cockpit Chat from its layout menu. Switch back with ⌘⇧L.");
+            println!("\nOpen Herdr desktop and pick Flightdeck Chat from its layout menu. Switch back with ⌘⇧L.");
         }
     }
     mark_shown(state);
@@ -207,7 +207,7 @@ fn ask(state: &Value) {
 fn asked(state: &Value, config: &Value, mut lines: impl Iterator<Item = String>, out: &mut dyn Write) -> (String, Vec<(&'static options::Setting, bool)>) {
     let from = state["update"]["from"].as_str().unwrap_or_default();
     let news = news(state, config);
-    // A switch is asked about; another kind of option is named by `cockpit options new`, with how to set it.
+    // A switch is asked about; another kind of option is named by `flightdeck options new`, with how to set it.
     let new: Vec<&options::Setting> =
         if from.is_empty() { Vec::new() } else { options::since(from).into_iter().filter(|s| s.kind == options::Kind::Toggle).collect() };
     // The news without its option lines: each option is asked in its place.
@@ -215,10 +215,10 @@ fn asked(state: &Value, config: &Value, mut lines: impl Iterator<Item = String>,
         .split("\nNew options\n")
         .next()
         .unwrap_or_default()
-        .split("\nTry Cockpit Chat\n")
+        .split("\nTry Flightdeck Chat\n")
         .next()
         .unwrap_or_default()
-        .trim_end_matches("\nEvery option: cockpit options\n");
+        .trim_end_matches("\nEvery option: flightdeck options\n");
     let _ = write!(out, "{head}");
     let mut picked = Vec::new();
     if !new.is_empty() {
@@ -235,7 +235,7 @@ fn asked(state: &Value, config: &Value, mut lines: impl Iterator<Item = String>,
     let mut said = String::new();
     if !picked.is_empty() {
         let set: Vec<String> = picked.iter().map(|(s, on)| format!("{} {}", s.key, word(*on))).collect();
-        said.push_str(&format!("\nNow: {}.\nChange one any time: cockpit options set <key> on|off\n", set.join(", ")));
+        said.push_str(&format!("\nNow: {}.\nChange one any time: flightdeck options set <key> on|off\n", set.join(", ")));
     }
     (said, picked)
 }
@@ -253,7 +253,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     if !["set", "shown"].contains(&action) {
         return None;
     }
-    if let Err(why) = cockpit_core::peer::person(&format!("options {action}: options are set by a person, not by an agent's tools")) {
+    if let Err(why) = flightdeck_core::peer::person(&format!("options {action}: options are set by a person, not by an agent's tools")) {
         return Some(Err(why));
     }
     let arg = args.first().cloned().unwrap_or(Value::Null);
@@ -293,14 +293,14 @@ mod tests {
     fn the_news_names_each_new_option_with_how_to_set_it() {
         let said = news(&updated(), &json!({"queue": {"drain": false}}));
         assert!(
-            said.starts_with("Cockpit 0.41.0 is installed (you ran 0.40.3).\n\nWhat's new\n  0.41.0 (2026-11-20)\n  - Quotas grouped by provider\n"),
+            said.starts_with("Flightdeck 0.41.0 is installed (you ran 0.40.3).\n\nWhat's new\n  0.41.0 (2026-11-20)\n  - Quotas grouped by provider\n"),
             "{said}"
         );
         assert!(said.contains("  Send queued prompts on their own: off\n"), "{said}");
-        assert!(said.contains("    cockpit options set queue.drain on\n"), "{said}");
+        assert!(said.contains("    flightdeck options set queue.drain on\n"), "{said}");
         assert!(said.contains("  Suggest next prompts: off (the default)\n    After each turn"), "{said}");
-        assert!(said.contains("Try Cockpit Chat\n  In Herdr desktop: herdr-app do layout.switch '{\"name\":\"cockpit-chat\"}'"), "{said}");
-        assert!(said.ends_with("\nEvery option: cockpit options\n"));
+        assert!(said.contains("Try Flightdeck Chat\n  In Herdr desktop: herdr-app do layout.switch '{\"name\":\"flightdeck-chat\"}'"), "{said}");
+        assert!(said.ends_with("\nEvery option: flightdeck options\n"));
         assert!(news(&json!({}), &json!({})).starts_with("No update since"));
         let mut hostile = updated();
         hostile["update"]["notes"] =
@@ -316,7 +316,7 @@ mod tests {
         let answers = ["n", "maybe", "y"].map(String::from);
         let (said, picked) = asked(&updated(), &json!({}), answers.into_iter(), &mut out);
         let shown = String::from_utf8(out).unwrap();
-        assert!(shown.starts_with("Cockpit 0.41.0 is installed") && !shown.contains("cockpit options set"), "{shown}");
+        assert!(shown.starts_with("Flightdeck 0.41.0 is installed") && !shown.contains("flightdeck options set"), "{shown}");
         assert_eq!(shown.matches("Turn it on? (y/n)").count(), 5);
         assert!(shown.contains("Suggest next prompts\n  After each turn") && shown.contains("Turn it on? (y/n) [n] "), "{shown}");
         let got: Vec<(&str, bool)> = picked.iter().map(|(s, on)| (s.key, *on)).collect();
@@ -336,7 +336,7 @@ mod tests {
         for (answer, expected) in [("y", true), ("yes", true), ("", false), ("n", false), ("maybe", false)] {
             let mut out = Vec::new();
             assert_eq!(ask_layout(&updated(), &mut [answer.to_string()].into_iter(), &mut out), expected);
-            assert!(String::from_utf8(out).unwrap().contains("Try Cockpit Chat in the Herdr desktop app? (y/n) [n]"));
+            assert!(String::from_utf8(out).unwrap().contains("Try Flightdeck Chat in the Herdr desktop app? (y/n) [n]"));
         }
         assert!(!ask_layout(&updated(), &mut std::iter::empty(), &mut Vec::new()));
         let mut out = Vec::new();
@@ -360,15 +360,15 @@ mod tests {
         let said = listed(&config, &json!({"seen": ["queue.drain"]}));
         assert!(said.contains("  Send queued prompts on their own: on (default on, since 1.0.0)\n"), "{said}");
         assert!(said.contains("  Suggest next prompts: on (default off, since 1.0.0, new)\n"), "{said}");
-        assert!(said.contains("       cockpit options set chat.nextSteps off\n"), "{said}");
-        // An option cockpit always read names no version and is never new; each kind says what it takes.
-        assert!(said.contains("  GitHub: 45 s (default 30 s)\n") && said.contains("       cockpit options set refresh.github <15 to 86400>\n"), "{said}");
+        assert!(said.contains("       flightdeck options set chat.nextSteps off\n"), "{said}");
+        // An option flightdeck always read names no version and is never new; each kind says what it takes.
+        assert!(said.contains("  GitHub: 45 s (default 30 s)\n") && said.contains("       flightdeck options set refresh.github <15 to 86400>\n"), "{said}");
         assert!(
             said.contains("  Pace of the 7-day limit: Weekdays (default Whole week)\n")
-                && said.contains("       cockpit options set agents.pace week|weekdays\n"),
+                && said.contains("       flightdeck options set agents.pace week|weekdays\n"),
             "{said}"
         );
-        assert!(said.contains("  Morning brief time: 08:30 (default 08:30)\n") && said.contains("       cockpit options set brief.at <text>\n"), "{said}");
+        assert!(said.contains("  Morning brief time: 08:30 (default 08:30)\n") && said.contains("       flightdeck options set brief.at <text>\n"), "{said}");
         assert!(said.contains("  Model for next prompts: set by hand in config.json (default the agent's lightest model)\n"), "{said}");
         // The sections in the registry's order, then what only the file holds.
         let at = |words: &str| said.find(words).unwrap_or_else(|| panic!("{words} missing in {said}"));

@@ -1,11 +1,11 @@
 //! The frame: the header, the filter, the list (the adder, the open items, the folded done ones), the selection's panel
 //! (or, compact, its buttons on the row itself), the footer, and the toasts, palette and dialog over them.
 
-use cockpit_core::acts::{self, Act};
-use cockpit_core::files::Density;
-use cockpit_core::text::{fit, width, wrap};
-use cockpit_core::theme::{FG, GREEN, LINE, ORANGE, PANEL, base, bold, dim, fg};
-use cockpit_core::widgets;
+use flightdeck_core::acts::{self, Act};
+use flightdeck_core::files::Density;
+use flightdeck_core::text::{fit, width, wrap};
+use flightdeck_core::theme::{FG, GREEN, LINE, ORANGE, PANEL, base, bold, dim, fg};
+use flightdeck_core::widgets;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};

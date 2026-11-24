@@ -1,20 +1,20 @@
 #!/bin/sh
-# Updates both halves of cockpit, then restarts what runs them: the space apps, the Herdr app's layout and mod, and idle
+# Updates both halves of flightdeck, then restarts what runs them: the space apps, the Herdr app's layout and mod, and idle
 # Claude sessions reload the plugin. Without herdr it updates the Herdr app half alone, from install.sh's copy or the Claude plugin's.
 PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.claude/local:$PATH"
 . "$(dirname "$0")/lib.sh"
 # An install made by install.sh, outside herdr and Claude Code, updates by running it again.
-if [ -z "$REGISTERED" ] && [ -f "$(dirname "$ROOT")/.cockpit-install" ]; then
-  COCKPIT_NO_SETUP=1 COCKPIT_HOME="$(dirname "$ROOT")" sh "$(dirname "$ROOT")/install.sh" || exit 1
+if [ -z "$REGISTERED" ] && [ -f "$(dirname "$ROOT")/.flightdeck-install" ]; then
+  FLIGHTDECK_NO_SETUP=1 FLIGHTDECK_HOME="$(dirname "$ROOT")" sh "$(dirname "$ROOT")/install.sh" || exit 1
 fi
 if command -v claude >/dev/null 2>&1; then
-  claude plugin marketplace update cockpit
-  claude plugin update cockpit@cockpit
+  claude plugin marketplace update flightdeck
+  claude plugin update flightdeck@flightdeck
 fi
 app_home=${HERDR_APP_HOME:-$HOME/.config/herdr-app}
 if [ -n "$REGISTERED" ]; then
-  "$H" plugin update cockpit --yes
-  root=$(jq -r '.[] | select(.plugin_id == "cockpit") | .plugin_root' "$HOME/.config/herdr/plugins.json")
+  "$H" plugin update flightdeck --yes
+  root=$(jq -r '.[] | select(.plugin_id == "flightdeck") | .plugin_root' "$HOME/.config/herdr/plugins.json")
 else
   root=$ROOT
 fi
@@ -22,8 +22,8 @@ sh "$root/fetch-apps.sh"
 
 # The spaces' supervisors and their apps stop, then ensure-spaces (from the new folder) moves the link, prunes old folders
 # and starts them again.
-pkill -f "(^|/)cockpit space (inbox|todo|runbook|meetings|monitor|routines|review|mail)$"
-pkill -f "cockpit (inbox|todo|runbook|meetings|monitor|routines|review|mail) cockpit-space"
+pkill -f "(^|/)flightdeck space (inbox|todo|runbook|meetings|monitor|routines|review|mail)$"
+pkill -f "flightdeck (inbox|todo|runbook|meetings|monitor|routines|review|mail) flightdeck-space"
 sleep 1
 if [ -n "$REGISTERED" ]; then
   sh "$root/ensure-spaces.sh"
@@ -31,29 +31,29 @@ if [ -n "$REGISTERED" ]; then
 fi
 # The hub serves the old folder: it goes once the link names the new one, so the first app that needs it (a Herdr window
 # reconnects at once) starts the new binary.
-pkill -f "(^|/)cockpit hub$"
+pkill -f "(^|/)flightdeck hub$"
 
 # The Chromium side browser, when it is the one in use: what the new version pins is installed, and the running one
 # ends, so the next page opens in the new one with its tabs back.
-sh "$root/cockpit.sh" browser refresh >/dev/null 2>&1 &
+sh "$root/flightdeck.sh" browser refresh >/dev/null 2>&1 &
 
 # The Herdr app takes the new layout and mod (it reloads a mod on its own), when it has them.
-[ -f "$app_home/layouts/cockpit.json" ] && sh "$root/cockpit.sh" app install >/dev/null
+[ -f "$app_home/layouts/flightdeck.json" ] && sh "$root/flightdeck.sh" app install >/dev/null
 
-# A session waiting at its prompt reloads the plugin now; `cockpit doctor` names reload.sh for the ones that were busy.
+# A session waiting at its prompt reloads the plugin now; `flightdeck doctor` names reload.sh for the ones that were busy.
 sh "$root/reload.sh" --idle >/dev/null 2>&1 || true
 
 version=$(jq -r .version "$(dirname "$root")/plugin/.claude-plugin/plugin.json" 2>/dev/null) ||
   version=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$root/herdr-plugin.toml")
-sh "$root/cockpit.sh" notify "Cockpit updated" "Now on ${version:-the latest version}; idle sessions reloaded the mod." "space:inbox"
+sh "$root/flightdeck.sh" notify "Flightdeck updated" "Now on ${version:-the latest version}; idle sessions reloaded the mod." "space:inbox"
 
 # What the update brought: a terminal asks about its options and layout; without input it prints them. The Herdr app's
 # update dialog asks there, and a background TUI update opens its popup.
-if [ "${COCKPIT_FRONTEND:-}" != app ]; then
+if [ "${FLIGHTDECK_FRONTEND:-}" != app ]; then
   if [ -t 0 ] && [ -t 1 ]; then
-    sh "$root/cockpit.sh" options ask
+    sh "$root/flightdeck.sh" options ask
   elif [ -t 1 ]; then
-    sh "$root/cockpit.sh" options new
+    sh "$root/flightdeck.sh" options new
   elif [ -n "$REGISTERED" ]; then
     sh "$root/whats-new.sh"
   fi

@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;
 use std::time::Duration;
 
-use cockpit_core::frontend;
+use flightdeck_core::frontend;
 use serde_json::Value;
 
 /// Whether `hc events` runs and has sent its first snapshot: the agents view then trusts it to say when to look.

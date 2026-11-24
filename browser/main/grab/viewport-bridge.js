@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/shared/browser/annotations/browser-annotation-viewport-bridge.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { COMPOSED_TREE_SCRIPT } from "./script-composed-tree.js";
 import { GRAB_SELECTED_ATTRIBUTE } from "./types.js";
@@ -73,8 +73,8 @@ export function buildAnnotationViewportBridgeScript({ emitViewport, enabled, mar
   const selectionId = ${JSON.stringify(selectionId ?? null)};
   const token = ${JSON.stringify(token)};
   const prefix = ${JSON.stringify(ANNOTATION_VIEWPORT_MESSAGE_PREFIX)};
-  const stateKey = '__cockpitAnnotationViewportBridge';
-  const hostAttribute = 'data-cockpit-annotation-overlay';
+  const stateKey = '__flightdeckAnnotationViewportBridge';
+  const hostAttribute = 'data-flightdeck-annotation-overlay';
   const selectedAttribute = ${JSON.stringify(GRAB_SELECTED_ATTRIBUTE)};
   const markerSize = 24;
 ${COMPOSED_TREE_SCRIPT}

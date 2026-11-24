@@ -1,5 +1,5 @@
 [package]
-name = "cockpit-review"
+name = "flightdeck-review"
 description = "The review space: an agent's changes in its worktree, uncommitted, on its branch or in its pull request, commented line by line and sent back to it, or read as a walkthrough."
 version.workspace = true
 edition.workspace = true
@@ -9,8 +9,8 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-core.workspace = true
-cockpit-show = { path = "../show" }
+flightdeck-core.workspace = true
+flightdeck-show = { path = "../show" }
 chrono.workspace = true
 crossterm.workspace = true
 ratatui.workspace = true

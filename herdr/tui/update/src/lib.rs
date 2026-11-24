@@ -1,5 +1,5 @@
-//! Installs the release's `cockpit` binary for the plugin's version and this machine into the herdr folder's bin/:
-//! `cockpit update-apps` once per version (fetch-apps.sh runs it), and the hub every 10 minutes while it runs.
+//! Installs the release's `flightdeck` binary for the plugin's version and this machine into the herdr folder's bin/:
+//! `flightdeck update-apps` once per version (fetch-apps.sh runs it), and the hub every 10 minutes while it runs.
 
 mod folder;
 mod install;
@@ -12,9 +12,9 @@ use std::path::Path;
 pub use folder::{dev_build, installed, wanted};
 pub use watch::{keep_current, restart_apps};
 
-/// Where the releases' files are, `<base>/v<version>/<file>`; COCKPIT_RELEASES_URL points elsewhere for tests.
+/// Where the releases' files are, `<base>/v<version>/<file>`; FLIGHTDECK_RELEASES_URL points elsewhere for tests.
 pub fn releases() -> String {
-    std::env::var("COCKPIT_RELEASES_URL").unwrap_or_else(|_| "https://github.com/quaresc/cockpit/releases/download".into())
+    std::env::var("FLIGHTDECK_RELEASES_URL").unwrap_or_else(|_| "https://github.com/gramosbr/flightdeck/releases/download".into())
 }
 
 /// What an update did.

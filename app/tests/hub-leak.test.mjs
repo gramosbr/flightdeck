@@ -6,7 +6,7 @@ import { once } from "node:events";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const HUB = new URL("../mods/cockpit/hub.js", import.meta.url);
+const HUB = new URL("../mods/flightdeck/hub.js", import.meta.url);
 
 /**
  * hub.js's source for one new context, told apart from every other context's by a comment: Node 20 and 22 reuse code
@@ -36,7 +36,7 @@ async function fixture(t, { connectDelay = 0, stopped = false } = {}) {
   await once(server, "listening");
   t.after(() => { for (const s of clients) s.destroy(); server.close(); });
   const info = { host: "127.0.0.1", port: server.address().port, token: "tok" };
-  const install = { bin: "/x/cockpit", home: "/x", cache: "/x/cache" };
+  const install = { bin: "/x/flightdeck", home: "/x", cache: "/x/cache" };
   const context = createContext({ console });
   const imports = {
     herdr: {
@@ -44,7 +44,7 @@ async function fixture(t, { connectDelay = 0, stopped = false } = {}) {
       window: () => ({ platform: "macos" }),
       run: () => {},
       readTextFile: async (path) => {
-        if (path === "/app/cockpit.json") return JSON.stringify(install);
+        if (path === "/app/flightdeck.json") return JSON.stringify(install);
         if (path.endsWith("/hub.stopped")) return stopped ? "" : null;
         return JSON.stringify(info);
       },
@@ -103,7 +103,7 @@ async function loads(t, n, { connectDelay = () => 0, together = false } = {}) {
   await once(server, "listening");
   t.after(() => { for (const s of clients) s.destroy(); server.close(); });
   const info = { host: "127.0.0.1", port: server.address().port, token: "tok" };
-  const install = { bin: "/x/cockpit", home: "/x", cache: "/x/cache" };
+  const install = { bin: "/x/flightdeck", home: "/x", cache: "/x/cache" };
   const context = createContext({ console });
   // The loads share one context, as a window's do: one source for all of them.
   const source = await hubSource();
@@ -116,7 +116,7 @@ async function loads(t, n, { connectDelay = () => 0, together = false } = {}) {
         appHome: () => "/app",
         window: () => ({ platform: "macos" }),
         run: () => {},
-        readTextFile: async (path) => (path === "/app/cockpit.json" ? JSON.stringify(install) : path.endsWith("/hub.stopped") ? null : JSON.stringify(info)),
+        readTextFile: async (path) => (path === "/app/flightdeck.json" ? JSON.stringify(install) : path.endsWith("/hub.stopped") ? null : JSON.stringify(info)),
         exec: async () => ({ code: 0, stdout: JSON.stringify(info), stderr: "" }),
       },
       net: { default: { connect: async (host, port) => {
@@ -208,14 +208,14 @@ async function idleReads(t, { gaveUp = 2 } = {}) {
   await once(server, "listening");
   t.after(() => { for (const s of clients) s.destroy(); server.close(); });
   const info = { host: "127.0.0.1", port: server.address().port, token: "tok" };
-  const install = { bin: "/x/cockpit", home: "/x", cache: "/x/cache" };
+  const install = { bin: "/x/flightdeck", home: "/x", cache: "/x/cache" };
   let refusals = 0;
   const imports = {
     herdr: {
       appHome: () => "/app",
       window: () => ({ platform: "macos" }),
       run: () => {},
-      readTextFile: async (path) => (path === "/app/cockpit.json" ? JSON.stringify(install) : path.endsWith("/hub.stopped") ? null : JSON.stringify(info)),
+      readTextFile: async (path) => (path === "/app/flightdeck.json" ? JSON.stringify(install) : path.endsWith("/hub.stopped") ? null : JSON.stringify(info)),
       exec: async () => ({ code: 0, stdout: JSON.stringify(info), stderr: "" }),
     },
     net: { default: { connect: async (host, port) => {

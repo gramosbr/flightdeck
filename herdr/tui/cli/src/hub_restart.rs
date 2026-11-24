@@ -1,4 +1,4 @@
-//! A session cockpit drives across `cockpit hub stop` and the next hub, on the path the window takes: Start work makes it
+//! A session flightdeck drives across `flightdeck hub stop` and the next hub, on the path the window takes: Start work makes it
 //! from a prompt, the registry names it, the hub ends on its signal, and the hub started after brings it back paused.
 
 use std::io::{BufRead, BufReader, Write};
@@ -10,21 +10,21 @@ use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 
-/// Set on this test binary run again as `cockpit hub`.
-const HUB: &str = "COCKPIT_TEST_HUB_PROCESS";
-/// Set on this test binary run again as `cockpit hub stop`.
-const STOP: &str = "COCKPIT_TEST_HUB_STOP";
+/// Set on this test binary run again as `flightdeck hub`.
+const HUB: &str = "FLIGHTDECK_TEST_HUB_PROCESS";
+/// Set on this test binary run again as `flightdeck hub stop`.
+const STOP: &str = "FLIGHTDECK_TEST_HUB_STOP";
 
-/// `cockpit hub` as shipped, when this binary runs as the hub: only who sends a request is told, every sender the person.
+/// `flightdeck hub` as shipped, when this binary runs as the hub: only who sends a request is told, every sender the person.
 #[test]
 fn hub_process() {
     if std::env::var_os(HUB).is_some() {
-        cockpit_core::peer::on_place(|_| cockpit_core::peer::Who::Person);
+        flightdeck_core::peer::on_place(|_| flightdeck_core::peer::Who::Person);
         crate::gui::hub();
     }
 }
 
-/// `cockpit hub stop` as shipped, when this binary runs as it.
+/// `flightdeck hub stop` as shipped, when this binary runs as it.
 #[test]
 fn hub_stopper() {
     if std::env::var_os(STOP).is_some() {
@@ -56,7 +56,7 @@ impl Sandbox {
         let dir = tempfile::Builder::new().prefix("hub-restart").tempdir().unwrap();
         let root = dir.path().to_path_buf();
         let home = root.join("home");
-        for sub in [".cache/cockpit", ".config/cockpit", "code/api"] {
+        for sub in [".cache/flightdeck", ".config/flightdeck", "code/api"] {
             std::fs::create_dir_all(home.join(sub)).unwrap();
         }
         let bin = root.join("bin");
@@ -74,7 +74,7 @@ impl Sandbox {
         git(&api, &["remote", "add", "origin", &root.join("api-origin.git").to_string_lossy()]);
         git(&api, &["fetch", "-q", "origin"]);
         let config = json!({"reposDir": home.join("code").to_string_lossy()});
-        std::fs::write(home.join(".config/cockpit/config.json"), config.to_string()).unwrap();
+        std::fs::write(home.join(".config/flightdeck/config.json"), config.to_string()).unwrap();
         let world = json!({"agents": [], "driven": [{"key": "claude:demo-421", "agent": "claude", "session": "demo-421", "cwd": "/Users/me/code/api",
                                                      "title": "Make the daily quota configurable", "messages": [{"role": "user", "min": 3, "text": "Make the daily quota configurable"}]}]});
         std::fs::write(root.join("world.json"), world.to_string()).unwrap();
@@ -86,10 +86,10 @@ impl Sandbox {
     }
 
     fn cache(&self) -> PathBuf {
-        self.home().join(".cache/cockpit")
+        self.home().join(".cache/flightdeck")
     }
 
-    /// Where the hub listens, as `cockpit_core::hub::socket` names it for this home.
+    /// Where the hub listens, as `flightdeck_core::hub::socket` names it for this home.
     fn socket(&self) -> PathBuf {
         use std::hash::{Hash, Hasher};
         let path = self.cache().join("hub.sock");
@@ -98,15 +98,15 @@ impl Sandbox {
         }
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
         self.cache().hash(&mut hasher);
-        std::env::temp_dir().join(format!("cockpit-hub-{:016x}.sock", hasher.finish()))
+        std::env::temp_dir().join(format!("flightdeck-hub-{:016x}.sock", hasher.finish()))
     }
 
-    /// The test's environment without what ties it to a herdr pane, an agent or cockpit settings, then the sandbox's own.
+    /// The test's environment without what ties it to a herdr pane, an agent or flightdeck settings, then the sandbox's own.
     fn env(&self) -> Vec<(String, String)> {
         let at = |p: &str| self.root.join(p).to_string_lossy().into_owned();
         let stub = Path::new(env!("CARGO_MANIFEST_DIR")).join("../agents/tests/fixtures/stub-claude");
         let path = format!("{}:{}", at("bin"), std::env::var("PATH").unwrap_or_default());
-        let inherited = std::env::vars().filter(|(k, _)| !["HERDR_", "HC_", "COCKPIT_", "CLAUDE"].iter().any(|p| k.starts_with(p)));
+        let inherited = std::env::vars().filter(|(k, _)| !["HERDR_", "HC_", "FLIGHTDECK_", "CLAUDE"].iter().any(|p| k.starts_with(p)));
         let mut env: Vec<(String, String)> = inherited
             .chain([
                 ("HOME".into(), self.home().to_string_lossy().into_owned()),
@@ -114,19 +114,19 @@ impl Sandbox {
                 ("HERDR_BIN_PATH".into(), at("bin/herdr")),
                 ("HERDR_APP_BIN".into(), at("bin/herdr-app")),
                 ("HERDR_APP_HOME".into(), at("herdr-home")),
-                ("COCKPIT_HC_BIN".into(), at("bin/hc")),
-                ("COCKPIT_FRONTEND".into(), "app".into()),
-                ("COCKPIT_NOTIFY_PROGRAM".into(), at("bin/notify")),
-                ("COCKPIT_HUB_FEED".into(), "off".into()),
-                ("COCKPIT_PUBLISHED_URL".into(), "off".into()),
-                ("COCKPIT_EMBED".into(), "off".into()),
-                ("COCKPIT_HUB_LIMITS".into(), "off".into()),
-                ("COCKPIT_HUB_MODELS".into(), "off".into()),
-                ("COCKPIT_CLAUDE".into(), stub.to_string_lossy().into_owned()),
+                ("FLIGHTDECK_HC_BIN".into(), at("bin/hc")),
+                ("FLIGHTDECK_FRONTEND".into(), "app".into()),
+                ("FLIGHTDECK_NOTIFY_PROGRAM".into(), at("bin/notify")),
+                ("FLIGHTDECK_HUB_FEED".into(), "off".into()),
+                ("FLIGHTDECK_PUBLISHED_URL".into(), "off".into()),
+                ("FLIGHTDECK_EMBED".into(), "off".into()),
+                ("FLIGHTDECK_HUB_LIMITS".into(), "off".into()),
+                ("FLIGHTDECK_HUB_MODELS".into(), "off".into()),
+                ("FLIGHTDECK_CLAUDE".into(), stub.to_string_lossy().into_owned()),
             ])
             .collect();
         if self.demo {
-            env.push(("COCKPIT_AGENTS_DEMO".into(), at("world.json")));
+            env.push(("FLIGHTDECK_AGENTS_DEMO".into(), at("world.json")));
         }
         env
     }
@@ -139,11 +139,11 @@ impl Sandbox {
         command
     }
 
-    /// A hub, as the window's Start it brings one up: its command line ends as `cockpit hub`'s does, which is how
-    /// `cockpit hub stop` tells a hub (libtest takes the two words as names to match exactly, which no test has).
+    /// A hub, as the window's Start it brings one up: its command line ends as `flightdeck hub`'s does, which is how
+    /// `flightdeck hub stop` tells a hub (libtest takes the two words as names to match exactly, which no test has).
     fn hub(&self) -> Hub {
         let _ = std::fs::remove_file(self.cache().join("hub.stopped"));
-        let child = self.this("hub_restart::hub_process", HUB).args(["cockpit", "hub"]).spawn().unwrap();
+        let child = self.this("hub_restart::hub_process", HUB).args(["flightdeck", "hub"]).spawn().unwrap();
         let started = Instant::now();
         while UnixStream::connect(self.socket()).is_err() {
             assert!(started.elapsed() < Duration::from_secs(10), "the hub never listened");
@@ -152,10 +152,10 @@ impl Sandbox {
         Hub { child, socket: self.socket() }
     }
 
-    /// `cockpit hub stop`: the stopped mark, then SIGTERM to every hub of this home, waited out.
+    /// `flightdeck hub stop`: the stopped mark, then SIGTERM to every hub of this home, waited out.
     fn stop_hub(&self) {
         let ran = self.this("hub_restart::hub_stopper", STOP).status().unwrap();
-        assert!(ran.success(), "cockpit hub stop did not run");
+        assert!(ran.success(), "flightdeck hub stop did not run");
     }
 }
 
@@ -229,7 +229,7 @@ fn sessions(registry: &Value) -> Vec<String> {
     registry["sessions"].as_array().into_iter().flatten().filter_map(|e| e["key"].as_str().map(str::to_string)).collect()
 }
 
-/// Start work from a prompt, driven, as Cockpit Chat's empty box asks for it; `cockpit hub stop`; a new hub; a send.
+/// Start work from a prompt, driven, as Flightdeck Chat's empty box asks for it; `flightdeck hub stop`; a new hub; a send.
 fn survives_a_stop_and_start(demo: bool) {
     if !Command::new("/usr/bin/python3").arg("--version").output().is_ok_and(|o| o.status.success()) {
         eprintln!("no /usr/bin/python3: the stub agent cannot run here");
@@ -249,15 +249,15 @@ fn survives_a_stop_and_start(demo: bool) {
     let id = first["session"].as_str().unwrap().to_string();
 
     let registry = sandbox.cache().join("driven/registry.json");
-    let written = cockpit_core::files::load(&registry).expect("the registry is written once the session starts");
+    let written = flightdeck_core::files::load(&registry).expect("the registry is written once the session starts");
     assert_eq!(sessions(&written), [key.as_str()], "it names the session Start work made, and no session of the demo world");
     assert_eq!(written["sessions"][0]["session_id"], id.as_str());
 
-    // The signal path: `cockpit hub stop` ends the hub, which leaves the registry behind.
+    // The signal path: `flightdeck hub stop` ends the hub, which leaves the registry behind.
     sandbox.stop_hub();
-    assert!(hub.ended(), "cockpit hub stop ends the hub");
+    assert!(hub.ended(), "flightdeck hub stop ends the hub");
     assert!(sandbox.cache().join("hub.stopped").exists(), "and says so to the windows");
-    assert_eq!(sessions(&cockpit_core::files::load(&registry).expect("the registry outlives the hub")), [key.as_str()]);
+    assert_eq!(sessions(&flightdeck_core::files::load(&registry).expect("the registry outlives the hub")), [key.as_str()]);
     drop(hub);
 
     // Start it: the next hub brings the session back paused, its history read from its transcript.
@@ -290,11 +290,11 @@ fn survives_a_stop_and_start(demo: bool) {
 }
 
 #[test]
-fn a_driven_start_comes_back_paused_after_cockpit_hub_stop_and_a_new_hub() {
+fn a_driven_start_comes_back_paused_after_flightdeck_hub_stop_and_a_new_hub() {
     survives_a_stop_and_start(false);
 }
 
 #[test]
-fn a_driven_start_in_the_demo_world_comes_back_paused_after_cockpit_hub_stop_and_a_new_hub() {
+fn a_driven_start_in_the_demo_world_comes_back_paused_after_flightdeck_hub_stop_and_a_new_hub() {
     survives_a_stop_and_start(true);
 }

@@ -6,7 +6,7 @@ import type { Platform, Recipe } from './config'
 type $ = EngineInterface
 
 // Deploys and preview environments through whatever MCP tools the platform connector offers. The config maps each capability to a
-// tool and its arguments, and each value cockpit reads to a path in the tool's answer; /cockpit:setup writes both.
+// tool and its arguments, and each value flightdeck reads to a path in the tool's answer; /flightdeck:setup writes both.
 
 export type Capability =
   | 'deployStatus'
@@ -129,14 +129,14 @@ export async function callMapped<C extends string>(
   extra: Record<string, unknown> = {},
 ): Promise<unknown> {
   const recipe = connector.tools[capability]
-  if (!recipe?.tool) throw new Error(`no ${connector.name ?? 'platform'} tool for ${capability}: run /cockpit:setup`)
+  if (!recipe?.tool) throw new Error(`no ${connector.name ?? 'platform'} tool for ${capability}: run /flightdeck:setup`)
   return callRecipe($, connector.server, recipe, values, extra)
 }
 
 // One call to the platform tool mapped to a capability.
 export async function call($: $, capability: Capability, values: Record<string, unknown> = {}, extra: Record<string, unknown> = {}): Promise<unknown> {
   const config = await platform($)
-  if (!config) throw new Error(`no platform tool for ${capability}: run /cockpit:setup`)
+  if (!config) throw new Error(`no platform tool for ${capability}: run /flightdeck:setup`)
   return callMapped($, config, capability, values, extra)
 }
 

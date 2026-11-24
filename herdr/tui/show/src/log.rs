@@ -11,8 +11,8 @@ use serde_json::Value;
 
 use crossterm::event::{KeyCode, KeyEvent};
 
-use cockpit_core::text::fit;
-use cockpit_core::theme::{LINE, ORANGE, RED, dim, fg};
+use flightdeck_core::text::fit;
+use flightdeck_core::theme::{LINE, ORANGE, RED, dim, fg};
 
 use crate::row::{Row, Target};
 

@@ -4,10 +4,10 @@ mod common;
 
 use std::collections::HashMap;
 
-use cockpit_core::testing::render;
-use cockpit_inbox::app::App;
-use cockpit_inbox::inputs::Inputs;
-use cockpit_inbox::sessions::Local;
+use flightdeck_core::testing::render;
+use flightdeck_inbox::app::App;
+use flightdeck_inbox::inputs::Inputs;
+use flightdeck_inbox::sessions::Local;
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 

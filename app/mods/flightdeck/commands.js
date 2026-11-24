@@ -1,5 +1,5 @@
-// The window's commands for both cockpit layouts: what keys.json binds, what the palette lists and what the keys sheet
-// shows. The one copy each layout always shows runs them (the status bar in Cockpit, the top bar in Cockpit Chat).
+// The window's commands for both flightdeck layouts: what keys.json binds, what the palette lists and what the keys sheet
+// shows. The one copy each layout always shows runs them (the status bar in Flightdeck, the top bar in Flightdeck Chat).
 
 import { run, shared, setShared, keys, commands, focused, openOverlay, spaces, notify, terminals } from "herdr";
 import * as hub from "./hub.js";
@@ -18,7 +18,7 @@ import { undoToast } from "./agentsui.js";
 import { projectPanels } from "./projects.js";
 
 /** The view that runs the window's commands in each layout: always shown there, and only once. */
-export const RUNNER = { cockpit: "status", "cockpit-chat": "chat-top" };
+export const RUNNER = { flightdeck: "status", "flightdeck-chat": "chat-top" };
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Keys
@@ -55,54 +55,54 @@ export function hint(label, action) {
 // ---------------------------------------------------------------------------------------------------------------------
 // What the commands are called
 
-/** A command of cockpit's besides its screens: what the palette and the keys sheet call it, and where it works. */
+/** A command of flightdeck's besides its screens: what the palette and the keys sheet call it, and where it works. */
 const entry = (command, title, icon, group, words, more = {}) => ({ command, title, icon, group, words, ...more });
 
 /**
- * cockpit's commands besides its screens. `layouts` names the layouts where a view handles one (the queue drawer, the
- * chat), `screen` the screen whose view that is, and `driven` the ones for a session cockpit drives.
+ * flightdeck's commands besides its screens. `layouts` names the layouts where a view handles one (the queue drawer, the
+ * chat), `screen` the screen whose view that is, and `driven` the ones for a session flightdeck drives.
  */
 export const CATALOGUE = [
-  entry("cockpit.palette", "Search or run a command", "search", "Window", "palette find"),
-  entry("cockpit.keys", "Keys", "keyboard", "Window", "shortcuts keybindings help sheet"),
-  entry("cockpit.settings", "Cockpit settings", "sliders-horizontal", "Window", "options preferences config version update check switch toggle"),
-  entry("cockpit.settings:health", "Cockpit settings: Health", "shield-check", "Window", "doctor diagnostics checks report setup getting started hub fix"),
-  entry("cockpit.settings:agents", "Cockpit settings: Agents", "bot", "Window", "installed providers can start resume fork tools"),
-  entry("cockpit.settings:layout", "Cockpit settings: Layout", "layout", "Window", "cockpit chat reading look switch screenshot"),
-  entry("cockpit.next-waiting", "Next agent waiting for you", "bell", "Agents", "needs you question jump"),
-  entry("cockpit.next:blocked", "Next blocked agent", "circle-dot", "Agents", "needs you"),
-  entry("cockpit.next:done", "Next finished agent", "circle-check", "Agents", "done"),
-  entry("cockpit.recap", "Recap the agents", "sparkles", "Agents", "whose move stages summary"),
-  entry("cockpit.usage", "Usage and limits", "gauge", "Agents", "quota limits tokens spend estimate account plan"),
-  entry("cockpit.start", "Start work…", "play", "Agents", "new agent worktree ticket pr prompt task branch"),
-  entry("cockpit.resume", "Resume stopped agents", "play", "Agents", "restart reboot resume session"),
-  entry("cockpit.queue", "Prompt queue", "list", "Agents", "follow-ups send later", { layouts: ["cockpit"] }),
-  entry("cockpit.session", "Start a session cockpit drives", "bot", "Agents", "claude driven new chat"),
-  entry("cockpit.agent-view", "The focused agent alone", "bot", "This agent", "focus lone terminal tab toggle", { layouts: ["cockpit"] }),
-  entry("cockpit.terminal", "Its terminal", "terminal", "This agent", "pane shell real resume"),
-  entry("cockpit.chat:mode", "What it may do without asking: the next mode", "shield-check", "This agent", "permission mode cycle", { layouts: ["cockpit-chat"], screen: "chat", driven: true }),
-  entry("cockpit.chat:stop", "Stop its turn", "circle-stop", "This agent", "interrupt escape", { layouts: ["cockpit-chat"], screen: "chat", driven: true }),
-  entry("cockpit.dismiss", "Dismiss this agent until it asks again", "x", "This agent", "needs you set aside hide waiting card"),
-  entry("cockpit.dismiss:back", "Bring this agent back to Needs you", "undo", "This agent", "dismissed restore undo waiting card"),
-  entry("cockpit.pr", "This branch's PR", "git-pull-request", "This agent", "pull request github"),
-  entry("cockpit.ticket", "This branch's ticket", "ticket", "This agent", "linear jira issue"),
-  entry("cockpit.panel", "Side panel", "panel-right", "Side panel", "show review runbook files changes toggle"),
-  entry("cockpit.panel:show", "Side panel: Show", "layout", "Side panel", "charts tables diagrams"),
-  entry("cockpit.panel:review", "Side panel: Review", "git-pull-request", "Side panel", "diff comments"),
-  entry("cockpit.panel:runbook", "Side panel: Runbook", "book", "Side panel", "steps ticket"),
-  entry("cockpit.panel:files", "Side panel: Files", "folder", "Side panel", "tree"),
-  entry("cockpit.panel:changes", "Side panel: Changes", "git-fork", "Side panel", "git diff"),
-  entry("cockpit.sidebar", "Sidebar", "panel-right", "Window", "pin drawer open close", { layouts: ["cockpit-chat"] }),
-  entry("cockpit.new", "Start something new", "plus", "Window", "terminal agent space worktree tab", { layouts: ["cockpit-chat"] }),
-  entry("cockpit.tabs", "Every tab, the ones that do not fit too", "app-window", "Window", "tabs more overflow switch", { layouts: ["cockpit-chat"] }),
+  entry("flightdeck.palette", "Search or run a command", "search", "Window", "palette find"),
+  entry("flightdeck.keys", "Keys", "keyboard", "Window", "shortcuts keybindings help sheet"),
+  entry("flightdeck.settings", "Flightdeck settings", "sliders-horizontal", "Window", "options preferences config version update check switch toggle"),
+  entry("flightdeck.settings:health", "Flightdeck settings: Health", "shield-check", "Window", "doctor diagnostics checks report setup getting started hub fix"),
+  entry("flightdeck.settings:agents", "Flightdeck settings: Agents", "bot", "Window", "installed providers can start resume fork tools"),
+  entry("flightdeck.settings:layout", "Flightdeck settings: Layout", "layout", "Window", "flightdeck chat reading look switch screenshot"),
+  entry("flightdeck.next-waiting", "Next agent waiting for you", "bell", "Agents", "needs you question jump"),
+  entry("flightdeck.next:blocked", "Next blocked agent", "circle-dot", "Agents", "needs you"),
+  entry("flightdeck.next:done", "Next finished agent", "circle-check", "Agents", "done"),
+  entry("flightdeck.recap", "Recap the agents", "sparkles", "Agents", "whose move stages summary"),
+  entry("flightdeck.usage", "Usage and limits", "gauge", "Agents", "quota limits tokens spend estimate account plan"),
+  entry("flightdeck.start", "Start work…", "play", "Agents", "new agent worktree ticket pr prompt task branch"),
+  entry("flightdeck.resume", "Resume stopped agents", "play", "Agents", "restart reboot resume session"),
+  entry("flightdeck.queue", "Prompt queue", "list", "Agents", "follow-ups send later", { layouts: ["flightdeck"] }),
+  entry("flightdeck.session", "Start a session flightdeck drives", "bot", "Agents", "claude driven new chat"),
+  entry("flightdeck.agent-view", "The focused agent alone", "bot", "This agent", "focus lone terminal tab toggle", { layouts: ["flightdeck"] }),
+  entry("flightdeck.terminal", "Its terminal", "terminal", "This agent", "pane shell real resume"),
+  entry("flightdeck.chat:mode", "What it may do without asking: the next mode", "shield-check", "This agent", "permission mode cycle", { layouts: ["flightdeck-chat"], screen: "chat", driven: true }),
+  entry("flightdeck.chat:stop", "Stop its turn", "circle-stop", "This agent", "interrupt escape", { layouts: ["flightdeck-chat"], screen: "chat", driven: true }),
+  entry("flightdeck.dismiss", "Dismiss this agent until it asks again", "x", "This agent", "needs you set aside hide waiting card"),
+  entry("flightdeck.dismiss:back", "Bring this agent back to Needs you", "undo", "This agent", "dismissed restore undo waiting card"),
+  entry("flightdeck.pr", "This branch's PR", "git-pull-request", "This agent", "pull request github"),
+  entry("flightdeck.ticket", "This branch's ticket", "ticket", "This agent", "linear jira issue"),
+  entry("flightdeck.panel", "Side panel", "panel-right", "Side panel", "show review runbook files changes toggle"),
+  entry("flightdeck.panel:show", "Side panel: Show", "layout", "Side panel", "charts tables diagrams"),
+  entry("flightdeck.panel:review", "Side panel: Review", "git-pull-request", "Side panel", "diff comments"),
+  entry("flightdeck.panel:runbook", "Side panel: Runbook", "book", "Side panel", "steps ticket"),
+  entry("flightdeck.panel:files", "Side panel: Files", "folder", "Side panel", "tree"),
+  entry("flightdeck.panel:changes", "Side panel: Changes", "git-fork", "Side panel", "git diff"),
+  entry("flightdeck.sidebar", "Sidebar", "panel-right", "Window", "pin drawer open close", { layouts: ["flightdeck-chat"] }),
+  entry("flightdeck.new", "Start something new", "plus", "Window", "terminal agent space worktree tab", { layouts: ["flightdeck-chat"] }),
+  entry("flightdeck.tabs", "Every tab, the ones that do not fit too", "app-window", "Window", "tabs more overflow switch", { layouts: ["flightdeck-chat"] }),
 ];
 
 /** Older names of commands, which keys bound to them still run: the keys sheet names each as what it opens now. */
-export const ALIASES = { "cockpit.diagnostics": "cockpit.settings:health" };
+export const ALIASES = { "flightdeck.diagnostics": "flightdeck.settings:health" };
 
 /** What the palette runs for an entry: a view's command goes through the runner, which shows that view's screen first. */
 export function paletteAction(e) {
-  return e.screen ? `cockpit.via:${e.screen}|${e.command.slice(8)}` : e.command;
+  return e.screen ? `flightdeck.via:${e.screen}|${e.command.slice(8)}` : e.command;
 }
 
 /** Herdr's own names for its commands: [command, args, group, title, keywords]. */
@@ -170,9 +170,9 @@ export const VIEW_KEYS = [
 
 /** Keys the reading layout's chat takes itself, while the keyboard is in it: [keys, title, layout]. */
 export const CHAT_KEYS = [
-  ["shift-tab", "What it may do without asking: the next mode", "cockpit-chat"],
-  ["escape", "Stop its turn", "cockpit-chat"],
-  ["tab", "Complete a / or @, or put the keyboard on the question", "cockpit-chat"],
+  ["shift-tab", "What it may do without asking: the next mode", "flightdeck-chat"],
+  ["escape", "Stop its turn", "flightdeck-chat"],
+  ["tab", "Complete a / or @, or put the keyboard on the question", "flightdeck-chat"],
 ];
 
 /** The keys sheet's groups, in order. */
@@ -191,7 +191,7 @@ export function describe(action, layout = layoutName()) {
 }
 
 /**
- * The keys sheet of a layout: its bindings grouped, Herdr's global ones it keeps last, cockpit's in the order of its
+ * The keys sheet of a layout: its bindings grouped, Herdr's global ones it keeps last, flightdeck's in the order of its
  * screens and commands whatever order keys() gives. [{title, rows: [{keys, action, title, group, icon}]}].
  */
 export function sheet(layout = layoutName(), bound = keys(), section = shownLayout()) {
@@ -213,9 +213,9 @@ export function sheet(layout = layoutName(), bound = keys(), section = shownLayo
 /** keys.json's value for an argument: a number when it is written as one (`tab.select:1`). */
 const argValue = (value) => (/^-?\d+$/.test(value) ? Number(value) : value);
 
-/** Runs a keys.json action: a cockpit command, or Herdr's `name:value` with the value as its first argument. */
+/** Runs a keys.json action: a flightdeck command, or Herdr's `name:value` with the value as its first argument. */
 export function runAction(action) {
-  if (action.startsWith("cockpit.")) return run(action);
+  if (action.startsWith("flightdeck.")) return run(action);
   const [name, value] = splitAction(action);
   if (value === undefined) return run(name, {});
   const arg = commands().find((c) => c.name === name)?.args?.[0]?.name;
@@ -229,7 +229,7 @@ export function runAction(action) {
 export const PANELS = { show: "show", review: "review", runbook: "runbook-panel", files: "files", changes: "changes" };
 
 /**
- * The panel a name shows: cockpit's Files and Changes, which follow the projects the chat's agent works in, where the
+ * The panel a name shows: flightdeck's Files and Changes, which follow the projects the chat's agent works in, where the
  * layout has them and `chat.projectPanels` is on, else Herdr's.
  */
 export function panelChild(name, tree) {
@@ -239,8 +239,8 @@ export function panelChild(name, tree) {
 }
 
 /** Whether the side panel is open, and on what, as last set; `panelOpen` reads what the shown layout really does. */
-export const PANELED = "cockpit.panel.open";
-export const PANEL_CHILD = "cockpit.panel.child";
+export const PANELED = "flightdeck.panel.open";
+export const PANEL_CHILD = "flightdeck.panel.child";
 
 /** Whether the shown layout's side panel is open: each layout keeps its own, so a flag set in the other never decides. */
 export function panelOpen(tree) {
@@ -264,7 +264,7 @@ export function openPanel(name) {
   run("layout.select", { stack: "panel-body", child });
   run("layout.show", { id: "panel" });
   // The panel only shows beside the agent, so opening it brings that screen up in whichever layout is on.
-  if (shared("cockpit.app") !== screens().work) showWork();
+  if (shared("flightdeck.app") !== screens().work) showWork();
 }
 
 /** Closes the side panel, and says so: the drawer on the edge takes over from the flag. */
@@ -284,10 +284,10 @@ export function togglePanel(name) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Overlays
 
-const PALETTE = { mod: "cockpit", kind: "popup", frame: "none", width: 1, height: 1, at: { x: 0, y: 0 } };
+const PALETTE = { mod: "flightdeck", kind: "popup", frame: "none", width: 1, height: 1, at: { x: 0, y: 0 } };
 
-/** When an open palette last answered `cockpit.palette` or `cockpit.keys` itself, so the runner opens none then. */
-export const ANSWERED = "cockpit.palette.closed";
+/** When an open palette last answered `flightdeck.palette` or `flightdeck.keys` itself, so the runner opens none then. */
+export const ANSWERED = "flightdeck.palette.closed";
 
 /** Opens the palette over the window (or its keys sheet), unless an open one answers the same command by itself. */
 export function togglePalette(cx, sheet = null) {
@@ -302,7 +302,7 @@ export function togglePalette(cx, sheet = null) {
 
 /** The recap of every agent, on one of its tabs. */
 export function openRecap(tab) {
-  openOverlay({ mod: "cockpit", props: { app: "recap", popup: true, ...(tab ? { tab } : {}) }, kind: "dialog", width: 0.8, height: 0.8 });
+  openOverlay({ mod: "flightdeck", props: { app: "recap", popup: true, ...(tab ? { tab } : {}) }, kind: "dialog", width: 0.8, height: 0.8 });
 }
 
 /** Herdr's own new menu: a terminal, an agent, a space, a worktree. */
@@ -317,7 +317,7 @@ export function openNew() {
  * Copies of the window that follow the agents view and lend it, each as a `() => value | null` with the load of hub.js
  * it runs: a load that stopped running (a reload left its views behind) lends nothing.
  */
-const lenders = () => (globalThis.cockpitAgentLent ??= new Map());
+const lenders = () => (globalThis.flightdeckAgentLent ??= new Map());
 
 /** Lends a copy's agents view to the window's commands until the returned function is called. */
 export function lend(fn) {
@@ -352,13 +352,13 @@ function withAgents(cx, ctx, then) {
 }
 
 /**
- * The agent the person looks at: in Cockpit Chat the one a `chat:open` pinned while the same pane is in front, else the
- * chat's subject; in Cockpit the focused pane's.
+ * The agent the person looks at: in Flightdeck Chat the one a `chat:open` pinned while the same pane is in front, else the
+ * chat's subject; in Flightdeck the focused pane's.
  */
 function looking() {
   const f = focused();
   const front = f?.agent ?? f?.terminal ?? null;
-  if (layoutName() !== "cockpit-chat") return front;
+  if (layoutName() !== "flightdeck-chat") return front;
   const pin = shared(CHAT_PIN);
   return (pin?.key && pin.focus === front ? pin.key : null) ?? shared(CHAT_SUBJECT) ?? front;
 }
@@ -385,7 +385,7 @@ export function nextOf(list, stage, here, reachable = () => true) {
   return { agent: null, passed };
 }
 
-/** Whether an agent can be brought up here: a session cockpit drives is read in the chat, a terminal must be running. */
+/** Whether an agent can be brought up here: a session flightdeck drives is read in the chat, a terminal must be running. */
 function reachableNow() {
   let live = null;
   try {
@@ -402,7 +402,7 @@ let jumped = null;
 const current = (list) => agentInView(list);
 
 /**
- * Brings the next agent at a stage into view: a session cockpit drives is read in the chat, which has no pane for it. An
+ * Brings the next agent at a stage into view: a session flightdeck drives is read in the chat, which has no pane for it. An
  * agent with no running terminal is passed, and so is one the last press could not bring up, and the person is told.
  */
 const next = (stage) => (_arg, cx, ctx) =>
@@ -437,7 +437,7 @@ function handOn(screen, command, cx, person = false) {
   // The chat's subject is set here, at once: the chat follows it whenever its copy comes up.
   if (command.startsWith("chat:open:")) pinChat(command.slice("chat:open:".length));
   show(screen);
-  cx.timer.after(150, () => run(person ? keyed(`cockpit.${command}`) : `cockpit.${command}`));
+  cx.timer.after(150, () => run(person ? keyed(`flightdeck.${command}`) : `flightdeck.${command}`));
 }
 
 /** The chat's subject, else the agent in front. */
@@ -459,7 +459,7 @@ function said(r, title) {
 
 /**
  * The chat's agent in its real terminal, as a window over the reading layout: what a reader cannot show. A session
- * cockpit drives has no terminal: the chat asks before handing it over to one of its own.
+ * flightdeck drives has no terminal: the chat asks before handing it over to one of its own.
  */
 function openTerminal(cx) {
   const key = subject();
@@ -467,7 +467,7 @@ function openTerminal(cx) {
   cx.spawn(async (cx) => {
     const row = await rowOf(key);
     // Nothing known of it: no terminal is opened on a guess.
-    if (!row) return notify({ title: "No terminal to open", body: row === undefined ? "Cockpit's hub is not answering." : "No agent by that name runs now.", level: "info" });
+    if (!row) return notify({ title: "No terminal to open", body: row === undefined ? "Flightdeck's hub is not answering." : "No agent by that name runs now.", level: "info" });
     if (!row.driven) return windowFor(key);
     if (hub.remoteMachine()) return notify({ title: "It runs on the runner", body: "A remote desk cannot hand it over to a terminal.", level: "info" });
     handOn("chat", "chat:handover", cx);
@@ -479,7 +479,7 @@ function windowFor(key) {
   const address = key.replace(/^app:/, "");
   openOverlay({
     kind: "window",
-    key: "cockpit-chat-terminal",
+    key: "flightdeck-chat-terminal",
     width: 0.7,
     height: 0.7,
     frame: "none",
@@ -490,7 +490,7 @@ function windowFor(key) {
       border: { width: 1, color: "border" },
       shadow: "lg",
       children: [
-        { type: "block", size: { px: 34 }, content: { mod: "cockpit", props: { app: "agent-head", place: "overlay", agent: address } } },
+        { type: "block", size: { px: 34 }, content: { mod: "flightdeck", props: { app: "agent-head", place: "overlay", agent: address } } },
         { type: "block", content: { terminal: address } },
       ],
     },
@@ -498,7 +498,7 @@ function windowFor(key) {
 }
 
 /**
- * Starts a session cockpit drives in the folder of the space in front (else the chat agent's), and opens its chat.
+ * Starts a session flightdeck drives in the folder of the space in front (else the chat agent's), and opens its chat.
  * Asked by a window command, a key binding included, it opens a menu naming it, which the person picks from.
  */
 function startSession(cx, person) {
@@ -508,7 +508,7 @@ function startSession(cx, person) {
   if (!cwd) return notify({ title: "Nowhere to start it", body: "The space in front has no folder.", level: "info" });
   if (!person) return openMenu([{ label: `Start a session in ${cwd.split("/").pop() || cwd}`, icon: "bot", command: "session" }], { width: 280, clickOnly: true });
   cx.spawn(async (cx) => {
-    // The first agent of the table cockpit can drive: the hub picks it.
+    // The first agent of the table flightdeck can drive: the hub picks it.
     const r = await hub.act("session", "start", [{ cwd, mode: "default" }]).catch((e) => ({ error: String(e?.message ?? e) }));
     said(r, "Could not start it");
     const key = /^started (\S+)/.exec(r?.note ?? "")?.[1];
@@ -556,7 +556,7 @@ const WINDOW = {
   "panel:": (name) => togglePanel(name),
   "doc:": (name, _cx, ctx) => {
     openPanel("show");
-    run(ctx.person ? keyed(`cockpit.show:go:${name}`) : `cockpit.show:go:${name}`);
+    run(ctx.person ? keyed(`flightdeck.show:go:${name}`) : `flightdeck.show:go:${name}`);
   },
   // `go:work` is where you deal with an agent in either layout: the panes in one, the chat in the other.
   "go:": (child) => show(child === "work" ? screens().work : child),
@@ -588,23 +588,23 @@ const WINDOW = {
   diagnostics: (_a, _cx, ctx) => openSettings({ tab: "health", person: ctx.person }),
   usage: () => openUsage(),
   start: () => openStart(),
-  kit: () => openOverlay({ mod: "cockpit", props: { app: "kit" }, kind: "window", key: "cockpit-kit", width: 0.85, height: 0.9 }),
-  "kit:": (tab) => openOverlay({ mod: "cockpit", props: { app: "kit", tab }, kind: "window", key: "cockpit-kit", width: 0.85, height: 0.9 }),
+  kit: () => openOverlay({ mod: "flightdeck", props: { app: "kit" }, kind: "window", key: "flightdeck-kit", width: 0.85, height: 0.9 }),
+  "kit:": (tab) => openOverlay({ mod: "flightdeck", props: { app: "kit", tab }, kind: "window", key: "flightdeck-kit", width: 0.85, height: 0.9 }),
   "code:open:": (path) => openCode(path),
 };
 
-/** What only one layout has: Home and the lone agent in Cockpit, the sidebar and the new menu in Cockpit Chat. */
+/** What only one layout has: Home and the lone agent in Flightdeck, the sidebar and the new menu in Flightdeck Chat. */
 const OWN = {
-  cockpit: {
-    home: () => show((shared("cockpit.app") ?? "home") === "home" ? "work" : "home"),
+  flightdeck: {
+    home: () => show((shared("flightdeck.app") ?? "home") === "home" ? "work" : "home"),
     "agent-view": () => {
-      const on = shared("cockpit.view") === "agent";
+      const on = shared("flightdeck.view") === "agent";
       run("layout.select", { stack: "view", child: on ? "main" : "agent" });
-      setShared("cockpit.view", on ? "main" : "agent");
-      if ((shared("cockpit.app") ?? "home") !== "work") show("work");
+      setShared("flightdeck.view", on ? "main" : "agent");
+      if ((shared("flightdeck.app") ?? "home") !== "work") show("work");
     },
   },
-  "cockpit-chat": {
+  "flightdeck-chat": {
     sidebar: () => toggleSidebar(),
     new: () => openNew(),
     terminal: (_a, cx) => openTerminal(cx),
@@ -642,26 +642,26 @@ function lookup(c, layout) {
 /** The names the runner of a layout handles; one ending in ":" takes the rest of the command as its argument. */
 export const runnerCommands = (layout) => [...Object.keys(OWN[layout] ?? {}), ...Object.keys(WINDOW)];
 
-/** Whether the runner of a layout handles `cockpit.<c>`. */
+/** Whether the runner of a layout handles `flightdeck.<c>`. */
 export const handles = (layout, c) => Boolean(lookup(c, layout));
 
 /**
- * Whether `cockpit.<c>` does something in a layout: its runner handles it, or a view of that layout does; one for a
- * session cockpit drives only while the chat follows one (`driven`).
+ * Whether `flightdeck.<c>` does something in a layout: its runner handles it, or a view of that layout does; one for a
+ * session flightdeck drives only while the chat follows one (`driven`).
  */
 export function available(layout, c, { driven = false } = {}) {
-  const e = CATALOGUE.find((x) => x.command === `cockpit.${c}`);
+  const e = CATALOGUE.find((x) => x.command === `flightdeck.${c}`);
   if (e?.driven && !driven) return false;
   return handles(layout, c) || Boolean(e?.layouts?.includes(layout));
 }
 
-/** Puts `cockpit.app` back on a screen of the shown layout: one carried over from the other layout names none of its. */
+/** Puts `flightdeck.app` back on a screen of the shown layout: one carried over from the other layout names none of its. */
 export function settle() {
   const s = screens();
   const valid = (child) => s.list.some((x) => x.child === child);
-  if (valid(shared("cockpit.app"))) return;
+  if (valid(shared("flightdeck.app"))) return;
   const shown = shownScreen();
-  setShared("cockpit.app", valid(shown) ? shown : s.first);
+  setShared("flightdeck.app", valid(shown) ? shown : s.first);
 }
 
 /**

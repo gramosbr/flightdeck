@@ -1,12 +1,12 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/chromium/chromium-cookie-snapshot.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { copyFileSync, mkdtempSync, rmSync, statSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const SNAPSHOT_ATTEMPTS = 5;
-export const SNAPSHOT_PREFIX = "cockpit-cookie-import-";
+export const SNAPSHOT_PREFIX = "flightdeck-cookie-import-";
 
 function isMissingFileError(error) {
   return error instanceof Error && error.code === "ENOENT";

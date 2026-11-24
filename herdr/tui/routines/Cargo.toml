@@ -1,5 +1,5 @@
 [package]
-name = "cockpit-routines"
+name = "flightdeck-routines"
 description = "The routines space: the agent prompts and scripts the hub runs on a schedule or when something happens, their runs and what they said."
 version.workspace = true
 edition.workspace = true
@@ -9,7 +9,7 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
-cockpit-core.workspace = true
+flightdeck-core.workspace = true
 chrono.workspace = true
 crossterm.workspace = true
 ratatui.workspace = true

@@ -18,7 +18,7 @@ pub fn target() -> Option<&'static str> {
 /// The archive's bytes once checked; None while the release has no archive or no checksum for it yet, since the
 /// publish workflow uploads them about 10 minutes after the version reaches main.
 pub fn fetch(base: &str, version: &str, target: &str) -> Result<Option<Vec<u8>>, String> {
-    let file = format!("cockpit-apps-{version}-{target}.tar.gz");
+    let file = format!("flightdeck-apps-{version}-{target}.tar.gz");
     let agent: ureq::Agent =
         ureq::Agent::config_builder().timeout_connect(Some(Duration::from_secs(10))).timeout_global(Some(Duration::from_secs(300))).build().into();
     let Some(archive) = get(&agent, &format!("{base}/v{version}/{file}"), &file)? else { return Ok(None) };

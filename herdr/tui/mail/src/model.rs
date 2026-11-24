@@ -2,7 +2,7 @@
 //! ones, each group newest first.
 
 use chrono::{DateTime, Utc};
-use cockpit_connectors::mail::unescape;
+use flightdeck_connectors::mail::unescape;
 use serde_json::Value;
 
 /// What the space shows of the hub's `mail` document.
@@ -14,7 +14,7 @@ pub struct Mail {
     /// When the list was last fetched, in epoch milliseconds; None before any fetch.
     pub at: Option<i64>,
     /// How fresh the mail is, when the hub reads it.
-    pub sources: Vec<cockpit_core::header::Source>,
+    pub sources: Vec<flightdeck_core::header::Source>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -62,9 +62,9 @@ impl Mail {
             *n += 1;
             *n <= PER_GROUP
         });
-        let sources = cockpit_core::header::sources(&[doc]);
+        let sources = flightdeck_core::header::sources(&[doc]);
         // The mail's chip says how it fails, when the hub reads it.
-        let error = doc["error"].as_str().map(str::to_string).filter(|_| !cockpit_core::header::has(&sources, "mail"));
+        let error = doc["error"].as_str().map(str::to_string).filter(|_| !flightdeck_core::header::has(&sources, "mail"));
         Self { messages, error, at: doc["at"].as_i64().filter(|at| *at > 0), sources }
     }
 

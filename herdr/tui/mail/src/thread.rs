@@ -1,11 +1,11 @@
-//! A message's thread read whole, as the hub or a Claude Code session keeps it in ~/.cache/cockpit/mail/<id>.json
+//! A message's thread read whole, as the hub or a Claude Code session keeps it in ~/.cache/flightdeck/mail/<id>.json
 //! (`{at, id, messages, error?}`, with an `<id>.asked` mark while a session is asked for it), and the page the side
 //! browser shows of it.
 
 use std::path::PathBuf;
 
-use cockpit_connectors::mail::cache_name;
-use cockpit_core::files;
+use flightdeck_connectors::mail::cache_name;
+use flightdeck_core::files;
 use serde_json::Value;
 
 use crate::html;

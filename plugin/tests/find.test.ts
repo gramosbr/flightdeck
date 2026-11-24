@@ -19,7 +19,7 @@ test('the changes take a duration or epoch milliseconds, and inbox or monitor', 
   expect(changesArgs({ app: 'todo' })).toContain('app:')
 })
 
-test('the CLI runs through cockpit.sh and its JSON comes back as is', async () => {
+test('the CLI runs through flightdeck.sh and its JSON comes back as is', async () => {
   const runs: string[][] = []
   const fake = (answer: ReturnType<typeof ran>) =>
     ({
@@ -33,11 +33,11 @@ test('the CLI runs through cockpit.sh and its JSON comes back as is', async () =
     }) as unknown as Parameters<typeof find>[0]
 
   expect(await find(fake(ran(0, '{"entries":[]}\n')), { query: 'quota' }, searchArgs)).toEqual({ result: '{"entries":[]}' })
-  expect(runs[0]).toEqual(['sh', '/home/me/.config/cockpit/herdr/cockpit.sh', 'search', 'quota'])
-  expect(await find(fake(ran(1, '', 'cockpit events: the cockpit hub did not start')), { since: '2h' }, changesArgs)).toEqual({
-    deny: 'cockpit events: the cockpit hub did not start',
+  expect(runs[0]).toEqual(['sh', '/home/me/.config/flightdeck/herdr/flightdeck.sh', 'search', 'quota'])
+  expect(await find(fake(ran(1, '', 'flightdeck events: the flightdeck hub did not start')), { since: '2h' }, changesArgs)).toEqual({
+    deny: 'flightdeck events: the flightdeck hub did not start',
   })
-  expect(await find(fake(ran(0)), {}, changesArgs)).toEqual({ deny: 'cockpit events: no cockpit binary; run /cockpit:doctor' })
+  expect(await find(fake(ran(0)), {}, changesArgs)).toEqual({ deny: 'flightdeck events: no flightdeck binary; run /flightdeck:doctor' })
   expect(await find(fake(ran(0)), { app: 'todo' }, changesArgs)).toEqual({ deny: 'app: one of inbox, monitor, got "todo"' })
   expect(runs.length).toBe(3)
 })

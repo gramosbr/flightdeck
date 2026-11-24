@@ -18,13 +18,13 @@ import { branchOf, reviewFocus } from './work'
 
 type $ = EngineInterface
 
-const inbox = atom({ plugin: 'cockpit', key: 'inbox' } as const, null)
-const links = atom({ plugin: 'cockpit', key: 'links' } as const, null)
-const sidePage = atom({ plugin: 'cockpit', key: 'sidePage' } as const, null)
-const ticket = atom({ plugin: 'cockpit', key: 'ticket' } as const, null)
-const usage = atom({ plugin: 'cockpit', key: 'usage' } as const, null)
-const views = atom({ plugin: 'cockpit', key: 'views' } as const, [])
-const work = atom({ plugin: 'cockpit', key: 'work' } as const, null)
+const inbox = atom({ plugin: 'flightdeck', key: 'inbox' } as const, null)
+const links = atom({ plugin: 'flightdeck', key: 'links' } as const, null)
+const sidePage = atom({ plugin: 'flightdeck', key: 'sidePage' } as const, null)
+const ticket = atom({ plugin: 'flightdeck', key: 'ticket' } as const, null)
+const usage = atom({ plugin: 'flightdeck', key: 'usage' } as const, null)
+const views = atom({ plugin: 'flightdeck', key: 'views' } as const, [])
+const work = atom({ plugin: 'flightdeck', key: 'work' } as const, null)
 
 // The footer under the prompt: chips for what this conversation works on, its views and the page beside it.
 

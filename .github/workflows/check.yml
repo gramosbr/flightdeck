@@ -33,7 +33,7 @@ jobs:
           git ls-files -z -- ':(glob)app/**/*.json' ':(glob).claude-plugin/*.json' ':(glob)plugin/.claude-plugin/*.json' \
             ':(glob)plugin/hooks/*.json' ':(glob)codex/**/*.json' 'codex/.mcp.json' ':(glob).agents/**/*.json' |
             xargs -0 -n1 sh -c 'jq empty "$0" || { echo "::error file=$0::not valid JSON"; exit 255; }'
-      - run: for f in app/mods/cockpit/*.js; do node --input-type=module --check < "$f" || { echo "$f"; exit 1; }; done
+      - run: for f in app/mods/flightdeck/*.js; do node --input-type=module --check < "$f" || { echo "$f"; exit 1; }; done
       - run: node --experimental-vm-modules --test app/tests/*.test.mjs
       # The Chromium side browser's shell has no build step either: every module must parse, and its logic is tested
       # without Electron.
@@ -51,7 +51,7 @@ jobs:
           node-version: "22"
       - uses: actions/cache@v4
         with:
-          path: ~/.cache/cockpit-ci/electron
+          path: ~/.cache/flightdeck-ci/electron
           key: electron-${{ runner.arch }}-${{ hashFiles('browser/pins.json') }}
       - run: sh scripts/browser-smoke.sh
 

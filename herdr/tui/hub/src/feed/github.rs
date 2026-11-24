@@ -11,7 +11,7 @@ use crate::proc;
 use crate::value::list;
 
 pub fn api() -> String {
-    http::base("COCKPIT_GITHUB_API", "https://api.github.com")
+    http::base("FLIGHTDECK_GITHUB_API", "https://api.github.com")
 }
 
 static TOKEN: Mutex<Option<String>> = Mutex::new(None);
@@ -23,7 +23,7 @@ pub fn token() -> Option<String> {
         let from_env = ["GH_TOKEN", "GITHUB_TOKEN"].iter().find_map(|v| std::env::var(v).ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty()));
         *kept = from_env.or_else(|| {
             let out = proc::run(&proc::strings(&["gh", "auth", "token"]), Duration::from_secs(10), None);
-            out.ok().then(|| cockpit_connectors::printed_token(&out.stdout)).flatten()
+            out.ok().then(|| flightdeck_connectors::printed_token(&out.stdout)).flatten()
         });
     }
     kept.clone()

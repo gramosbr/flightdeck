@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-use cockpit_agents::session;
+use flightdeck_agents::session;
 use serde_json::{Value, json};
 
 fn wait_for(key: &str, what: &str, done: impl Fn(&Value) -> bool) -> Value {
@@ -43,17 +43,17 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_CLAUDE", &stub);
+        std::env::set_var("FLIGHTDECK_CLAUDE", &stub);
     }
     // Only a hub keeps the registry: this one is told of every move, as the hub is, and acts for the person.
     session::on_change(|| {}, || {});
-    cockpit_core::peer::trusted();
+    flightdeck_core::peer::trusted();
 
     let key = session::start("claude", &work.to_string_lossy(), "default", &session::Picks::default()).expect("the stub starts");
     session::send(&key, "What resets the quota?").unwrap();
     let first = wait_for(&key, "the first turn", |s| s["working"] == false && said(s).len() == 2);
     let id = first["session"].as_str().unwrap().to_string();
-    let registry = cockpit_core::files::load(&session::registry()).expect("the registry is written");
+    let registry = flightdeck_core::files::load(&session::registry()).expect("the registry is written");
     let entry = registry["sessions"].as_array().unwrap().iter().find(|e| e["key"] == key.as_str()).cloned().expect("it names the session");
     assert_eq!(entry["session_id"], id.as_str(), "the id it was started under, which its agent took");
     let real = work.canonicalize().unwrap();
@@ -61,7 +61,7 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
 
     // The hub goes away: its registry stays behind, naming a process still running that session.
     session::stop(&key);
-    let stream = cockpit_core::agent::get("claude").and_then(|a| a.stream).unwrap();
+    let stream = flightdeck_core::agent::get("claude").and_then(|a| a.stream).unwrap();
     let mut orphan = Command::new("/usr/bin/python3")
         .arg(&stub)
         .args(&stream)
@@ -77,7 +77,7 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
     let mut stranger = Command::new("/bin/sleep").arg("30").spawn().unwrap();
     let mut other = left.clone();
     (other["key"], other["session_id"], other["pid"]) = (json!("claude:9-0"), json!("00000000-0000-4000-8000-000000000000"), json!(stranger.id()));
-    cockpit_core::files::write(&session::registry(), &json!({"sessions": [left, other]})).unwrap();
+    flightdeck_core::files::write(&session::registry(), &json!({"sessions": [left, other]})).unwrap();
 
     session::restore();
     assert!(orphan.try_wait().unwrap().is_some(), "the process left behind is ended");
@@ -90,14 +90,14 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
     assert!(session::summary(&key).unwrap()["messages"].is_null(), "a summary carries no messages");
 
     // Paused, it takes words the person sends, never words that would go on their own.
-    assert!(cockpit_agents::gui::ready(&key, 0, true).is_ok());
-    assert!(cockpit_agents::gui::ready(&key, 0, false).unwrap_err().contains("not running"));
+    assert!(flightdeck_agents::gui::ready(&key, 0, true).is_ok());
+    assert!(flightdeck_agents::gui::ready(&key, 0, false).unwrap_err().contains("not running"));
 
     // The next prompt starts its agent again on the same session: one process, however many send at once.
     let other = std::thread::spawn({
         let key = key.clone();
         move || {
-            cockpit_core::peer::trusted();
+            flightdeck_core::peer::trusted();
             session::send(&key, "And the week after?")
         }
     });
@@ -109,7 +109,7 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
     assert_eq!((resumed["paused"].clone(), resumed["session"].clone()), (json!(false), json!(id)));
     assert!(said(&resumed).iter().any(|t| t == "And after midnight?") && said(&resumed).iter().any(|t| t == "And the week after?"));
     assert_eq!(agents_of(&id), 1, "one agent runs the session");
-    let entry = cockpit_core::files::load(&session::registry()).unwrap()["sessions"][0].clone();
+    let entry = flightdeck_core::files::load(&session::registry()).unwrap()["sessions"][0].clone();
     assert!(entry["pid"].is_u64() && entry["pid"] != json!(orphan.id()), "the registry names the new process");
 
     // End: refused while it works unless confirmed; once ended, nothing is left of it.
@@ -124,6 +124,6 @@ fn a_session_comes_back_paused_after_a_restart_and_the_next_prompt_resumes_it() 
         std::thread::sleep(Duration::from_millis(50));
     }
     assert_eq!(agents_of(&id), 0, "no process is left");
-    let registry = cockpit_core::files::load(&session::registry()).unwrap();
+    let registry = flightdeck_core::files::load(&session::registry()).unwrap();
     assert!(!registry.to_string().contains(&id), "and the registry forgets it");
 }

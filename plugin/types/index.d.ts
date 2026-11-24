@@ -120,7 +120,7 @@ export type Meeting = {
   briefable?: boolean
 }
 
-// A runbook step the runbook app handed to a Claude session, in ~/.cache/cockpit/handoffs/<id>.json.
+// A runbook step the runbook app handed to a Claude session, in ~/.cache/flightdeck/handoffs/<id>.json.
 // sent → running → (waiting → running)* → done | failed | blocked, or unreported when the session never says.
 export type Handoff = {
   id: string
@@ -190,7 +190,7 @@ export type MeetingsState = { at: number; meetings: Meeting[]; notified: string[
 
 declare module 'claude-code' {
   interface PluginState {
-    cockpit: {
+    flightdeck: {
       inbox: Inbox | null
       muted: string[]
       work: Work | null

@@ -321,8 +321,8 @@ pub fn tree_of(roots: &[u32]) -> Option<std::collections::HashSet<u32>> {
     }
 }
 
-/// Shells only sit in a terminal a cleanup closes with the space; lsof, git, cockpit and herdr's own only look.
-pub const IDLE: [&str; 12] = ["sh", "bash", "zsh", "fish", "dash", "lsof", "cockpit", "git", "herdr", "herdr-core", "herdr-app", "hc"];
+/// Shells only sit in a terminal a cleanup closes with the space; lsof, git, flightdeck and herdr's own only look.
+pub const IDLE: [&str; 12] = ["sh", "bash", "zsh", "fish", "dash", "lsof", "flightdeck", "git", "herdr", "herdr-core", "herdr-app", "hc"];
 
 /// An agent the hub knows works somewhere: its name, its folder, and the pane and space it runs in.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

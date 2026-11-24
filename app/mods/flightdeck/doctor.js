@@ -1,5 +1,5 @@
-// Cockpit settings: every option of config.json, saved by the person's click or key (`act options set`), the checks of
-// `cockpit doctor --json` with their fixes, the agents, the two layouts to switch between, and the installed and published
+// Flightdeck settings: every option of config.json, saved by the person's click or key (`act options set`), the checks of
+// `flightdeck doctor --json` with their fixes, the agents, the two layouts to switch between, and the installed and published
 // versions with a check on demand.
 // It also makes the "Getting started" checklist for the empty states; a confirmed fix runs the doctor's own command or
 // action through the hub (`act doctor fix`, or `act doctor fix_all` for Fix all), never one this sends.
@@ -18,7 +18,7 @@ import { tokens, TEXT, RADIUS, Icon, Button, Badge, Tabs, Skeleton, Spinner, Toa
 // A Herdr without ScrollHandle still draws the sheet; j/k then move without scrolling.
 const ScrollHandle = base.ScrollHandle ?? null;
 /** How many checks fail in the last report read, shared so every sidebar and drawer redraws its link. */
-const FAILING = "cockpit.doctor.failing";
+const FAILING = "flightdeck.doctor.failing";
 
 /** The categories of checks, in the order the sheet lists them. */
 const CATEGORIES = {
@@ -36,16 +36,16 @@ const CATEGORIES = {
   browser: "Browser for E2E tests",
 };
 /** What an agent can do, as the Agents tab says it: the report's key, its word, and a tooltip where the word needs one. */
-const CAN = [["start", "start"], ["resume", "resume"], ["fork", "fork"], ["headless", "headless"], ["driven", "in chat", "Cockpit Chat runs it itself, without a terminal"]];
+const CAN = [["start", "start"], ["resume", "resume"], ["fork", "fork"], ["headless", "headless"], ["driven", "in chat", "Flightdeck Chat runs it itself, without a terminal"]];
 
 /** The doctor's report, `--cached` for one under ten minutes old; throws when it does not run. */
 export async function loadDoctor({ cached = false } = {}) {
-  const r = await hub.cockpit(["doctor", "--json", ...(cached ? ["--cached"] : [])]);
+  const r = await hub.flightdeck(["doctor", "--json", ...(cached ? ["--cached"] : [])]);
   let report;
   try {
     report = JSON.parse(r.stdout);
   } catch {
-    throw new Error((r.stderr || r.stdout || "cockpit doctor did not answer").trim().split("\n")[0]);
+    throw new Error((r.stderr || r.stdout || "flightdeck doctor did not answer").trim().split("\n")[0]);
   }
   const failing = report?.summary?.fail ?? 0;
   if (shared(FAILING) !== failing) setShared(FAILING, failing);
@@ -62,11 +62,11 @@ const CHECKS_MS = 90_000;
 /** The tabs in order, by their number key. */
 const TABS = ["options", "health", "agents", "layout"];
 
-/** The two cockpit layouts the Layout tab offers, each with what it is for in a few plain lines. */
+/** The two flightdeck layouts the Layout tab offers, each with what it is for in a few plain lines. */
 export const LAYOUT_CHOICES = [
   {
-    name: "cockpit",
-    title: "Cockpit",
+    name: "flightdeck",
+    title: "Flightdeck",
     points: [
       "Your agents' terminals, with the inbox, review and runbooks beside them",
       "A Home board with what needs you, what comes next and your apps",
@@ -75,8 +75,8 @@ export const LAYOUT_CHOICES = [
     ],
   },
   {
-    name: "cockpit-chat",
-    title: "Cockpit Chat",
+    name: "flightdeck-chat",
+    title: "Flightdeck Chat",
     points: [
       "Reads one agent at a time as a conversation, its work folded into one line",
       "Can run a session itself, in chat, with no terminal behind it",
@@ -98,7 +98,7 @@ export function isDark(color) {
 }
 
 /** A layout's picture for the window's theme, as `image()` takes it from the Herdr app's home. */
-export const layoutPicture = (name, dark) => `mods/cockpit/layouts/${name}-${dark ? "dark" : "light"}.png`;
+export const layoutPicture = (name, dark) => `mods/flightdeck/layouts/${name}-${dark ? "dark" : "light"}.png`;
 
 /** A tab by the name a caller gives it; the checks' two older names both mean Health. */
 const tabOf = (name) => (TABS.includes(name) ? name : name === "problems" || name === "all" ? "health" : null);
@@ -107,15 +107,15 @@ const tabOf = (name) => (TABS.includes(name) ? name : name === "problems" || nam
 export const sheetWidth = (window = viewport()) => (window?.width ? Math.max(320, Math.min(860, Math.floor(window.width) - 32)) : 860);
 
 /**
- * Opens Cockpit settings: a window over the cockpit, on `tab` when given (options, health, agents, layout). `person` when the
+ * Opens Flightdeck settings: a window over the flightdeck, on `tab` when given (options, health, agents, layout). `person` when the
  * person's click, key or palette pick opened it: what it shows counts as seen at once.
  */
 export function openSettings({ tab = null, person = false } = {}) {
-  openOverlay({ mod: "cockpit", kind: "window", key: "cockpit-settings", width: sheetWidth(), height: 0.86, props: { app: "settings", tab, person: Boolean(person) } });
+  openOverlay({ mod: "flightdeck", kind: "window", key: "flightdeck-settings", width: sheetWidth(), height: 0.86, props: { app: "settings", tab, person: Boolean(person) } });
 }
 
 /**
- * A quiet row that opens Cockpit settings, with how many checks fail when a report was read: the sidebar's and the
+ * A quiet row that opens Flightdeck settings, with how many checks fail when a report was read: the sidebar's and the
  * drawer's. It opens on Health while a check fails, the tab its count is about. `rail` keeps the icon alone.
  */
 export function SettingsLink(id, { rail = false } = {}) {
@@ -123,7 +123,7 @@ export function SettingsLink(id, { rail = false } = {}) {
   if (hub.remoteMachine()) return div();
   const k = tokens();
   const failing = Number(shared(FAILING) ?? 0);
-  const tip = `Cockpit settings${failing ? `: ${failing} failing` : ""}`;
+  const tip = `Flightdeck settings${failing ? `: ${failing} failing` : ""}`;
   const row = h_flex()
     .id(id)
     .h(28)
@@ -135,12 +135,12 @@ export function SettingsLink(id, { rail = false } = {}) {
     .text_color(k.mutedFg)
     .hover((s) => s.bg(k.accent).text_color(k.foreground))
     .on_click(() => openSettings({ tab: failing ? "health" : null, person: true }))
-    .tooltip(chat() ? tip : `${tip}  ⌘⇧P, then Cockpit settings`)
+    .tooltip(chat() ? tip : `${tip}  ⌘⇧P, then Flightdeck settings`)
     .child(Icon("sliders-horizontal", { size: 14, color: failing && !chat() ? k.destructive : undefined }));
   if (rail) return row.justify_center();
   return row
     .px(8)
-    .child(div().flex_1().truncate().text_size(TEXT.sm).child("Cockpit settings"))
+    .child(div().flex_1().truncate().text_size(TEXT.sm).child("Flightdeck settings"))
     .when(failing > 0, (e) => e.child(div().text_size(TEXT.xs).font_medium().text_color(chat() ? k.foreground : k.destructive).child(`${failing} failing`)));
 }
 
@@ -231,7 +231,7 @@ export function runFixAll(items, report, cx, toasts, done) {
   });
 }
 
-/** Cockpit Chat's quiet confirm: a plain card, Cancel holding the keyboard, no keys drawn. */
+/** Flightdeck Chat's quiet confirm: a plain card, Cancel holding the keyboard, no keys drawn. */
 function quietConfirm(id, { title, description, confirmLabel, onConfirm, onCancel }) {
   const k = tokens();
   return div()
@@ -287,7 +287,7 @@ function fixAllQuestion(items, left) {
   };
 }
 
-/** The confirm before a fix or Fix all, as each layout asks it: Cockpit's AlertDialog, Cockpit Chat's quiet card. */
+/** The confirm before a fix or Fix all, as each layout asks it: Flightdeck's AlertDialog, Flightdeck Chat's quiet card. */
 function fixConfirm(id, asking, { onConfirm, onCancel }) {
   const q = asking.items ? fixAllQuestion(asking.items, asking.left) : fixQuestion(asking.item);
   const ask = { title: q.title, description: q.description, confirmLabel: q.confirm, onConfirm, onCancel };
@@ -295,9 +295,9 @@ function fixConfirm(id, asking, { onConfirm, onCancel }) {
   return chat() ? quietConfirm(id, ask) : AlertDialog(id, { ...ask, confirmKbd: null });
 }
 
-const chat = () => shared("layout") === "cockpit-chat";
+const chat = () => shared("layout") === "flightdeck-chat";
 const statusIcon = (status) => (status === "pass" ? "circle-check" : status === "fail" ? "circle-x" : "triangle-alert");
-// Cockpit Chat keeps colour for agents' states: there the icons' shapes say it, in grey.
+// Flightdeck Chat keeps colour for agents' states: there the icons' shapes say it, in grey.
 const statusColor = (k, status) =>
   chat() ? (status === "pass" ? k.dim : status === "fail" ? k.foreground : k.mutedFg) : status === "pass" ? k.success : status === "fail" ? k.destructive : k.warning;
 
@@ -491,7 +491,7 @@ export default class Settings {
     /** A command a fix typed into a tab runs on: the sheet keeps its report until checked again. */
     this.fixing = null;
     this.rowAt = {};
-    // Any local process can open the sheet (`cockpit.settings`): ⏎ and space set or run nothing until the person
+    // Any local process can open the sheet (`flightdeck.settings`): ⏎ and space set or run nothing until the person
     // moves in it (j/k) or clicks in it.
     this.pointed = true;
     /** The person opened the sheet or acted in it: from then on what it shows counts as seen. */
@@ -630,7 +630,7 @@ export default class Settings {
     cx.spawn(async (cx) => {
       try {
         const r = await hub.act("options", "set", [{ [o.key]: value }], cx);
-        if (r?.unknown) throw new Error("this cockpit's hub cannot save options: update it first");
+        if (r?.unknown) throw new Error("this flightdeck's hub cannot save options: update it first");
         if (r?.error) throw new Error(r.error);
         // The value as the hub wrote it (a time comes back as 08:05), and the field with it.
         const view = await hub.view("options").catch(() => null);
@@ -700,7 +700,7 @@ export default class Settings {
   openFile(cx) {
     cx.spawn(async (cx) => {
       try {
-        const path = this.view?.path ?? `${(await hub.install()).home}/.config/cockpit/config.json`;
+        const path = this.view?.path ?? `${(await hub.install()).home}/.config/flightdeck/config.json`;
         const failed = await openInEditor(path);
         if (failed) this.toasts.push(cx, "config.json did not open", { kind: "error", description: failed });
         else this.toasts.push(cx, `Opened config.json in ${this.editor}`, { kind: "info", description: path });
@@ -752,10 +752,10 @@ export default class Settings {
     cx.spawn(async (cx) => {
       try {
         if (firstCached && !this.report) {
-          this.report = await hub.within(cx, loadDoctor({ cached: true }), READ_MS, "cockpit doctor").catch(() => null);
+          this.report = await hub.within(cx, loadDoctor({ cached: true }), READ_MS, "flightdeck doctor").catch(() => null);
           cx.notify();
         }
-        this.report = await hub.within(cx, loadDoctor(), CHECKS_MS, "cockpit doctor");
+        this.report = await hub.within(cx, loadDoctor(), CHECKS_MS, "flightdeck doctor");
         this.error = null;
         this.fixing = null;
         // A question asked from another report is not this one's: it closes, and the new checks say what is left.
@@ -920,7 +920,7 @@ export default class Settings {
             icon: verb ? "play" : "copy",
             size: "sm",
             variant: c.status === "fail" && verb ? "default" : "outline",
-            // ⏎ runs the selected check's fix: its key shows there, a Kbd in Cockpit and in the tooltip in Cockpit Chat.
+            // ⏎ runs the selected check's fix: its key shows there, a Kbd in Flightdeck and in the tooltip in Flightdeck Chat.
             kbd: selected ? "⏎" : undefined,
             tooltip: c.fix.act ? c.fix.label : verb ? `Runs ${c.fix.command} in a tab of the actions space` : "Copy what to do",
             onClick: (_e, cx) => this.ask(c, cx),
@@ -967,8 +967,8 @@ export default class Settings {
     const missing = hub.isNotInstalled(state);
     const stopped = hub.isStoppedOnPurpose(state);
     const last = connecting ? (hub.lastFailure()?.message ?? "") : hub.downReason(state);
-    const words = this.starting ? "Starting the cockpit hub…" : connecting ? "Reaching the cockpit hub…" : missing ? "Cockpit isn't set up in this Herdr" : `${hub.downWords(state)}: this window cannot reach it`;
-    const why = stopped ? "It was stopped with cockpit hub stop, and no window starts it again until you do." : missing ? "Run cockpit app install, then open this again." : last ? `${connecting ? "The last try failed" : "Why"}: ${last}` : "";
+    const words = this.starting ? "Starting the flightdeck hub…" : connecting ? "Reaching the flightdeck hub…" : missing ? "Flightdeck isn't set up in this Herdr" : `${hub.downWords(state)}: this window cannot reach it`;
+    const why = stopped ? "It was stopped with flightdeck hub stop, and no window starts it again until you do." : missing ? "Run flightdeck app install, then open this again." : last ? `${connecting ? "The last try failed" : "Why"}: ${last}` : "";
     const startable = !connecting && !missing && !hub.remoteMachine() && !this.starting;
     return h_flex()
       .id(id)
@@ -989,7 +989,7 @@ export default class Settings {
           .child(div().text_size(TEXT.sm).font_medium().text_color(k.foreground).child(words))
           .when(Boolean(why), (e) => e.child(div().whitespace_normal().text_size(TEXT.sm).text_color(k.mutedFg).child(why))),
       )
-      .when(startable, (e) => e.child(Button(`${id}-start`, { label: "Start it", size: "sm", variant: "outline", tooltip: "Start the cockpit hub", onClick: (_e, cx) => this.startHub(cx) })));
+      .when(startable, (e) => e.child(Button(`${id}-start`, { label: "Start it", size: "sm", variant: "outline", tooltip: "Start the flightdeck hub", onClick: (_e, cx) => this.startHub(cx) })));
   }
 
   /** What sets an option: its switch, its choices as pills, or its field with Save once something else is typed. */
@@ -1078,7 +1078,7 @@ export default class Settings {
 
   /** What config.json holds that no switch or field sets, each key with its line, and the button that opens the file. */
   fileRows(k) {
-    const open = Button("options-open-file", { label: `Open config.json in ${this.editor}`, icon: "external", variant: "outline", size: "sm", kbd: "O", tooltip: "~/.config/cockpit/config.json", onClick: (_e, cx) => this.openFile(cx) });
+    const open = Button("options-open-file", { label: `Open config.json in ${this.editor}`, icon: "external", variant: "outline", size: "sm", kbd: "O", tooltip: "~/.config/flightdeck/config.json", onClick: (_e, cx) => this.openFile(cx) });
     const list = this.view?.in_file ?? [];
     return [
       heading(k, "options-in-file", "In config.json", true),
@@ -1087,7 +1087,7 @@ export default class Settings {
         .gap(12)
         .pb(6)
         .items_center()
-        .child(div().flex_1().min_w(0).whitespace_normal().text_size(TEXT.sm).text_color(k.mutedFg).child("What no switch or field sets. Edit the file by hand, then run cockpit doctor: it says when the file does not read."))
+        .child(div().flex_1().min_w(0).whitespace_normal().text_size(TEXT.sm).text_color(k.mutedFg).child("What no switch or field sets. Edit the file by hand, then run flightdeck doctor: it says when the file does not read."))
         .child(open),
       ...list.map((f, i) =>
         h_flex()
@@ -1116,13 +1116,13 @@ export default class Settings {
           .gap(12)
           .pt(14)
           .items_center()
-          .child(div().flex_1().min_w(0).whitespace_normal().text_size(TEXT.sm).text_color(k.mutedFg).child("The options are read and saved through the hub. config.json itself opens without it, and cockpit options lists them in a terminal."))
+          .child(div().flex_1().min_w(0).whitespace_normal().text_size(TEXT.sm).text_color(k.mutedFg).child("The options are read and saved through the hub. config.json itself opens without it, and flightdeck options lists them in a terminal."))
           .child(Button("options-open-file", { label: `Open config.json in ${this.editor}`, icon: "external", variant: "outline", size: "sm", onClick: (_e, cx) => this.openFile(cx) })),
       ];
     }
-    if (!this.options.length) return [div().p(24).text_size(TEXT.sm).text_color(k.mutedFg).child("This cockpit has no options to set from here: cockpit options lists them in a terminal.")];
+    if (!this.options.length) return [div().p(24).text_size(TEXT.sm).text_color(k.mutedFg).child("This flightdeck has no options to set from here: flightdeck options lists them in a terminal.")];
     const rows = down ? [div().pb(12).child(down)] : [];
-    rows.push(div().pb(4).text_size(TEXT.sm).text_color(k.mutedFg).child("Saved in ~/.config/cockpit/config.json as you change them; cockpit options lists them in a terminal."));
+    rows.push(div().pb(4).text_size(TEXT.sm).text_color(k.mutedFg).child("Saved in ~/.config/flightdeck/config.json as you change them; flightdeck options lists them in a terminal."));
     for (const section of sectioned(this.view)) {
       rows.push(heading(k, `section-${section.title}`, section.title, true));
       for (const [o, i] of section.rows) {
@@ -1142,12 +1142,12 @@ export default class Settings {
   useLayout(name) {
     const choice = LAYOUT_CHOICES.find((l) => l.name === name);
     if (!choice || name === layoutName()) return;
-    notify({ title: `This is ${choice.title}`, body: "Cockpit settings, under Layout, switches back.", level: "info", timeout: 8000 });
+    notify({ title: `This is ${choice.title}`, body: "Flightdeck settings, under Layout, switches back.", level: "info", timeout: 8000 });
     this.dismiss();
     run("layout.switch", { name });
   }
 
-  /** The Layout tab: a card per cockpit layout with its picture in the window's theme, side by side, stacked when narrow. */
+  /** The Layout tab: a card per flightdeck layout with its picture in the window's theme, side by side, stacked when narrow. */
   layoutEl(k) {
     const shown = layoutName();
     const dark = isDark(k.background);
@@ -1223,7 +1223,7 @@ export default class Settings {
             .gap(6)
             .flex_wrap()
             .children(CAN.map(([key, word, tip]) => Badge(word, a.can?.[key] ? "secondary" : "outline", { icon: a.can?.[key] ? "check" : "x", id: tip ? `agent-${a.id}-${key}` : undefined, tooltip: tip })))
-            .child(Badge(a.tools ? `cockpit's tools: ${a.tools === "plugin" ? "its plugin" : "MCP"}${a.connected === false ? ", not connected" : ""}` : "no cockpit tools", a.connected === false && !chat() ? "warning" : "outline")),
+            .child(Badge(a.tools ? `flightdeck's tools: ${a.tools === "plugin" ? "its plugin" : "MCP"}${a.connected === false ? ", not connected" : ""}` : "no flightdeck tools", a.connected === false && !chat() ? "warning" : "outline")),
         )
         .child(
           div()
@@ -1254,7 +1254,7 @@ export default class Settings {
       ? this.fixing
       : r
         ? [s.fail ? `${s.fail} failing` : null, s.warn ? `${s.warn} to look at` : null, `${s.pass ?? 0} passed`, at ? `checked ${at}` : null].filter(Boolean).join(" · ")
-        : (this.error ?? "Checking every part of cockpit…");
+        : (this.error ?? "Checking every part of flightdeck…");
     const rows = [
       h_flex()
         .id("health-top")
@@ -1273,7 +1273,7 @@ export default class Settings {
               icon: "play",
               size: "sm",
               kbd: "F",
-              tooltip: `Run the ${fixable.length} fixes cockpit can run, after one confirm`,
+              tooltip: `Run the ${fixable.length} fixes flightdeck can run, after one confirm`,
               onClick: (_e, cx) => this.askAll(cx),
             }),
           ),
@@ -1294,7 +1294,7 @@ export default class Settings {
           .py(6)
           .items_start()
           .child(div().pt(1).child(Icon("circle-check", { size: 15, color: statusColor(k, "pass") })))
-          .child(div().flex_1().min_w(0).text_size(TEXT.sm).text_color(k.foreground).child("This window reaches the cockpit hub")),
+          .child(div().flex_1().min_w(0).text_size(TEXT.sm).text_color(k.foreground).child("This window reaches the flightdeck hub")),
       );
     }
     // Nothing needs a look only when the hub answers too.
@@ -1347,7 +1347,7 @@ export default class Settings {
               .flex_1()
               .min_w(0)
               .gap(2)
-              .child(div().text_size(TEXT.lg).font_semibold().child("Cockpit settings"))
+              .child(div().text_size(TEXT.lg).font_semibold().child("Flightdeck settings"))
               .child(div().id("settings-version").truncate().text_size(TEXT.sm).text_color(line.state === "failed" && !chat() ? k.destructive : k.mutedFg).tooltip(line.text).child(line.text)),
           )
           .when(this.checking, (e) => e.child(Spinner({ size: 14, color: k.mutedFg })))
@@ -1362,7 +1362,7 @@ export default class Settings {
               size: narrow ? "icon-sm" : "sm",
               kbd: "U",
               disabled: this.checking,
-              tooltip: narrow ? "Check for updates  U" : "Ask now whether a newer cockpit is published",
+              tooltip: narrow ? "Check for updates  U" : "Ask now whether a newer flightdeck is published",
               onClick: (_e, cx) => this.checkUpdates(cx),
             }),
           )

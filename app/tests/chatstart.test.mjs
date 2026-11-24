@@ -25,7 +25,7 @@ async function starter(planFor, actFor = () => ({ note: "started" })) {
     "./ui.js": Object.fromEntries(["TEXT", "RADIUS", "Icon", "Spinner", "Button", "HubDown"].map((k) => [k, stub()])),
   };
   const context = createContext({ console, setTimeout, Promise, Date, JSON, Math, String, Number, Boolean, Object, Array, RegExp, Error, Set, Map });
-  const mods = new URL("../mods/cockpit/", import.meta.url);
+  const mods = new URL("../mods/flightdeck/", import.meta.url);
   const loaded = new Map();
   const load = async (file) => {
     if (loaded.has(file)) return loaded.get(file);
@@ -61,7 +61,7 @@ function plan(request) {
   const agent = request.agent || "claude";
   return {
     ok: Boolean(request.text), kind, title: request.text, driven: request.driven === true, agent, place: "worktree",
-    steps: [{ id: "agent", text: request.driven ? "start as a session cockpit drives" : "open a space there" }],
+    steps: [{ id: "agent", text: request.driven ? "start as a session flightdeck drives" : "open a space there" }],
     blockers: request.text ? [] : [{ step: "empty", text: "Type a prompt", fixes: [] }],
     choices: { repos: ["api", "web"], repo: "api", agent: "claude", agents: AGENTS },
   };
@@ -183,13 +183,13 @@ test("Retry after a failed start follows the retried run to its end", async () =
 
 test("Retry of a start the hub never recorded runs it again from the box, under the same id", async () => {
   let works = 0;
-  const reply = (_app, action) => (action === "retry" ? { error: "no such start" } : action === "work" && ++works === 1 ? { error: "the cockpit hub was stopped" } : { note: "started" });
+  const reply = (_app, action) => (action === "retry" ? { error: "no such start" } : action === "work" && ++works === 1 ? { error: "the flightdeck hub was stopped" } : { note: "started" });
   const { start, hub, cx } = await starter(plan, reply);
   await typed(start, cx, "Fix the login redirect");
   start.start(cx, () => {});
   await settle();
   const id = start.run.id;
-  assert.equal(start.error, "the cockpit hub was stopped");
+  assert.equal(start.error, "the flightdeck hub was stopped");
   start.retry(cx);
   await settle();
   assert.deepEqual(hub.acts.slice(-2).map((a) => [a[1], a[2][0]?.id ?? a[2][0]]), [["retry", id], ["work", id]]);

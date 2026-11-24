@@ -1,12 +1,12 @@
-//! The show tool for any agent: the view checked as the plugin checks it, written to ~/.cache/cockpit/show and opened
-//! beside the agent (`cockpit show` in herdr, the mod's show view in the Herdr app), its answers sent back as prompts.
+//! The show tool for any agent: the view checked as the plugin checks it, written to ~/.cache/flightdeck/show and opened
+//! beside the agent (`flightdeck show` in herdr, the mod's show view in the Herdr app), its answers sent back as prompts.
 
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::Duration;
 
-use cockpit_core::files;
-use cockpit_core::frontend::{self, Frontend};
+use flightdeck_core::files;
+use flightdeck_core::frontend::{self, Frontend};
 use regex::Regex;
 use serde_json::{Map, Value, json};
 
@@ -133,7 +133,7 @@ fn block_error(block: &Block, at: &str) -> Option<String> {
     // A table or chart gets its rows from the call or from a command; a source needs a Claude session's connectors.
     if block.get("source").is_some() {
         return Some(format!(
-            "at {at}/source: no server of cockpit's own for this source (servers in config.json, set up by cockpit setup); give rows, or a command printing JSON"
+            "at {at}/source: no server of flightdeck's own for this source (servers in config.json, set up by flightdeck setup); give rows, or a command printing JSON"
         ));
     }
     if let Some(command) = block.get("command") {
@@ -327,7 +327,7 @@ impl Here {
     }
 }
 
-/// Whose a view is: the app terminal's, else the key of the session cockpit drives (`driven`), which has no terminal.
+/// Whose a view is: the app terminal's, else the key of the session flightdeck drives (`driven`), which has no terminal.
 fn owner(here: Option<&Here>, driven: Option<String>) -> Option<String> {
     here.and_then(Here::terminal)
         .map(str::to_string)
@@ -359,10 +359,10 @@ fn app_pane(terminal: &str) -> Option<String> {
     found.and_then(|t| t["pane"].as_str()).map(str::to_string)
 }
 
-/// Whether a pane shows the view now: the app's view follows the hub while it is drawn, `cockpit show` keeps a pid file.
+/// Whether a pane shows the view now: the app's view follows the hub while it is drawn, `flightdeck show` keeps a pid file.
 fn is_open(dir: &Path, name: &str) -> bool {
     if dir.join(format!("{name}.app")).exists() {
-        let shown = cockpit_core::hub::request(&json!({"op": "shown", "view": "show"}), Duration::from_secs(5)).unwrap_or_default();
+        let shown = flightdeck_core::hub::request(&json!({"op": "shown", "view": "show"}), Duration::from_secs(5)).unwrap_or_default();
         return shown["args"].as_array().into_iter().flatten().any(|a| a["name"] == name);
     }
     let pid = std::fs::read_to_string(dir.join(format!("{name}.pid"))).unwrap_or_default();
@@ -375,9 +375,9 @@ fn open_pane(dir: &Path, here: &Here, name: &str, session: &str, placement: &str
     match here {
         Here::App { terminal, pane } => {
             let props = json!({"app": "show", "name": name, "session": session});
-            let made = frontend::app_do("pane.split", &json!({"direction": direction, "pane": pane, "mod": "cockpit", "props": props}));
+            let made = frontend::app_do("pane.split", &json!({"direction": direction, "pane": pane, "mod": "flightdeck", "props": props}));
             let Some(new) = made.as_ref().and_then(|m| m["pane"].as_str()).map(str::to_string) else {
-                return Err("herdr-app pane.split failed: is the cockpit mod installed? (cockpit app install)".into());
+                return Err("herdr-app pane.split failed: is the flightdeck mod installed? (flightdeck app install)".into());
             };
             files::write(&dir.join(format!("{name}.app")), &json!({"pane": new, "terminal": terminal})).map_err(|e| e.to_string())?;
             // The pane's header reads the view's name; a Herdr older than 0.1.17 cannot name panes and keeps its own.
@@ -410,18 +410,18 @@ fn open_pane(dir: &Path, here: &Here, name: &str, session: &str, placement: &str
 }
 
 /// Writes the view and makes sure a pane shows it: the open one redraws, else one opens beside the agent.
-/// Blocks whose Metabase, Datadog or metrics source cockpit reaches itself become blocks running `cockpit connector rows`.
+/// Blocks whose Metabase, Datadog or metrics source flightdeck reaches itself become blocks running `flightdeck connector rows`.
 pub fn with_sources(input: &Value) -> Value {
     let mut input = input.clone();
-    let config = cockpit_core::files::config();
-    let bin = std::env::current_exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_else(|_| "cockpit".into());
+    let config = flightdeck_core::files::config();
+    let bin = std::env::current_exe().map(|e| e.to_string_lossy().into_owned()).unwrap_or_else(|_| "flightdeck".into());
     for block in input["blocks"].as_array_mut().into_iter().flatten() {
         let Some(source) = block.get("source").cloned() else { continue };
         let reachable = if source["metrics"].is_object() {
             let raw = files::load(&files::config_dir().join("config.json")).unwrap_or(Value::Null);
-            cockpit_connectors::observability::server(&raw).is_some()
+            flightdeck_connectors::observability::server(&raw).is_some()
         } else {
-            crate::connector::configured(&cockpit_connectors::sources::server(&source, &config)).is_some()
+            crate::connector::configured(&flightdeck_connectors::sources::server(&source, &config)).is_some()
         };
         if !reachable {
             continue;
@@ -455,7 +455,7 @@ pub fn show(input: &Value, here: Option<&Here>, session: &str) -> Result<String,
     if let Some(url) = input["url"].as_str() {
         spec["url"] = url.into();
     }
-    if let Some(terminal) = owner(here, std::env::var(cockpit_core::run::DRIVEN_KEY).ok()) {
+    if let Some(terminal) = owner(here, std::env::var(flightdeck_core::run::DRIVEN_KEY).ok()) {
         spec["terminal"] = terminal.into();
     }
     let plan = dir.join(format!("{name}.mmd"));
@@ -553,7 +553,7 @@ pub fn hand_over(dir: &Path, session: &str, now: f64, send: &mut dyn FnMut(&str)
         let block = spec["blocks"].get(n).cloned();
         let said = answer_text(&view, &answer, block.as_ref());
         match send(&said) {
-            Err(why) if cockpit_core::deliver::is_waiting(&why) && now - answer["at"].as_f64().unwrap_or(now) < KEEP_FOR_SECS => continue,
+            Err(why) if flightdeck_core::deliver::is_waiting(&why) && now - answer["at"].as_f64().unwrap_or(now) < KEEP_FOR_SECS => continue,
             Err(_) => {
                 let _ = std::fs::remove_file(&path);
                 continue;
@@ -578,7 +578,7 @@ pub fn prompt(here: &Here, text: &str) -> Result<(), String> {
         Here::App { terminal, .. } => format!("{}{terminal}", frontend::APP),
         Here::Tui { pane } => pane.clone(),
     };
-    cockpit_core::deliver::deliver(&handle, text)
+    flightdeck_core::deliver::deliver(&handle, text)
 }
 
 #[cfg(test)]
@@ -640,7 +640,7 @@ mod tests {
         files::write(&dir.path().join("mine.0.answer"), &json!({"block": 0, "type": "choice", "value": "b", "label": "b", "at": 1000.0})).unwrap();
         files::write(&dir.path().join("theirs.0.answer"), &json!({"block": 0, "type": "confirm", "value": true, "label": "yes", "at": 1000.0})).unwrap();
         // Waiting on a question: kept, and not marked answered.
-        let mut busy = |_: &str| Err(cockpit_core::deliver::waiting_note("api"));
+        let mut busy = |_: &str| Err(flightdeck_core::deliver::waiting_note("api"));
         assert!(hand_over(dir.path(), "mcp-1", 1010.0, &mut busy).is_empty());
         assert!(dir.path().join("mine.0.answer").exists(), "kept until it goes");
         assert!(files::load(&dir.path().join("mine.json")).unwrap()["blocks"][0]["answered"].is_null());

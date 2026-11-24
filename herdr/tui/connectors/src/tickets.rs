@@ -5,7 +5,7 @@ use serde_json::{Value, json};
 use crate::mapping::{capture, fill, list_at, pick, text};
 use crate::tools::Tools;
 
-/// Cockpit's status types are Linear's categories; the open ones, in the order the inbox lists them.
+/// Flightdeck's status types are Linear's categories; the open ones, in the order the inbox lists them.
 const ACTIVE: [&str; 4] = ["started", "unstarted", "triage", "backlog"];
 
 /// The Linear connector's mapping, the default for a config that names no other (config.ts `LINEAR`).
@@ -32,7 +32,7 @@ pub fn linear() -> Value {
 }
 
 /// The GitHub Issues connector's mapping (config.ts `GITHUB_ISSUES`). An issue is `owner`, `repo` and `number`, which
-/// `idPattern` and `idTemplate` carry through cockpit's one id as `owner/repo#number`; a team is a repo, which
+/// `idPattern` and `idTemplate` carry through flightdeck's one id as `owner/repo#number`; a team is a repo, which
 /// `teamPattern` splits for a new issue.
 pub fn github() -> Value {
     json!({

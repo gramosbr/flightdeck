@@ -1,5 +1,5 @@
-//! Where a process stands, from its whole line of parents: in a watched agent's tree, under an agent cockpit does not
-//! watch, under work cockpit runs for someone (the hub, a `cockpit show` pane, a notification's click, start work's
+//! Where a process stands, from its whole line of parents: in a watched agent's tree, under an agent flightdeck does not
+//! watch, under work flightdeck runs for someone (the hub, a `flightdeck show` pane, a notification's click, start work's
 //! setup), under a window or terminal the person uses, or none of these. A front is known by its executable's real
 //! path, never by the name a process gives itself.
 
@@ -34,7 +34,7 @@ pub trait Look {
     fn args(&self, pid: u32) -> Vec<String>;
     /// The processes about to be asked about, read at once where the system allows.
     fn prefetch(&self, _pids: &[u32]) {}
-    /// The far end of the TCP connection an ssh server process holds, when it holds one cockpit can read.
+    /// The far end of the TCP connection an ssh server process holds, when it holds one flightdeck can read.
     fn ssh_from(&self, pid: u32) -> Option<IpAddr>;
     /// The account's home, from the user database rather than the environment.
     fn home(&self) -> Option<PathBuf>;
@@ -77,7 +77,7 @@ impl Look for System {
     }
 
     fn ssh_from(&self, pid: u32) -> Option<IpAddr> {
-        let text = cockpit_core::peer::lsof(&["-nP", "-a", "-p", &pid.to_string(), "-iTCP", "-sTCP:ESTABLISHED", "-Fn"])?;
+        let text = flightdeck_core::peer::lsof(&["-nP", "-a", "-p", &pid.to_string(), "-iTCP", "-sTCP:ESTABLISHED", "-Fn"])?;
         text.lines().filter_map(|l| l.strip_prefix('n')?.split_once("->")).find_map(|(_, far)| far_end(far))
     }
 
@@ -140,14 +140,14 @@ fn exe_of(pid: u32) -> Option<PathBuf> {
 pub enum Walk {
     /// Into a watched agent's tree: its handle.
     Agent(String),
-    /// Past a process running an agent's program cockpit has not placed: that program.
+    /// Past a process running an agent's program flightdeck has not placed: that program.
     Unwatched(String),
-    /// Past cockpit's own work (the hub, a `cockpit show` pane, `cockpit focus`, `act` or `setup-run`), or from the hub
+    /// Past flightdeck's own work (the hub, a `flightdeck show` pane, `flightdeck focus`, `act` or `setup-run`), or from the hub
     /// itself: it runs for an agent, a routine, a view, a click from outside or a repo's setup, never for the person.
-    Cockpit,
+    Flightdeck,
     /// To a window or terminal the person uses, past no agent.
     Front,
-    /// Through an ssh server whose client is this machine itself, or one whose client cockpit cannot read.
+    /// Through an ssh server whose client is this machine itself, or one whose client flightdeck cannot read.
     Ssh(Option<IpAddr>),
     /// To the system's root (launchd, pid 1) past no front: started detached (setsid, nohup, launchd).
     Detached,
@@ -171,7 +171,7 @@ const APPS: [(&str, &str); 11] = [
     ("Herdr.app", "Herdr"),
     ("Herdr Core.app", "herdr-core"),
     // The notifier, which runs a notification's button only once the person clicks it.
-    ("Cockpit.app", "cockpit-notify"),
+    ("Flightdeck.app", "flightdeck-notify"),
 ];
 
 /// Terminals and multiplexers outside a bundle: one counts where it is installed (`installed`), so a copy under that
@@ -254,29 +254,29 @@ fn agent_program(pid: u32, name: &str, programs: &[String], look: &dyn Look) -> 
     known(&stem(script)).or_else(|| Path::new(script).iter().filter_map(|c| c.to_str()).find_map(known))
 }
 
-/// The commands of cockpit's own work, by the word after `cockpit`, and whether the process itself is that work as well
-/// as what it starts. The hub and a `cockpit show` pane run commands an agent or a routine gave them; `focus` and `act`
+/// The commands of flightdeck's own work, by the word after `flightdeck`, and whether the process itself is that work as well
+/// as what it starts. The hub and a `flightdeck show` pane run commands an agent or a routine gave them; `focus` and `act`
 /// run what a notification's click or a window command names, from outside the person's hands; `setup-run` runs start
 /// work's setup command, the repo's code.
-const COCKPIT_WORK: [(&str, bool); 5] = [("hub", false), ("show", false), ("focus", true), ("act", true), ("setup-run", true)];
+const FLIGHTDECK_WORK: [(&str, bool); 5] = [("hub", false), ("show", false), ("focus", true), ("act", true), ("setup-run", true)];
 
-/// Whether `pid` is cockpit's own work: the hub (`own`) or a command of `COCKPIT_WORK`; `sender` when it is the process
+/// Whether `pid` is flightdeck's own work: the hub (`own`) or a command of `FLIGHTDECK_WORK`; `sender` when it is the process
 /// that sent the request rather than one above it.
-fn cockpit_work(pid: u32, own: u32, sender: bool, look: &dyn Look) -> bool {
+fn flightdeck_work(pid: u32, own: u32, sender: bool, look: &dyn Look) -> bool {
     if pid == own {
         return true;
     }
-    if !look.exe(pid).is_some_and(|p| p.file_name().is_some_and(|n| n == "cockpit")) {
+    if !look.exe(pid).is_some_and(|p| p.file_name().is_some_and(|n| n == "flightdeck")) {
         return false;
     }
     // The command line comes split on spaces: the word after the program's own, wherever a space in its path cut it.
     let args = look.args(pid);
-    let word = args.iter().position(|a| a.ends_with("cockpit")).and_then(|at| args.get(at + 1)).map(String::as_str).unwrap_or_default();
-    COCKPIT_WORK.iter().any(|(w, itself)| *w == word && (*itself || !sender))
+    let word = args.iter().position(|a| a.ends_with("flightdeck")).and_then(|at| args.get(at + 1)).map(String::as_str).unwrap_or_default();
+    FLIGHTDECK_WORK.iter().any(|(w, itself)| *w == word && (*itself || !sender))
 }
 
 /// Follows `pid`'s whole line of parents in `table`: a watched agent's root anywhere on it (`roots`) makes it that
-/// agent's, then an agent program anywhere, then cockpit's own work above it; else the first front decides, an ssh
+/// agent's, then an agent program anywhere, then flightdeck's own work above it; else the first front decides, an ssh
 /// server by where its client is. `own` is the hub's pid, `programs` every agent program's name.
 pub fn walk(pid: u32, table: &HashMap<u32, (u32, String)>, roots: &[(String, u32)], programs: &[String], own: u32, look: &dyn Look) -> Walk {
     if !table.contains_key(&pid) {
@@ -297,8 +297,8 @@ pub fn walk(pid: u32, table: &HashMap<u32, (u32, String)>, roots: &[(String, u32
     if let Some(program) = chain.iter().find_map(|p| agent_program(*p, name(p), programs, look)) {
         return Walk::Unwatched(program);
     }
-    if pid == own || chain.iter().enumerate().any(|(i, p)| cockpit_work(*p, own, i == 0, look)) {
-        return Walk::Cockpit;
+    if pid == own || chain.iter().enumerate().any(|(i, p)| flightdeck_work(*p, own, i == 0, look)) {
+        return Walk::Flightdeck;
     }
     let mut replaced = None;
     for (i, p) in chain.iter().enumerate() {
@@ -368,19 +368,19 @@ mod tests {
 
     #[test]
     fn an_app_updated_on_disk_while_it_runs_is_named_not_trusted() {
-        let t = table(&[(945, 1, "/Users/me/Applications/Herdr.app/Contents/MacOS/Herdr"), (946, 945, "cockpit")]);
+        let t = table(&[(945, 1, "/Users/me/Applications/Herdr.app/Contents/MacOS/Herdr"), (946, 945, "flightdeck")]);
         let updated = Fake { gone: vec![945], ..Fake::default() };
         assert_eq!(walk(946, &t, &[], &programs(), 999, &updated), Walk::Replaced("Herdr".into()));
         assert_eq!(walk(946, &t, &[], &programs(), 999, &Fake::default()), Walk::Detached, "an executable merely unreadable is no update");
-        let root_sshd = table(&[(70, 1, "/usr/sbin/sshd"), (71, 70, "sshd-session"), (72, 71, "cockpit")]);
-        assert_eq!(walk(72, &root_sshd, &[], &programs(), 999, &Fake::default()), Walk::Detached, "a root sshd cockpit cannot read");
-        let t = table(&[(20, 1, "launchd-helper"), (21, 20, "cockpit")]);
+        let root_sshd = table(&[(70, 1, "/usr/sbin/sshd"), (71, 70, "sshd-session"), (72, 71, "flightdeck")]);
+        assert_eq!(walk(72, &root_sshd, &[], &programs(), 999, &Fake::default()), Walk::Detached, "a root sshd flightdeck cannot read");
+        let t = table(&[(20, 1, "launchd-helper"), (21, 20, "flightdeck")]);
         assert_eq!(walk(21, &t, &[], &programs(), 999, &Fake::default()), Walk::Detached, "an unknown program stays detached");
     }
 
     #[test]
     fn a_front_is_its_executable_path_never_its_name() {
-        let t = table(&[(10, 1, "Ghostty"), (11, 10, "zsh"), (12, 11, "Terminal"), (13, 12, "cockpit")]);
+        let t = table(&[(10, 1, "Ghostty"), (11, 10, "zsh"), (12, 11, "Terminal"), (13, 12, "flightdeck")]);
         let mut look = Fake::default();
         look.exes.insert(10, "/usr/local/bin/sleep");
         look.exes.insert(12, "/tmp/x/Terminal");
@@ -418,15 +418,15 @@ mod tests {
 
     #[test]
     fn an_agent_anywhere_above_wins_over_any_front_below_it() {
-        // herdr → zsh → claude → "Terminal" (a tool's own name) → cockpit: the agent's, whatever the tool calls itself.
-        let t = table(&[(10, 1, "herdr"), (11, 10, "zsh"), (12, 11, "claude"), (13, 12, "Terminal"), (14, 13, "cockpit")]);
+        // herdr → zsh → claude → "Terminal" (a tool's own name) → flightdeck: the agent's, whatever the tool calls itself.
+        let t = table(&[(10, 1, "herdr"), (11, 10, "zsh"), (12, 11, "claude"), (13, 12, "Terminal"), (14, 13, "flightdeck")]);
         let mut look = Fake::default();
         look.exes.insert(10, "/usr/bin/herdr");
         look.exes.insert(13, "/System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal");
         assert_eq!(walk(14, &t, &[("w1:p1".into(), 11)], &programs(), 999, &look), Walk::Agent("w1:p1".into()));
         assert_eq!(walk(14, &t, &[], &programs(), 999, &look), Walk::Unwatched("claude".into()), "not placed yet: still an agent");
         // Under node, the script names it.
-        let t = table(&[(10, 1, "herdr"), (11, 10, "node"), (12, 11, "sh"), (13, 12, "cockpit")]);
+        let t = table(&[(10, 1, "herdr"), (11, 10, "node"), (12, 11, "sh"), (13, 12, "flightdeck")]);
         look.args.insert(11, "node /opt/lib/node_modules/@anthropic-ai/claude-code/cli.js --resume x");
         assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Unwatched("claude-code".into()));
         look.args.insert(11, "node /opt/lib/node_modules/@openai/codex/bin/codex.js");
@@ -436,66 +436,73 @@ mod tests {
     }
 
     #[test]
-    fn what_cockpit_runs_for_someone_is_never_the_person() {
-        // herdr → cockpit show deploy → sh (a log block's command) → cockpit.
-        let t = table(&[(10, 1, "herdr"), (11, 10, "cockpit"), (12, 11, "sh"), (13, 12, "cockpit"), (20, 10, "cockpit"), (21, 20, "cockpit")]);
+    fn what_flightdeck_runs_for_someone_is_never_the_person() {
+        // herdr → flightdeck show deploy → sh (a log block's command) → flightdeck.
+        let t = table(&[(10, 1, "herdr"), (11, 10, "flightdeck"), (12, 11, "sh"), (13, 12, "flightdeck"), (20, 10, "flightdeck"), (21, 20, "flightdeck")]);
         let mut look = Fake::default();
         look.exes.insert(10, "/usr/bin/herdr");
         for pid in [11, 13, 20, 21] {
-            look.exes.insert(pid, "/Users/me/.config/cockpit/herdr/bin/cockpit");
+            look.exes.insert(pid, "/Users/me/.config/flightdeck/herdr/bin/flightdeck");
         }
-        look.args.insert(11, "/Users/me/.config/cockpit/herdr/bin/cockpit show deploy");
-        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Cockpit);
+        look.args.insert(11, "/Users/me/.config/flightdeck/herdr/bin/flightdeck show deploy");
+        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Flightdeck);
         assert_eq!(walk(11, &t, &[], &programs(), 999, &look), Walk::Front, "the pane itself is the person's");
-        assert_eq!(walk(12, &t, &[], &programs(), 11, &look), Walk::Cockpit, "a child of the hub");
-        assert_eq!(walk(11, &t, &[], &programs(), 11, &look), Walk::Cockpit, "the hub itself");
-        // A space app under its supervisor (`cockpit space inbox`) is the person's.
-        look.args.insert(20, "/Users/me/.config/cockpit/herdr/bin/cockpit space inbox");
-        look.args.insert(21, "/Users/me/.config/cockpit/herdr/bin/cockpit inbox cockpit-space");
+        assert_eq!(walk(12, &t, &[], &programs(), 11, &look), Walk::Flightdeck, "a child of the hub");
+        assert_eq!(walk(11, &t, &[], &programs(), 11, &look), Walk::Flightdeck, "the hub itself");
+        // A space app under its supervisor (`flightdeck space inbox`) is the person's.
+        look.args.insert(20, "/Users/me/.config/flightdeck/herdr/bin/flightdeck space inbox");
+        look.args.insert(21, "/Users/me/.config/flightdeck/herdr/bin/flightdeck inbox flightdeck-space");
         assert_eq!(walk(21, &t, &[], &programs(), 999, &look), Walk::Front);
     }
 
     #[test]
-    fn a_click_from_outside_and_a_repo_s_setup_are_cockpit_s_work_not_the_person_s() {
-        // Herdr → cockpit focus act:merge:… (a toast's click, or `herdr-app do cockpit.target:…`) → cockpit act merge.
-        let t =
-            table(&[(10, 1, "Herdr"), (11, 10, "cockpit"), (12, 11, "cockpit"), (13, 10, "cockpit"), (14, 10, "zsh"), (15, 14, "cockpit"), (16, 15, "npm")]);
+    fn a_click_from_outside_and_a_repo_s_setup_are_flightdeck_s_work_not_the_person_s() {
+        // Herdr → flightdeck focus act:merge:… (a toast's click, or `herdr-app do flightdeck.target:…`) → flightdeck act merge.
+        let t = table(&[
+            (10, 1, "Herdr"),
+            (11, 10, "flightdeck"),
+            (12, 11, "flightdeck"),
+            (13, 10, "flightdeck"),
+            (14, 10, "zsh"),
+            (15, 14, "flightdeck"),
+            (16, 15, "npm"),
+        ]);
         let mut look = Fake::default();
         look.exes.insert(10, "/Applications/Herdr.app/Contents/MacOS/Herdr");
         for pid in [11, 12, 13, 15] {
-            look.exes.insert(pid, "/Users/me/.config/cockpit/herdr/bin/cockpit");
+            look.exes.insert(pid, "/Users/me/.config/flightdeck/herdr/bin/flightdeck");
         }
-        look.args.insert(11, "/Users/me/.config/cockpit/herdr/bin/cockpit focus act:merge:https://github.com/acme/api/pull/4");
-        look.args.insert(12, "/Users/me/.config/cockpit/herdr/bin/cockpit act merge https://github.com/acme/api/pull/4");
-        assert_eq!(walk(12, &t, &[], &programs(), 999, &look), Walk::Cockpit, "under cockpit focus");
-        assert_eq!(walk(11, &t, &[], &programs(), 999, &look), Walk::Cockpit, "cockpit focus itself");
-        // The app's `cockpit()` helper runs `cockpit act` straight from the window: it is the sender.
-        look.args.insert(13, "/Users/me/.config/cockpit/herdr/bin/cockpit act review https://github.com/acme/api/pull/4");
-        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Cockpit);
-        // Start work's setup in the person's terminal: `cockpit setup-run sh -c 'npm ci'` and what it runs.
-        look.args.insert(15, "/Users/me/.config/cockpit/herdr/bin/cockpit setup-run /bin/sh -c npm ci");
-        assert_eq!(walk(16, &t, &[], &programs(), 999, &look), Walk::Cockpit);
-        assert_eq!(walk(15, &t, &[], &programs(), 999, &look), Walk::Cockpit);
+        look.args.insert(11, "/Users/me/.config/flightdeck/herdr/bin/flightdeck focus act:merge:https://github.com/acme/api/pull/4");
+        look.args.insert(12, "/Users/me/.config/flightdeck/herdr/bin/flightdeck act merge https://github.com/acme/api/pull/4");
+        assert_eq!(walk(12, &t, &[], &programs(), 999, &look), Walk::Flightdeck, "under flightdeck focus");
+        assert_eq!(walk(11, &t, &[], &programs(), 999, &look), Walk::Flightdeck, "flightdeck focus itself");
+        // The app's `flightdeck()` helper runs `flightdeck act` straight from the window: it is the sender.
+        look.args.insert(13, "/Users/me/.config/flightdeck/herdr/bin/flightdeck act review https://github.com/acme/api/pull/4");
+        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Flightdeck);
+        // Start work's setup in the person's terminal: `flightdeck setup-run sh -c 'npm ci'` and what it runs.
+        look.args.insert(15, "/Users/me/.config/flightdeck/herdr/bin/flightdeck setup-run /bin/sh -c npm ci");
+        assert_eq!(walk(16, &t, &[], &programs(), 999, &look), Walk::Flightdeck);
+        assert_eq!(walk(15, &t, &[], &programs(), 999, &look), Walk::Flightdeck);
         assert_eq!(walk(14, &t, &[], &programs(), 999, &look), Walk::Front, "the terminal's own shell stays the person's");
         // A space in the binary's path cuts the command line where ps splits it: the word after the program still counts.
-        look.exes.insert(13, "/Users/Sam Lee/.local/bin/cockpit");
-        look.args.insert(13, "/Users/Sam Lee/.local/bin/cockpit focus act:merge:https://github.com/acme/api/pull/4");
-        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Cockpit);
-        // The person's own cockpit commands stay theirs.
-        look.args.insert(13, "/Users/me/.config/cockpit/herdr/bin/cockpit hub act review send [] ");
+        look.exes.insert(13, "/Users/Sam Lee/.local/bin/flightdeck");
+        look.args.insert(13, "/Users/Sam Lee/.local/bin/flightdeck focus act:merge:https://github.com/acme/api/pull/4");
+        assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Flightdeck);
+        // The person's own flightdeck commands stay theirs.
+        look.args.insert(13, "/Users/me/.config/flightdeck/herdr/bin/flightdeck hub act review send [] ");
         assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Front, "a request the hub's own command line sends");
-        look.args.insert(13, "/Users/me/.config/cockpit/herdr/bin/cockpit agents answer w1:p1 1");
+        look.args.insert(13, "/Users/me/.config/flightdeck/herdr/bin/flightdeck agents answer w1:p1 1");
         assert_eq!(walk(13, &t, &[], &programs(), 999, &look), Walk::Front);
     }
 
     #[test]
     fn ssh_counts_from_another_machine_only() {
-        let t = table(&[(10, 1, "sshd"), (11, 10, "sshd-session"), (12, 11, "sshd-session"), (13, 12, "zsh"), (14, 13, "cockpit")]);
+        let t = table(&[(10, 1, "sshd"), (11, 10, "sshd-session"), (12, 11, "sshd-session"), (13, 12, "zsh"), (14, 13, "flightdeck")]);
         let mut look = Fake::default();
         look.exes.insert(10, "/usr/sbin/sshd");
         look.exes.insert(11, "/usr/libexec/sshd-session");
         look.exes.insert(12, "/usr/libexec/sshd-session");
-        assert_eq!(walk(14, &t, &[], &programs(), 999, &look), Walk::Ssh(None), "a client cockpit cannot read");
+        assert_eq!(walk(14, &t, &[], &programs(), 999, &look), Walk::Ssh(None), "a client flightdeck cannot read");
         look.ssh.insert(12, "127.0.0.1".parse().unwrap());
         assert_eq!(walk(14, &t, &[], &programs(), 999, &look), Walk::Ssh(Some("127.0.0.1".parse().unwrap())));
         look.ssh.insert(12, "192.0.2.7".parse().unwrap());
@@ -512,12 +519,12 @@ mod tests {
         let looped = table(&[(30, 31, "sh"), (31, 30, "sh")]);
         assert_eq!(walk(30, &looped, &[], &programs(), 999, &Fake::default()), Walk::Detached, "a cycle ends the walk, refused");
         assert_eq!(walk(12, &HashMap::new(), &[], &programs(), 999, &Fake::default()), Walk::Unlisted, "no table, nothing let through");
-        let orphan = table(&[(13, 12, "cockpit")]);
+        let orphan = table(&[(13, 12, "flightdeck")]);
         assert_eq!(walk(13, &orphan, &[], &programs(), 999, &Fake::default()), Walk::Detached, "a parent gone from the table ends the walk");
     }
 
     /// Set on this test binary run again as a stand-in parent.
-    const STAND_IN: &str = "COCKPIT_TEST_STAND_IN";
+    const STAND_IN: &str = "FLIGHTDECK_TEST_STAND_IN";
 
     /// A parent of a few seconds' sleep, when this binary runs as one: it writes the sleep's pid where STAND_IN says.
     #[test]
@@ -564,8 +571,8 @@ mod tests {
     }
 
     /// Set on this test binary run again to walk from a pid, with the result written where WALK_OUT says.
-    const WALK: &str = "COCKPIT_TEST_WALK";
-    const WALK_OUT: &str = "COCKPIT_TEST_WALK_OUT";
+    const WALK: &str = "FLIGHTDECK_TEST_WALK";
+    const WALK_OUT: &str = "FLIGHTDECK_TEST_WALK_OUT";
 
     /// A walk from WALK's pid in a process of its own, whose environment (its PATH) the test chose.
     #[test]
@@ -620,23 +627,23 @@ mod tests {
     }
 
     #[test]
-    fn real_cockpit_focus_act_and_setup_runs_are_cockpit_s_own_work() {
+    fn real_flightdeck_focus_act_and_setup_runs_are_flightdeck_s_own_work() {
         let dir = tempfile::tempdir().unwrap();
         for word in ["focus", "act", "setup-run"] {
             let folder = dir.path().join(word);
             std::fs::create_dir_all(&folder).unwrap();
-            let (pid, parent) = detached(&folder, "cockpit", Some(word));
+            let (pid, parent) = detached(&folder, "flightdeck", Some(word));
             let t = super::table();
-            assert_eq!(walk(pid, &t, &[], &programs(), 0, &System::default()), Walk::Cockpit, "what cockpit {word} runs");
-            assert_eq!(walk(parent, &t, &[], &programs(), 0, &System::default()), Walk::Cockpit, "cockpit {word} itself");
+            assert_eq!(walk(pid, &t, &[], &programs(), 0, &System::default()), Walk::Flightdeck, "what flightdeck {word} runs");
+            assert_eq!(walk(parent, &t, &[], &programs(), 0, &System::default()), Walk::Flightdeck, "flightdeck {word} itself");
             let _ = std::process::Command::new("kill").arg(pid.to_string()).status();
         }
-        // `cockpit show` is cockpit's work for what it runs, not for itself: the pane is the person's.
+        // `flightdeck show` is flightdeck's work for what it runs, not for itself: the pane is the person's.
         let show = dir.path().join("show");
         std::fs::create_dir_all(&show).unwrap();
-        let (pid, parent) = detached(&show, "cockpit", Some("show"));
+        let (pid, parent) = detached(&show, "flightdeck", Some("show"));
         let t = super::table();
-        assert_eq!(walk(pid, &t, &[], &programs(), 0, &System::default()), Walk::Cockpit);
+        assert_eq!(walk(pid, &t, &[], &programs(), 0, &System::default()), Walk::Flightdeck);
         assert_eq!(walk(parent, &t, &[], &programs(), 0, &System::default()), Walk::Detached, "detached here, so no front either");
         let _ = std::process::Command::new("kill").arg(pid.to_string()).status();
     }

@@ -1,4 +1,4 @@
-//! `cockpit mcp` spoken to over stdio, and `cockpit agents connect` on a fake HOME.
+//! `flightdeck mcp` spoken to over stdio, and `flightdeck agents connect` on a fake HOME.
 
 mod common;
 
@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use common::{Sandbox, executable, stdout};
 use serde_json::{Value, json};
 
-/// A running `cockpit mcp` with the sandbox's environment and these extra variables.
+/// A running `flightdeck mcp` with the sandbox's environment and these extra variables.
 struct Server {
     child: std::process::Child,
     out: BufReader<std::process::ChildStdout>,
@@ -18,7 +18,7 @@ struct Server {
 
 impl Server {
     fn start(sandbox: &Sandbox, extra: &[(&str, &str)]) -> Server {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_cockpit"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_flightdeck"))
             .arg("mcp")
             .env_clear()
             .envs(sandbox.env())
@@ -114,13 +114,13 @@ fn outside_herdr_the_view_is_written_without_a_pane() {
 #[test]
 fn a_runbook_step_is_reported_from_any_agent() {
     let sandbox = Sandbox::new();
-    let book = sandbox.home().join(".config/cockpit/runbooks/eng-412.md");
+    let book = sandbox.home().join(".config/flightdeck/runbooks/eng-412.md");
     sandbox.write(
-        "home/.config/cockpit/runbooks/eng-412.md",
+        "home/.config/flightdeck/runbooks/eng-412.md",
         "| # | Step | Where | Status | Command |\n|---|---|---|---|---|\n| 2 | Deploy | api | | `make deploy` |\n",
     );
     let handoff = json!({"id": "eng-412-2", "slug": "eng-412", "step": "2", "title": "Deploy", "path": book, "state": "sent", "sentAt": 1});
-    sandbox.write("home/.cache/cockpit/handoffs/eng-412-2.json", &handoff.to_string());
+    sandbox.write("home/.cache/flightdeck/handoffs/eng-412-2.json", &handoff.to_string());
     let mut server = Server::start(&sandbox, &[]);
     let said = server.ask("tools/call", json!({"name": "report_step", "arguments": {"handoff": "eng-412-2", "outcome": "blocked", "message": "no VPN"}}));
     assert_eq!(said["result"]["content"][0]["text"], "Recorded: step 2 of ENG-412 blocked; its runbook status now reads \"❌ blocked\".");
@@ -140,36 +140,36 @@ fn connect_writes_each_agents_own_config_and_disconnect_takes_it_out() {
         executable(&sandbox.root.join("bin").join(bin), "#!/bin/sh\n");
     }
     let fake_codex = sandbox.root.join("bin/codex");
-    let env = [("CODEX_HOME", codex_home.to_str().unwrap()), ("COCKPIT_CODEX", fake_codex.to_str().unwrap())];
-    let out = sandbox.cockpit(&["agents", "connect", "codex", "opencode"], &env);
+    let env = [("CODEX_HOME", codex_home.to_str().unwrap()), ("FLIGHTDECK_CODEX", fake_codex.to_str().unwrap())];
+    let out = sandbox.flightdeck(&["agents", "connect", "codex", "opencode"], &env);
     assert!(out.status.success(), "{}", common::stderr(&out));
     let said = stdout(&out);
-    assert!(said.contains("Codex has cockpit's tools in ") && said.contains("(backup "), "{said}");
-    let exe = std::fs::canonicalize(env!("CARGO_BIN_EXE_cockpit")).unwrap();
+    assert!(said.contains("Codex has flightdeck's tools in ") && said.contains("(backup "), "{said}");
+    let exe = std::fs::canonicalize(env!("CARGO_BIN_EXE_flightdeck")).unwrap();
     let written = std::fs::read_to_string(codex_home.join("config.toml")).unwrap();
     assert!(written.starts_with(toml), "{written}");
-    assert!(written.contains(&format!("[mcp_servers.cockpit]\ncommand = \"{}\"\nargs = [\"mcp\"]\nenv_vars = [", exe.display())), "{written}");
+    assert!(written.contains(&format!("[mcp_servers.flightdeck]\ncommand = \"{}\"\nargs = [\"mcp\"]\nenv_vars = [", exe.display())), "{written}");
     let opencode = std::fs::read_to_string(sandbox.home().join(".config/opencode/opencode.json")).unwrap();
     assert!(opencode.starts_with("{\n  // mine\n  \"theme\": \"dark\",\n  \"mcp\": {"), "{opencode}");
     assert!(
         std::fs::read_dir(sandbox.home().join(".config/opencode"))
             .unwrap()
             .flatten()
-            .any(|e| e.file_name().to_string_lossy().starts_with("opencode.json.bak-cockpit-"))
+            .any(|e| e.file_name().to_string_lossy().starts_with("opencode.json.bak-flightdeck-"))
     );
 
-    let again = stdout(&sandbox.cockpit(&["agents", "connect", "codex", "opencode"], &env));
-    assert!(again.contains("Codex already has cockpit's tools") && again.contains("opencode already has cockpit's tools"), "{again}");
-    let listed: Value = serde_json::from_str(&stdout(&sandbox.cockpit(&["agents", "connected"], &env))).unwrap();
+    let again = stdout(&sandbox.flightdeck(&["agents", "connect", "codex", "opencode"], &env));
+    assert!(again.contains("Codex already has flightdeck's tools") && again.contains("opencode already has flightdeck's tools"), "{again}");
+    let listed: Value = serde_json::from_str(&stdout(&sandbox.flightdeck(&["agents", "connected"], &env))).unwrap();
     let codex = listed.as_array().unwrap().iter().find(|t| t["id"] == "codex").unwrap();
     assert_eq!((codex["installed"].clone(), codex["connected"].clone()), (json!(true), json!(true)));
 
-    let out = sandbox.cockpit(&["agents", "disconnect", "codex", "opencode"], &env);
+    let out = sandbox.flightdeck(&["agents", "disconnect", "codex", "opencode"], &env);
     assert!(out.status.success(), "{}", common::stderr(&out));
     assert_eq!(std::fs::read_to_string(codex_home.join("config.toml")).unwrap(), toml);
     assert_eq!(std::fs::read_to_string(sandbox.home().join(".config/opencode/opencode.json")).unwrap(), jsonc);
 
-    let claude = sandbox.cockpit(&["agents", "connect", "claude"], &env);
+    let claude = sandbox.flightdeck(&["agents", "connect", "claude"], &env);
     assert!(!claude.status.success() && common::stderr(&claude).contains("plugin"));
 }
 
@@ -177,7 +177,7 @@ fn connect_writes_each_agents_own_config_and_disconnect_takes_it_out() {
 fn a_config_that_does_not_read_is_left_alone() {
     let sandbox = Sandbox::new();
     sandbox.write("home/.qwen/settings.json", "{ \"a\": }");
-    let out = sandbox.cockpit(&["agents", "connect", "qwen"], &[]);
+    let out = sandbox.flightdeck(&["agents", "connect", "qwen"], &[]);
     assert!(!out.status.success());
     assert!(common::stderr(&out).contains("does not read as the agent's config"), "{}", common::stderr(&out));
     assert_eq!(std::fs::read_to_string(sandbox.home().join(".qwen/settings.json")).unwrap(), "{ \"a\": }");
@@ -192,7 +192,7 @@ fn fake_server(sandbox: &Sandbox, name: &str, answers: Value) -> Value {
 }
 
 #[test]
-fn any_agent_reads_any_tool_through_cockpit() {
+fn any_agent_reads_any_tool_through_flightdeck() {
     let sandbox = Sandbox::new();
     let jira = fake_server(&sandbox, "jira", json!({"jira_issue": {"key": "ACME-7", "fields": {"summary": "Quota banner"}}}));
     let grafana = fake_server(
@@ -215,24 +215,25 @@ fn any_agent_reads_any_tool_through_cockpit() {
             "statuses": {"firing": "alert"},
             "queries": {"errors": "sum(errors{service=\"{service}\"})", "hits": "sum(hits{service=\"{service}\"})", "p95": "histogram_quantile(0.95, x)"}}
     });
-    sandbox.write("home/.config/cockpit/config.json", &config.to_string());
+    sandbox.write("home/.config/flightdeck/config.json", &config.to_string());
     let mut server = Server::start(&sandbox, &[]);
     let tools = server.ask("tools/list", json!({}));
     let names: Vec<&str> = tools["result"]["tools"].as_array().unwrap().iter().filter_map(|t| t["name"].as_str()).collect();
-    assert!(names.contains(&"cockpit_read") && names.contains(&"cockpit_health"), "{names:?}");
+    assert!(names.contains(&"flightdeck_read") && names.contains(&"flightdeck_health"), "{names:?}");
 
     let text = |answer: &Value| answer["result"]["content"][0]["text"].as_str().unwrap_or_default().to_string();
-    let read = server.ask("tools/call", json!({"name": "cockpit_read", "arguments": {"source": "tickets", "verb": "details", "values": {"ticket": "ACME-7"}}}));
+    let read =
+        server.ask("tools/call", json!({"name": "flightdeck_read", "arguments": {"source": "tickets", "verb": "details", "values": {"ticket": "ACME-7"}}}));
     assert_eq!(serde_json::from_str::<Value>(&text(&read)).unwrap()["fields"]["summary"], "Quota banner");
-    let refused = server.ask("tools/call", json!({"name": "cockpit_read", "arguments": {"source": "tickets", "verb": "setState"}}));
+    let refused = server.ask("tools/call", json!({"name": "flightdeck_read", "arguments": {"source": "tickets", "verb": "setState"}}));
     assert_eq!(refused["result"]["isError"], true);
 
-    let health = server.ask("tools/call", json!({"name": "cockpit_health", "arguments": {"service": "api", "from": "now-1h"}}));
+    let health = server.ask("tools/call", json!({"name": "flightdeck_health", "arguments": {"service": "api", "from": "now-1h"}}));
     let health: Value = serde_json::from_str(&text(&health)).unwrap();
     assert_eq!((&health["numbers"]["errors"].as_f64().map(|e| e > 0.0), &health["monitors"]["alert"]), (&Some(true), &json!(1)));
     assert_eq!(health["issues"][0]["id"], "API-1");
 
-    let rows = sandbox.cockpit(&["connector", "rows", r#"{"metrics": {"queries": ["sum(hits{service=\"api\"})"], "from": "now-1h"}}"#], &[]);
+    let rows = sandbox.flightdeck(&["connector", "rows", r#"{"metrics": {"queries": ["sum(hits{service=\"api\"})"], "from": "now-1h"}}"#], &[]);
     let rows: Value = serde_json::from_str(&stdout(&rows)).unwrap();
     assert_eq!(rows["columns"][0], "time");
     assert!(rows["rows"].as_array().is_some_and(|r| !r.is_empty()));

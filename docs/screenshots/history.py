@@ -6,19 +6,19 @@ import copy, json, os, subprocess, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.join(HERE, "home")
 APPS = os.path.join(HERE, "..", "..", "herdr")
-COCKPIT = os.path.join(APPS, "tui", "target", "release", "cockpit")
-CACHE = os.path.join(HOME, ".cache", "cockpit")
-env = {**os.environ, "HOME": HOME, "COCKPIT_HERDR_DIR": APPS, "HERDR_BIN_PATH": "/usr/bin/true", "COCKPIT_HUB_FEED": "off",
-       "COCKPIT_HUB_MODELS": "off", "COCKPIT_HUB_IDLE_SECS": "120"}
+FLIGHTDECK = os.path.join(APPS, "tui", "target", "release", "flightdeck")
+CACHE = os.path.join(HOME, ".cache", "flightdeck")
+env = {**os.environ, "HOME": HOME, "FLIGHTDECK_HERDR_DIR": APPS, "HERDR_BIN_PATH": "/usr/bin/true", "FLIGHTDECK_HUB_FEED": "off",
+       "FLIGHTDECK_HUB_MODELS": "off", "FLIGHTDECK_HUB_IDLE_SECS": "120"}
 
 # The search model, shared with this machine's when it has one, else downloaded by the hub's session index.
 models = os.path.join(CACHE, "models")
-mine = os.path.expanduser("~/.cache/cockpit/models/potion-base-8M")
+mine = os.path.expanduser("~/.cache/flightdeck/models/potion-base-8M")
 if os.path.isdir(mine) and not os.path.exists(os.path.join(models, "potion-base-8M")):
     os.makedirs(models, exist_ok=True)
     os.symlink(mine, os.path.join(models, "potion-base-8M"))
 
-subprocess.run(["pkill", "-f", f"{COCKPIT} hub"])
+subprocess.run(["pkill", "-f", f"{FLIGHTDECK} hub"])
 for name in ["store.redb", "hub.sock"]:
     if os.path.exists(os.path.join(CACHE, name)):
         os.remove(os.path.join(CACHE, name))
@@ -44,14 +44,14 @@ api["issues"] = []
 def put(doc, value):
     path = os.path.join(CACHE, f"history-{doc}.json")
     json.dump(value, open(path, "w"))
-    subprocess.run([COCKPIT, "store", "put", doc, path], env=env, stdout=subprocess.DEVNULL, check=True)
+    subprocess.run([FLIGHTDECK, "store", "put", doc, path], env=env, stdout=subprocess.DEVNULL, check=True)
 
 
 for doc, old, new in [("inbox", before, now), ("monitor", monitor_before, monitor_now)]:
     put(doc, old)
     time.sleep(0.05)
     put(doc, new)
-events = json.loads(subprocess.run([COCKPIT, "events", "--since", "1d"], env=env, capture_output=True, text=True).stdout)["events"]
+events = json.loads(subprocess.run([FLIGHTDECK, "events", "--since", "1d"], env=env, capture_output=True, text=True).stdout)["events"]
 print(len(events), "events:", *[e["title"] for e in events], sep="\n  ")
 
 # You last looked two hours ago, so the apps mark what changed since.

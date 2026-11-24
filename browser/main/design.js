@@ -222,7 +222,7 @@ export class Design {
       if (sending?.kept) this.clear(owner, { files: false });
       return { ok: true };
     }
-    dialog.showMessageBox(this.shell.window.win, { type: "warning", message: "The agent did not get it", detail: String(error || "cockpit could not send it."), buttons: ["OK"] });
+    dialog.showMessageBox(this.shell.window.win, { type: "warning", message: "The agent did not get it", detail: String(error || "flightdeck could not send it."), buttons: ["OK"] });
     return { ok: false };
   }
 

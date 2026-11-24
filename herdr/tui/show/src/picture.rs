@@ -15,7 +15,7 @@ use ratatui_image::picker::Picker;
 use ratatui_image::sliced::SlicedProtocol;
 use serde_json::Value;
 
-use cockpit_core::theme::{DIM, FG, ORANGE, bold, dim, fg};
+use flightdeck_core::theme::{DIM, FG, ORANGE, bold, dim, fg};
 
 use crate::chart;
 use crate::compare::{self, Pair};
@@ -73,7 +73,7 @@ fn encode(picker: &Picker, image: DynamicImage, size: Size) -> Result<SlicedProt
 }
 
 /// The job drawn and encoded for the terminal here too, since Kitty's deflate takes a while.
-/// The block's key for `COCKPIT_SHOT_DIR`: the README's screenshot script lays each picture, saved there, over the cells
+/// The block's key for `FLIGHTDECK_SHOT_DIR`: the README's screenshot script lays each picture, saved there, over the cells
 /// its block holds, since a captured terminal keeps no images.
 pub fn shot_key(block: &Value) -> String {
     use std::hash::{Hash, Hasher};
@@ -85,7 +85,7 @@ pub fn shot_key(block: &Value) -> String {
 pub fn draw(job: Job, picker: &Picker) -> Result<Drawn, String> {
     let _turn = DRAWING.lock().unwrap_or_else(PoisonError::into_inner);
     let (cols, font) = (job.cols, picker.font_size());
-    let shots = std::env::var("COCKPIT_SHOT_DIR").ok();
+    let shots = std::env::var("FLIGHTDECK_SHOT_DIR").ok();
     let key = shot_key(&job.block);
     let still = |image: DynamicImage, size: Size, geometry: Option<Geometry>, pair: Option<Pair>| -> Result<Drawn, String> {
         if let Some(dir) = &shots {
@@ -267,7 +267,7 @@ impl Picture {
             if t >= 1.0 {
                 (self.glide, self.stale) = (None, true);
             } else if self.drew_at.is_none_or(|d| d.elapsed() >= FRAME) {
-                let eased = f64::from(cockpit_core::anim::out_cubic(t as f32));
+                let eased = f64::from(flightdeck_core::anim::out_cubic(t as f32));
                 block = chart::between(&chart::windowed(from, self.zoom), &block, eased, self.draw == Draw::Bar);
                 self.stale = true;
             }
@@ -504,7 +504,7 @@ mod tests {
 
     #[test]
     fn a_gif_keeps_every_frame_and_its_delay() {
-        let path = std::env::temp_dir().join(format!("cockpit-show-{}.gif", std::process::id()));
+        let path = std::env::temp_dir().join(format!("flightdeck-show-{}.gif", std::process::id()));
         let mut gif = GifEncoder::new(std::fs::File::create(&path).unwrap());
         for (shade, ms) in [(0, 150), (128, 0), (255, 300)] {
             let frame = RgbaImage::from_pixel(40, 20, Rgba([shade, shade, shade, 255]));

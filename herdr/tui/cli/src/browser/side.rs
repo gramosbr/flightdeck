@@ -1,10 +1,10 @@
-//! `cockpit browse` on the Chromium side browser: the same commands as with terminal-browser, answered by the shell.
+//! `flightdeck browse` on the Chromium side browser: the same commands as with terminal-browser, answered by the shell.
 //! A browser belongs to the session it was opened for, named by its Herdr app terminal (`app:t3`): a page is opened
 //! through the hub, which starts the shell; the rest reads the running shell.
 
 use std::time::Duration;
 
-use cockpit_core::{browser, frontend};
+use flightdeck_core::{browser, frontend};
 use serde_json::{Value, json};
 
 use super::agent::{self, Tabs};
@@ -57,14 +57,14 @@ pub fn open(url: &str, session: Option<&str>, reload: bool) -> Result<(), String
     let cwd = std::env::current_dir().unwrap_or_default();
     let request =
         json!({"op": "act", "app": "browser", "action": "open", "args": [{"url": url, "owner": owner, "session": session, "cwd": cwd, "reload": reload}]});
-    let answer = cockpit_core::hub::request(&request, Duration::from_secs(40))?;
+    let answer = flightdeck_core::hub::request(&request, Duration::from_secs(40))?;
     match answer["error"].as_str() {
         Some(why) => Err(why.to_string()),
         None => Ok(()),
     }
 }
 
-/// `cockpit browse action [-- ] <agent-browser command>`: the command on the active tab of the session's browser.
+/// `flightdeck browse action [-- ] <agent-browser command>`: the command on the active tab of the session's browser.
 pub fn action(command: &[String], session: Option<&str>) -> ! {
     if command.is_empty() || command == ["done"] {
         std::process::exit(0);

@@ -15,7 +15,7 @@ pub struct Doc {
     pub apps: Vec<App>,
     /// How fresh the monitor's numbers are, when the hub reads them.
     #[serde(skip)]
-    pub sources: Vec<cockpit_core::header::Source>,
+    pub sources: Vec<flightdeck_core::header::Source>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -168,7 +168,7 @@ impl Doc {
     /// The document, or None when it does not read as one.
     pub fn parse(value: &Value) -> Option<Doc> {
         let mut doc: Doc = serde_json::from_value(value.clone()).ok()?;
-        doc.sources = cockpit_core::header::sources(&[value]);
+        doc.sources = flightdeck_core::header::sources(&[value]);
         Some(doc)
     }
 

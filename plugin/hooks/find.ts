@@ -5,16 +5,16 @@ import { MCP } from './tools'
 
 type $ = EngineInterface
 
-// Two tools over the hub: the palette's search across cockpit, and what changed in its shared data. Each runs the
-// `cockpit` CLI through cockpit.sh and hands back its JSON as is.
-const SEARCH = MCP.tools.cockpit_search
-const CHANGES = MCP.tools.cockpit_changes
-const READ = MCP.tools.cockpit_read
-const HEALTH = MCP.tools.cockpit_health
+// Two tools over the hub: the palette's search across flightdeck, and what changed in its shared data. Each runs the
+// `flightdeck` CLI through flightdeck.sh and hands back its JSON as is.
+const SEARCH = MCP.tools.flightdeck_search
+const CHANGES = MCP.tools.flightdeck_changes
+const READ = MCP.tools.flightdeck_read
+const HEALTH = MCP.tools.flightdeck_health
 export const SEARCH_TOOL = SEARCH.name
-export const SEARCH_TOOL_FULL = `mcp__cockpit__${SEARCH_TOOL}` as const
+export const SEARCH_TOOL_FULL = `mcp__flightdeck__${SEARCH_TOOL}` as const
 export const CHANGES_TOOL = CHANGES.name
-export const CHANGES_TOOL_FULL = `mcp__cockpit__${CHANGES_TOOL}` as const
+export const CHANGES_TOOL_FULL = `mcp__flightdeck__${CHANGES_TOOL}` as const
 
 const APPS = CHANGES.inputSchema.properties.app.enum
 
@@ -22,9 +22,9 @@ export const SEARCH_SPEC = { name: SEARCH.name, description: SEARCH.description.
 
 export const CHANGES_SPEC = { name: CHANGES.name, description: CHANGES.description.join(''), inputSchema: CHANGES.inputSchema, isDeferred: false }
 
-// Reads from the person's tools through cockpit's own servers, for any agent and any tool.
-export const READ_TOOL_FULL = `mcp__cockpit__${READ.name}` as const
-export const HEALTH_TOOL_FULL = `mcp__cockpit__${HEALTH.name}` as const
+// Reads from the person's tools through flightdeck's own servers, for any agent and any tool.
+export const READ_TOOL_FULL = `mcp__flightdeck__${READ.name}` as const
+export const HEALTH_TOOL_FULL = `mcp__flightdeck__${HEALTH.name}` as const
 export const READ_SPEC = { name: READ.name, description: READ.description.join(''), inputSchema: READ.inputSchema, isDeferred: true }
 export const HEALTH_SPEC = { name: HEALTH.name, description: HEALTH.description.join(''), inputSchema: HEALTH.inputSchema, isDeferred: true }
 
@@ -71,9 +71,9 @@ export function changesArgs(input: Record<string, unknown>): string[] | string {
 export async function find($: $, input: Record<string, unknown>, argsOf: (input: Record<string, unknown>) => string[] | string) {
   const args = argsOf(input)
   if (typeof args === 'string') return { deny: args }
-  const command = `${await home($)}/.config/cockpit/herdr/cockpit.sh`
+  const command = `${await home($)}/.config/flightdeck/herdr/flightdeck.sh`
   const { exitCode, stdout, stderr } = await $.process.run(['sh', command, ...args], { timeoutMs: 60_000 })
-  // cockpit.sh says nothing when the plugin has no binary yet: /cockpit:doctor tells why.
-  if (exitCode !== 0 || stdout.trim() === '') return { deny: stderr.trim() || `cockpit ${args[0]}: no cockpit binary; run /cockpit:doctor` }
+  // flightdeck.sh says nothing when the plugin has no binary yet: /flightdeck:doctor tells why.
+  if (exitCode !== 0 || stdout.trim() === '') return { deny: stderr.trim() || `flightdeck ${args[0]}: no flightdeck binary; run /flightdeck:doctor` }
   return { result: stdout.trim() }
 }

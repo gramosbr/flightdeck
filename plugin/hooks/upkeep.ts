@@ -7,7 +7,7 @@ import { withLease } from './store'
 
 type $ = EngineInterface
 
-const REPO = 'quaresc/cockpit'
+const REPO = 'gramosbr/flightdeck'
 const UPDATE_EVERY_MS = 6 * 3600_000
 
 // Read once and kept: after an update the manifest on disk is the new version, while this session still runs the
@@ -22,7 +22,7 @@ export async function ownVersion($: $) {
   return loaded
 }
 
-// One file per running session, so /cockpit:doctor can tell which sessions run which version, and which run none.
+// One file per running session, so /flightdeck:doctor can tell which sessions run which version, and which run none.
 const BEAT_GONE_MS = 10 * 60_000
 let prunedAt = 0
 
@@ -64,10 +64,10 @@ export async function checkUpdate($: $) {
     const latest = exitCode === 0 ? (JSON.parse(stdout) as { version?: string }).version : undefined
     const next = afterLook(state, latest, Date.now())
     const current = await ownVersion($)
-    const hasLink = await $.fs.stat(`${await home($)}/.config/cockpit/herdr/update.sh`).then(() => true, () => false)
+    const hasLink = await $.fs.stat(`${await home($)}/.config/flightdeck/herdr/update.sh`).then(() => true, () => false)
     if (latest && isNewer(latest, current) && state.notified !== latest) {
-      const how = hasLink ? 'Click to update the Herdr app and TUI, then reload idle sessions.' : 'Run /plugin update cockpit@cockpit.'
-      await notify($, `⬆️ Cockpit ${latest}`, `You run ${current}. ${how}`, hasLink ? 'update' : `https://github.com/${REPO}`)
+      const how = hasLink ? 'Click to update the Herdr app and TUI, then reload idle sessions.' : 'Run /plugin update flightdeck@flightdeck.'
+      await notify($, `⬆️ Flightdeck ${latest}`, `You run ${current}. ${how}`, hasLink ? 'update' : `https://github.com/${REPO}`)
       next.notified = latest
     }
     await $.fs.write(path, JSON.stringify(next))

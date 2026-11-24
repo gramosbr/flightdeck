@@ -32,9 +32,9 @@ pub(crate) fn root(l: &Live, session: Option<&str>) -> Option<u32> {
         return got["pid"].as_u64().map(|p| p as u32);
     }
     let session = session.filter(|_| l.agent == "claude")?;
-    let dir = cockpit_core::transcripts::claude_home().join("sessions");
+    let dir = flightdeck_core::transcripts::claude_home().join("sessions");
     std::fs::read_dir(dir).into_iter().flatten().flatten().find_map(|e| {
-        let v = cockpit_core::files::load(&e.path())?;
+        let v = flightdeck_core::files::load(&e.path())?;
         (v["sessionId"].as_str() == Some(session)).then(|| v["pid"].as_u64().map(|p| p as u32)).flatten()
     })
 }

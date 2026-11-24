@@ -1,4 +1,4 @@
-//! A row a focus request brought into view (`cockpit focus`, a notification, a palette jump): any process can ask for one,
+//! A row a focus request brought into view (`flightdeck focus`, a notification, a palette jump): any process can ask for one,
 //! so the keys that act on that row wait until the person moves to it or clicks.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};

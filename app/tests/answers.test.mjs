@@ -4,14 +4,14 @@ import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
 // The mod loaded in a VM with Herdr's natives stubbed: `shown` is the screen in front, `acts` every hub action sent.
-async function fixture({ layout = "cockpit-chat", shown = null, answers = {}, down = false } = {}) {
+async function fixture({ layout = "flightdeck-chat", shown = null, answers = {}, down = false } = {}) {
   const acts = [], notices = [], calls = [], overlays = [];
-  const shared = { layout, "cockpit.app": shown };
+  const shared = { layout, "flightdeck.app": shown };
   // The shown layout as Herdr gives it: the screens' stack with its active child (the reading layout's agent screen
   // holds a stack of its own).
   const tree = () => {
-    const now = shared["cockpit.app"];
-    if (shared.layout === "cockpit-chat") {
+    const now = shared["flightdeck.app"];
+    if (shared.layout === "flightdeck-chat") {
       const inner = now === "chat" || now === "tab";
       return { id: "root", children: [{ id: "screen", type: "stack", active: inner ? "work" : now, children: [{ id: "work", children: [{ id: "view", type: "stack", active: inner ? now : "chat", children: [] }] }] }] };
     }
@@ -41,7 +41,7 @@ async function fixture({ layout = "cockpit-chat", shown = null, answers = {}, do
     },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -150,7 +150,7 @@ test("a choice that runs every tool unasked is confirmed only from the step its 
   await settled();
   assert.equal(acts.length, 1, "the menu's own key, used once");
   assert.deepEqual(plain(acts[0].args[0]), { terminal: "app:t42", choice: 3, asked: "fedcba9876543210", confirm: true, source: "needs:confirm" });
-  // A permission cockpit cannot show in full is answered in its terminal, in the hub's words.
+  // A permission flightdeck cannot show in full is answered in its terminal, in the hub's words.
   const cut = { ...full, terminal: "app:t43", question: { ...full.question, unasked: [], cut: true, terminal_only: "Part of what it would run is off its screen: answer it in its terminal" } };
   model.answer(cx, cut, 1);
   await settled();
@@ -167,7 +167,7 @@ test("a hub that does not answer allows nothing and says so", async () => {
   await settled();
   assert.equal(acts.length, 1, "one try, never repeated");
   assert.equal(notices.length, 1);
-  assert.equal(notices[0].title, "The cockpit hub did not answer");
+  assert.equal(notices[0].title, "The flightdeck hub did not answer");
   assert.equal(model.busy.size, 0, "the card is free again, still asking");
 });
 
@@ -220,7 +220,7 @@ test("Home's keys answer nothing while another screen is in front", async () => 
 });
 
 test("Home answers a driven session by its own handle", async () => {
-  const { mod, acts } = await fixture({ layout: "cockpit", shown: "home" });
+  const { mod, acts } = await fixture({ layout: "flightdeck", shown: "home" });
   const [agent] = mod.fleet({ agents: [driven] }, {});
   assert.equal(agent.handle, "claude:demo-421");
   const home = Object.create(mod.Home.prototype);
@@ -254,12 +254,12 @@ test("a mode that runs tools without asking waits for a yes about its own sessio
   await settled();
   assert.deepEqual(plain(acts.map((a) => [a.action, a.args[0]])), [["mode", { key: "claude:demo-421", mode: "bypassPermissions", confirm: true }]], "the yes goes to the session it was asked about");
   chat.sessions = { session };
-  shared["cockpit.app"] = "tab";
+  shared["flightdeck.app"] = "tab";
   chat.command("chat:mode", cx);
   chat.command("chat:stop", cx);
   await settled();
   assert.equal(acts.length, 1, "with a terminal in front, ⇧⇥ and ⎋ leave the session alone");
-  shared["cockpit.app"] = "chat";
+  shared["flightdeck.app"] = "chat";
   chat.command("chat:mode", cx);
   chat.command("chat:stop", cx);
   await settled();
@@ -296,16 +296,16 @@ test("a mode that runs tools without asking waits for a yes about its own sessio
 });
 
 test("a plan opens in the side panel of its session, and its card names it in one line", async () => {
-  const { mod, calls, shared } = await fixture({ layout: "cockpit" });
+  const { mod, calls, shared } = await fixture({ layout: "flightdeck" });
   assert.equal(mod.planTitle("Intro line\n\n## Must-have **fixes**\n\n1. One"), "Must-have fixes");
   assert.equal(mod.planTitle(""), "");
   assert.equal(mod.planNumber("plan-9d2e0000-12"), 12);
   assert.equal(mod.planNumber(null), null);
   mod.openPlan({ terminal: "app:t41", address: "t41" }, "plan-9d2e0000-2");
-  const pending = shared["cockpit.show.pending"];
+  const pending = shared["flightdeck.show.pending"];
   assert.deepEqual([pending.terminal, pending.name], ["t41", "plan-9d2e0000-2"], "the panel opens on it once it follows the agent");
   assert.equal(JSON.stringify(calls.find((c) => c[0] === "agent.focus")), JSON.stringify(["agent.focus", { terminal: "t41" }]));
-  assert.equal(JSON.stringify(calls.at(-1)), JSON.stringify(["cockpit.doc:plan-9d2e0000-2"]));
+  assert.equal(JSON.stringify(calls.at(-1)), JSON.stringify(["flightdeck.doc:plan-9d2e0000-2"]));
   const q = mod.questionOf({ question: { text: "Proceed?", kind: "single", permission: true, markdown: true, view: "plan-9d2e0000-2", preview: "# P", choices: [] } });
   assert.equal(q.view, "plan-9d2e0000-2");
 });

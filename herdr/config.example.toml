@@ -1,5 +1,5 @@
-# Cockpit's part of ~/.config/herdr/config.toml, merged by /cockpit:setup; keys already set in your config keep your value.
-# ~/.config/cockpit/herdr is a link the plugin keeps on its current install folder.
+# Flightdeck's part of ~/.config/herdr/config.toml, merged by /flightdeck:setup; keys already set in your config keep your value.
+# ~/.config/flightdeck/herdr is a link the plugin keeps on its current install folder.
 
 [ui]
 # One agent per space: the tab row only appears in a space holding several tabs.
@@ -8,12 +8,12 @@ sidebar_width = 34
 # Attention queue: blocked and finished agents float to the top of the agent panel.
 agent_panel_sort = "priority"
 
-# Cockpit sends the system notifications itself, with its icon and a click that leads somewhere useful;
+# Flightdeck sends the system notifications itself, with its icon and a click that leads somewhere useful;
 # herdr keeps its own as in-app toasts so none arrives twice.
 [ui.toast]
 delivery = "herdr"
 
-# Spaces: the pinned ones by name, then the counts cockpit reports on the inbox space and the app spaces.
+# Spaces: the pinned ones by name, then the counts flightdeck reports on the inbox space and the app spaces.
 [ui.sidebar.spaces]
 rows = [
   # Only the pinned spaces, labelled "<icon>  <name>" (the two spaces tell them); agent spaces render blank, the agent panel below lists them.
@@ -73,108 +73,108 @@ claude = [
   [{ token = "$clash", fg = "#FF8080", bold = true }],
 ]
 
-# The palette over the pane in view: every app's items, the week's events, past sessions and cockpit's commands; over a
+# The palette over the pane in view: every app's items, the week's events, past sessions and flightdeck's commands; over a
 # Claude session, a found item can go into it.
 [[keys.command]]
 key = "prefix+space"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/palette.sh"
-description = "cockpit palette"
+command = "sh ~/.config/flightdeck/herdr/palette.sh"
+description = "flightdeck palette"
 
 # Every agent: who needs you, answered from the popup, with recap, go and snooze.
 [[keys.command]]
 key = "prefix+shift+a"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/popup.sh agents"
+command = "sh ~/.config/flightdeck/herdr/popup.sh agents"
 description = "agents"
 
 # The prompt queue of the agent in view: follow-ups sent once it is free.
 [[keys.command]]
 key = "prefix+shift+q"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/popup.sh queue"
+command = "sh ~/.config/flightdeck/herdr/popup.sh queue"
 description = "prompt queue"
 
 # Start work: a prompt, a ticket's key or a PR's URL becomes a worktree, a space and an agent, planned before Enter.
 [[keys.command]]
 key = "prefix+shift+s"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/popup.sh start-work"
+command = "sh ~/.config/flightdeck/herdr/popup.sh start-work"
 description = "start work"
 
 # The agents a restart stopped, resumed where they were.
 [[keys.command]]
 key = "prefix+shift+u"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/cockpit.sh resume all"
+command = "sh ~/.config/flightdeck/herdr/flightdeck.sh resume all"
 description = "resume agents"
 
 # The page of the terminal-browser beside the focused pane, in the default browser.
 [[keys.command]]
 key = "prefix+f"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/browse.sh --external"
+command = "sh ~/.config/flightdeck/herdr/browse.sh --external"
 description = "page beside, in the default browser"
 
 # Jump to the pinned spaces.
 [[keys.command]]
 key = "prefix+i"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh inbox"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh inbox"
 description = "inbox space"
 
 [[keys.command]]
 key = "prefix+t"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh terminal"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh terminal"
 description = "terminal space"
 
 [[keys.command]]
 key = "prefix+a"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh actions"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh actions"
 description = "actions space"
 
 [[keys.command]]
 key = "prefix+d"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh to-do"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh to-do"
 description = "to-do space"
 
 [[keys.command]]
 key = "prefix+u"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh runbook"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh runbook"
 description = "runbook space"
 
 [[keys.command]]
 key = "prefix+m"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh meetings"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh meetings"
 description = "meetings space"
 
 [[keys.command]]
 key = "prefix+o"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh monitor"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh monitor"
 description = "monitor space"
 
 [[keys.command]]
 key = "prefix+y"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh routines"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh routines"
 description = "routines space"
 
 # The review space, when pinned: an agent's changes commented line by line and sent back to it.
 [[keys.command]]
 key = "prefix+shift+c"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh review"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh review"
 description = "review space"
 
 # prefix+e is herdr's edit_scrollback, so mail takes prefix+shift+e.
 [[keys.command]]
 key = "prefix+shift+e"
 type = "shell"
-command = "sh ~/.config/cockpit/herdr/focus-space.sh mail"
+command = "sh ~/.config/flightdeck/herdr/focus-space.sh mail"
 description = "mail space"

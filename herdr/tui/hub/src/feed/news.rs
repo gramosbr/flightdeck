@@ -157,7 +157,7 @@ pub(crate) fn notify(config: &Config, title: &str, body: &str, action: &str, but
         return;
     }
     let buttons: Vec<String> = buttons.iter().map(|(label, target)| format!("{label}={target}")).collect();
-    cockpit_core::notify::post(title, body, action, &buttons);
+    flightdeck_core::notify::post(title, body, action, &buttons);
 }
 
 #[cfg(test)]

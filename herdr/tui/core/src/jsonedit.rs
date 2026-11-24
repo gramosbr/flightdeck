@@ -294,7 +294,7 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    const SERVER: &str = "cockpit";
+    const SERVER: &str = "flightdeck";
 
     #[test]
     fn a_member_joins_an_object_as_its_last_line() {
@@ -302,7 +302,7 @@ mod tests {
         let done = set(text, &["mcpServers"], SERVER, &json!({"command": "/c", "args": ["mcp"]})).unwrap();
         assert_eq!(
             done,
-            "{\n    \"theme\": \"dark\", // mine\n    \"mcpServers\": {\n        \"other\": {\"command\": \"x\"},\n        \"cockpit\": {\n            \"args\": [\n                \"mcp\"\n            ],\n            \"command\": \"/c\"\n        }\n    }\n}\n"
+            "{\n    \"theme\": \"dark\", // mine\n    \"mcpServers\": {\n        \"other\": {\"command\": \"x\"},\n        \"flightdeck\": {\n            \"args\": [\n                \"mcp\"\n            ],\n            \"command\": \"/c\"\n        }\n    }\n}\n"
         );
         assert_eq!(plain(&done).unwrap()["mcpServers"]["other"], json!({"command": "x"}));
         // Again: the same text, the member replaced in place.
@@ -314,9 +314,9 @@ mod tests {
     fn a_missing_object_is_made() {
         let text = "{\n  \"model\": \"o3\"\n}\n";
         let done = set(text, &["mcp"], SERVER, &json!({"type": "local"})).unwrap();
-        assert_eq!(done, "{\n  \"model\": \"o3\",\n  \"mcp\": {\n    \"cockpit\": {\n      \"type\": \"local\"\n    }\n  }\n}\n");
-        assert_eq!(set("", &["mcpServers"], SERVER, &json!(1)).unwrap(), "{\n  \"mcpServers\": {\n    \"cockpit\": 1\n  }\n}\n");
-        assert_eq!(set("{}", &["mcpServers"], SERVER, &json!(1)).unwrap(), "{\n  \"mcpServers\": {\n    \"cockpit\": 1\n  }\n}");
+        assert_eq!(done, "{\n  \"model\": \"o3\",\n  \"mcp\": {\n    \"flightdeck\": {\n      \"type\": \"local\"\n    }\n  }\n}\n");
+        assert_eq!(set("", &["mcpServers"], SERVER, &json!(1)).unwrap(), "{\n  \"mcpServers\": {\n    \"flightdeck\": 1\n  }\n}\n");
+        assert_eq!(set("{}", &["mcpServers"], SERVER, &json!(1)).unwrap(), "{\n  \"mcpServers\": {\n    \"flightdeck\": 1\n  }\n}");
         assert_eq!(get(&done, &["mcp"], SERVER).unwrap(), Some(json!({"type": "local"})));
         assert_eq!(get(text, &["mcp"], SERVER).unwrap(), None);
     }
@@ -325,16 +325,16 @@ mod tests {
     fn jsonc_keeps_its_comments_and_trailing_commas() {
         let text = "// global\n{\n  \"mcp\": {\n    /* a */ \"a\": {\"enabled\": true},\n  },\n}\n";
         let done = set(text, &["mcp"], SERVER, &json!(true)).unwrap();
-        assert_eq!(done, "// global\n{\n  \"mcp\": {\n    /* a */ \"a\": {\"enabled\": true},\n    \"cockpit\": true,\n  },\n}\n");
-        assert_eq!(plain(&done).unwrap(), json!({"mcp": {"a": {"enabled": true}, "cockpit": true}}));
+        assert_eq!(done, "// global\n{\n  \"mcp\": {\n    /* a */ \"a\": {\"enabled\": true},\n    \"flightdeck\": true,\n  },\n}\n");
+        assert_eq!(plain(&done).unwrap(), json!({"mcp": {"a": {"enabled": true}, "flightdeck": true}}));
         assert_eq!(remove(&done, &["mcp"], SERVER).unwrap().unwrap(), text);
     }
 
     #[test]
     fn removing_the_first_or_only_member_leaves_valid_json() {
-        let text = "{\"mcpServers\": {\"cockpit\": {}, \"b\": 2}}";
+        let text = "{\"mcpServers\": {\"flightdeck\": {}, \"b\": 2}}";
         assert_eq!(remove(text, &["mcpServers"], SERVER).unwrap().unwrap(), "{\"mcpServers\": {\"b\": 2}}");
-        let only = "{\"mcpServers\": {\n  \"cockpit\": {}\n}}";
+        let only = "{\"mcpServers\": {\n  \"flightdeck\": {}\n}}";
         assert_eq!(remove(only, &["mcpServers"], SERVER).unwrap().unwrap(), "{\"mcpServers\": {}}");
         assert_eq!(remove("{\"a\": 1}", &["mcpServers"], SERVER).unwrap(), None);
         assert!(set("[1]", &["mcpServers"], SERVER, &json!(1)).is_err());

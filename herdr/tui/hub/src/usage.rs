@@ -5,8 +5,8 @@
 use std::sync::Mutex;
 use std::time::Duration;
 
-use cockpit_core::seen::now_ms;
-use cockpit_core::usage;
+use flightdeck_core::seen::now_ms;
+use flightdeck_core::usage;
 use serde_json::{Value, json};
 
 /// How often the sources are read again: a new reading reaches the views and the token within this.
@@ -18,7 +18,7 @@ const RESEND: u64 = 5 * 60_000;
 /// herdr drops the token this long after its last send, in ms: a hub that dies leaves no reading behind for long.
 const TTL: u64 = 2 * RESEND + 60_000;
 /// The source herdr's token goes by: the same as the inbox space's other counts.
-const SOURCE: &str = "cockpit";
+const SOURCE: &str = "flightdeck";
 
 pub fn start() {
     std::thread::spawn(|| {
@@ -84,10 +84,10 @@ fn last() -> std::sync::MutexGuard<'static, Option<(Option<String>, u64)>> {
 }
 
 /// The herdr TUI's `$limits` token on the inbox space's row: sent on the first call whatever it is (clearing one an
-/// earlier hub left), then when it changes and now and then. None in the Herdr app alone, or with COCKPIT_HUB_LIMITS=off.
+/// earlier hub left), then when it changes and now and then. None in the Herdr app alone, or with FLIGHTDECK_HUB_LIMITS=off.
 fn report(text: Option<&str>, now: u64) {
-    let app_only = cockpit_core::files::config()["frontend"] == "app" || std::env::var("COCKPIT_FRONTEND").is_ok_and(|f| f == "app");
-    if app_only || std::env::var("COCKPIT_HUB_LIMITS").is_ok_and(|v| v == "off") {
+    let app_only = flightdeck_core::files::config()["frontend"] == "app" || std::env::var("FLIGHTDECK_FRONTEND").is_ok_and(|f| f == "app");
+    if app_only || std::env::var("FLIGHTDECK_HUB_LIMITS").is_ok_and(|v| v == "off") {
         return;
     }
     let due = match last().as_ref() {
@@ -102,7 +102,7 @@ fn report(text: Option<&str>, now: u64) {
 /// The token cleared as the hub leaves, so no reading outlives the hub that kept it current: only while hub.json still
 /// names this hub (a newer one owns it otherwise), and with herdr given two seconds a call.
 pub fn stand_down() {
-    let ours = cockpit_core::files::load(&crate::tcp_file()).is_some_and(|v| v["pid"] == std::process::id());
+    let ours = flightdeck_core::files::load(&crate::tcp_file()).is_some_and(|v| v["pid"] == std::process::id());
     if ours && last().as_ref().is_some_and(|(sent, _)| sent.is_some()) {
         send_within(None, Duration::from_secs(2));
     }

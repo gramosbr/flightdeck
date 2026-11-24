@@ -29,10 +29,10 @@ fn tcp_on_an_explicit_interface_authenticates_and_streams_inbox_updates() {
     use std::net::TcpStream;
 
     let sandbox = sandbox();
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_LISTEN", "::1")]);
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_LISTEN", "::1")]);
     let started = Instant::now();
     let info: Value = loop {
-        if let Ok(text) = std::fs::read_to_string(sandbox.home().join(".cache/cockpit/hub.json")) {
+        if let Ok(text) = std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/hub.json")) {
             break serde_json::from_str(&text).unwrap();
         }
         assert!(started.elapsed() < Duration::from_secs(5), "no TCP discovery file");
@@ -78,7 +78,7 @@ fn an_idle_subscription_hears_from_the_hub_before_a_herdr_read_gives_up() {
     hub.request(&json!({"op": "ping"}));
     let started = Instant::now();
     let info: Value = loop {
-        if let Ok(text) = std::fs::read_to_string(sandbox.home().join(".cache/cockpit/hub.json")) {
+        if let Ok(text) = std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/hub.json")) {
             break serde_json::from_str(&text).unwrap();
         }
         assert!(started.elapsed() < Duration::from_secs(5), "no TCP discovery file");
@@ -103,10 +103,10 @@ fn an_idle_subscription_hears_from_the_hub_before_a_herdr_read_gives_up() {
 fn a_listen_address_that_cannot_be_bound_leaves_no_hub_behind() {
     let sandbox = sandbox();
     // TEST-NET-1: routable nowhere and assigned to no interface.
-    let mut child = common::hub_command(&sandbox).envs([("COCKPIT_HUB_LISTEN", "192.0.2.1")]).spawn().unwrap();
+    let mut child = common::hub_command(&sandbox).envs([("FLIGHTDECK_HUB_LISTEN", "192.0.2.1")]).spawn().unwrap();
     assert!(child.wait().unwrap().success(), "the hub says why on stderr rather than failing");
     assert!(!sandbox.socket().exists(), "a hub that cannot listen must not take the socket a working one holds");
-    assert!(!sandbox.home().join(".cache/cockpit/hub.json").exists());
+    assert!(!sandbox.home().join(".cache/flightdeck/hub.json").exists());
 }
 
 #[test]
@@ -146,7 +146,7 @@ fn a_stale_socket_is_taken_over() {
 #[test]
 fn exits_when_idle() {
     let sandbox = sandbox();
-    let mut hub = Hub::start(&sandbox, &[("COCKPIT_HUB_IDLE_SECS", "2")]);
+    let mut hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_IDLE_SECS", "2")]);
     let start = Instant::now();
     while hub.is_running() && start.elapsed() < Duration::from_secs(10) {
         std::thread::sleep(Duration::from_millis(100));
@@ -178,7 +178,7 @@ fn search_follows_file_changes() {
     let sandbox = sandbox();
     let hub = Hub::start(&sandbox, &[]);
     assert!(hub.request(&json!({"op": "search", "query": "quarterly taxes"}))["entries"].as_array().unwrap().is_empty());
-    std::fs::write(sandbox.home().join(".config/cockpit/todo.md"), "# To-do\n\n- [ ] pay the quarterly taxes\n").unwrap();
+    std::fs::write(sandbox.home().join(".config/flightdeck/todo.md"), "# To-do\n\n- [ ] pay the quarterly taxes\n").unwrap();
     let start = Instant::now();
     loop {
         let found = hub.request(&json!({"op": "search", "query": "quarterly taxes"}));
@@ -196,7 +196,7 @@ fn go_focuses_the_space_and_asks_the_app() {
     let hub = Hub::start(&sandbox, &[]);
     let target = json!({"app": "runbook", "key": "eng-401#2"});
     assert_eq!(hub.request(&json!({"op": "go", "target": target})), json!({"ok": true}));
-    let asked: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/cockpit/focus/runbook.json")).unwrap()).unwrap();
+    let asked: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/focus/runbook.json")).unwrap()).unwrap();
     assert_eq!(asked, target);
     let herdr: Vec<Value> = calls(&sandbox).into_iter().map(|c| c["args"].clone()).collect();
     assert_eq!(herdr, [json!(["workspace", "list"]), json!(["workspace", "focus", "w5"])]);
@@ -208,7 +208,7 @@ fn go_to_a_show_view_has_no_space() {
     let hub = Hub::start(&sandbox, &[]);
     hub.request(&json!({"op": "go", "target": {"app": "show", "key": "demo#0"}}));
     assert!(calls(&sandbox).is_empty());
-    assert!(sandbox.home().join(".cache/cockpit/focus/show.json").exists());
+    assert!(sandbox.home().join(".cache/flightdeck/focus/show.json").exists());
 }
 
 /// Codex and OpenCode installed as stand-ins that log their calls, each with models kept from a listing of its own.
@@ -220,9 +220,9 @@ fn listed_agents(sandbox: &Sandbox) {
         "codex": {"at": 1, "attempted": 1, "models": [{"id": "gpt-acme-1", "label": "GPT Acme 1", "efforts": ["low", "high"], "fast": true}, {"id": "gpt-acme-mini", "label": "GPT Acme Mini"}]},
         "opencode": {"at": 1, "attempted": 1, "models": ["acme/large", "acme/small"]},
     });
-    std::fs::write(sandbox.home().join(".cache/cockpit/models.json"), kept.to_string()).unwrap();
+    std::fs::write(sandbox.home().join(".cache/flightdeck/models.json"), kept.to_string()).unwrap();
     // The hub writes the routines' document once there is a routine: one run by hand only.
-    let routines = sandbox.home().join(".config/cockpit/routines");
+    let routines = sandbox.home().join(".config/flightdeck/routines");
     std::fs::create_dir_all(&routines).unwrap();
     std::fs::write(routines.join("standup.md"), "---\nname: Standup notes\nwhen: manual\n---\n\nSum up ENG-412.\n").unwrap();
 }
@@ -292,7 +292,7 @@ fn fetch_ci_log_of_another_ci_needs_a_session() {
 fn fake_gh(sandbox: &Sandbox) {
     use std::os::unix::fs::PermissionsExt;
     let script = r#"#!/bin/sh
-echo "$*" >> "$COCKPIT_TEST_DIR/gh.log"
+echo "$*" >> "$FLIGHTDECK_TEST_DIR/gh.log"
 case "$1 $2" in
   "api graphql") echo '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[
      {"isResolved":false,"isOutdated":false,"path":"lib/a.ex","line":12,"originalLine":10,"comments":{"nodes":[{"author":{"login":"maya"},"body":"Why?"},{"author":{"login":"me"},"body":"Because."}]}},
@@ -350,7 +350,7 @@ fn fetch_errors_reach_the_app() {
     let sandbox = Sandbox::new(&json!({}), &json!({"github": {"enabled": true, "org": ""}}));
     let hub = Hub::start(&sandbox, &[]);
     let answer = hub.request(&json!({"op": "fetch", "kind": "pr_files", "args": {"repo": "api", "number": 4}}));
-    assert_eq!(answer, json!({"error": "set github.org in the cockpit config"}));
+    assert_eq!(answer, json!({"error": "set github.org in the flightdeck config"}));
 }
 
 #[test]
@@ -367,14 +367,14 @@ fn history_of_ticket_estimates() {
     // A new session's estimate, $1.25 at $4 per million input tokens, all of it ENG-401's by its book.
     let call = r#"{"type": "assistant", "timestamp": "2026-10-28T11:00:00Z", "requestId": "r-new", "message": {"id": "m-new", "model": "claude-opus-5-5", "usage": {"input_tokens": 312500, "output_tokens": 0}}}"#;
     std::fs::write(sandbox.home().join(".claude/projects/-box-repos/s-new.jsonl"), format!("{call}\n")).unwrap();
-    std::fs::write(sandbox.home().join(".cache/cockpit/costs/s-new.json"), r#"{"ENG-401": 1}"#).unwrap();
+    std::fs::write(sandbox.home().join(".cache/flightdeck/costs/s-new.json"), r#"{"ENG-401": 1}"#).unwrap();
     // A usage chip's refresh counts again at once.
     hub.request(&json!({"op": "act", "app": "sources", "action": "refresh", "args": ["usage-all"], "armed": null}));
     while values(&hub) != json!([8.75, 10.0]) {
         assert!(start.elapsed() < Duration::from_secs(60), "no second point: {}", values(&hub));
         std::thread::sleep(Duration::from_millis(100));
     }
-    let estimates: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/cockpit/estimates.json")).unwrap()).unwrap();
+    let estimates: Value = serde_json::from_str(&std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/estimates.json")).unwrap()).unwrap();
     assert_eq!((estimates["sessions"]["s-new"].as_f64(), estimates["tickets"]["ENG-401"].as_f64()), (Some(1.25), Some(10.0)));
 }
 
@@ -435,7 +435,7 @@ fn a_client_s_notification_only_navigates_and_says_who_sent_it() {
         let hub = Hub::start(&sandbox, &env);
         let got = notified(&sandbox, || assert_eq!(hub.request(&json!({"op": "notify", "notification": forged})), json!({"delivered": true})));
         let n = &got[0];
-        assert_eq!(n["title"], format!("From {who}: ✅ Tests passed"), "never cockpit's own words");
+        assert_eq!(n["title"], format!("From {who}: ✅ Tests passed"), "never flightdeck's own words");
         assert_eq!((n["body"].as_str(), n["from"].as_str()), (Some("Ready to merge"), Some(who)));
         assert_eq!(
             (n["action"].as_str(), n["row"].as_str()),
@@ -451,7 +451,7 @@ fn the_documents_are_written_mirrored_and_pushed() {
     use std::io::{BufRead, BufReader, Write};
     let sandbox = sandbox();
     let hub = Hub::start(&sandbox, &[]);
-    let cache = sandbox.home().join(".cache/cockpit");
+    let cache = sandbox.home().join(".cache/flightdeck");
     let mut stream = std::os::unix::net::UnixStream::connect(sandbox.socket()).unwrap();
     stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
     writeln!(stream, "{}", json!({"op": "subscribe", "docs": ["ci", "nope"]})).unwrap();
@@ -526,24 +526,24 @@ fn a_subscriber_that_falls_far_behind_is_cut_off() {
 #[test]
 fn a_subscriber_that_stops_reading_is_let_go() {
     let sandbox = sandbox();
-    let hub = Hub::start(&sandbox, &[("COCKPIT_HUB_WRITE_SECS", "1")]);
+    let hub = Hub::start(&sandbox, &[("FLIGHTDECK_HUB_WRITE_SECS", "1")]);
     let stream = subscribed(&sandbox);
     let blob = "x".repeat(1 << 20);
     for n in 0..2 {
         hub.request(&json!({"op": "store.put", "name": "ci", "value": {"n": n, "blob": blob}}));
     }
     std::thread::sleep(Duration::from_secs(3));
-    assert!(closed_by_the_hub(stream, Duration::from_secs(5)), "a write blocked past COCKPIT_HUB_WRITE_SECS keeps the connection");
+    assert!(closed_by_the_hub(stream, Duration::from_secs(5)), "a write blocked past FLIGHTDECK_HUB_WRITE_SECS keeps the connection");
 }
 
 /// The hub on ::1 with its TCP side up (and these settings), and a subscription to the ci document there, its first
 /// line read.
 fn tcp_subscribed(sandbox: &Sandbox, extra: &[(&str, &str)]) -> (Hub, std::net::TcpStream) {
     use std::io::{BufRead, Write};
-    let hub = Hub::start(sandbox, &[&[("COCKPIT_HUB_LISTEN", "::1")], extra].concat());
+    let hub = Hub::start(sandbox, &[&[("FLIGHTDECK_HUB_LISTEN", "::1")], extra].concat());
     let started = Instant::now();
     let info: Value = loop {
-        if let Ok(info) = std::fs::read_to_string(sandbox.home().join(".cache/cockpit/hub.json")).map(|t| serde_json::from_str::<Value>(&t).unwrap()) {
+        if let Ok(info) = std::fs::read_to_string(sandbox.home().join(".cache/flightdeck/hub.json")).map(|t| serde_json::from_str::<Value>(&t).unwrap()) {
             break info;
         }
         assert!(started.elapsed() < Duration::from_secs(5), "no TCP discovery file");
@@ -562,7 +562,7 @@ fn tcp_subscribed(sandbox: &Sandbox, extra: &[(&str, &str)]) -> (Hub, std::net::
 fn a_tcp_subscriber_that_stopped_reading_is_reset_rather_than_left_waiting_for_a_fin() {
     use std::io::Read;
     let sandbox = sandbox();
-    let (hub, mut stream) = tcp_subscribed(&sandbox, &[("COCKPIT_HUB_WRITE_SECS", "1")]);
+    let (hub, mut stream) = tcp_subscribed(&sandbox, &[("FLIGHTDECK_HUB_WRITE_SECS", "1")]);
     // Loopback buffers take megabytes before a write blocks.
     let blob = "x".repeat(1 << 20);
     for n in 0..30 {

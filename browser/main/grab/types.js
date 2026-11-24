@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/shared/browser/element-grab/browser-grab-types.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /**
  * Page-level facts captured when an element is picked.
@@ -209,13 +209,13 @@ export const GRAB_SECRET_PATTERNS = Object.freeze([
 ]);
 
 /** The global the arm script installs in the page. */
-export const GRAB_GLOBAL = "__cockpitGrab";
+export const GRAB_GLOBAL = "__flightdeckGrab";
 
 /** The attribute the picker sets on the element it froze on, holding the selection id. */
-export const GRAB_SELECTED_ATTRIBUTE = "data-cockpit-grab-selected";
+export const GRAB_SELECTED_ATTRIBUTE = "data-flightdeck-grab-selected";
 
 /** The key that marks an `awaitClick` result as a right-click pick, with the payload under `payload`. */
-export const GRAB_CONTEXT_MENU_KEY = "__cockpitContextMenu";
+export const GRAB_CONTEXT_MENU_KEY = "__flightdeckContextMenu";
 
 /** The key that marks an `awaitClick` result as a cancelled pick. */
-export const GRAB_CANCELLED_KEY = "__cockpitCancelled";
+export const GRAB_CANCELLED_KEY = "__flightdeckCancelled";

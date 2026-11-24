@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/shared/browser/guest-lifecycle/browser-viewport-presets.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /** The sizes a page can be shown at, matching Chrome DevTools' own; a mobile one turns touch and small-screen CSS on. */
 export const PRESETS = [

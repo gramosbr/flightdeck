@@ -9,12 +9,12 @@ import { callMapped, capture, fillArgs, listAt, pick, text } from './platform'
 type $ = EngineInterface
 
 // My tickets through whatever MCP tools the ticket connector offers (Linear, Jira, Trello…). The config maps each
-// capability to a tool and each value cockpit reads to a path in its answers; /cockpit:setup writes both.
+// capability to a tool and each value flightdeck reads to a path in its answers; /flightdeck:setup writes both.
 
 // assign, create and details are the hub's, through a ticket server of its own.
 export type TicketCapability = 'listMine' | 'get' | 'comments' | 'listStates' | 'setState' | 'assign' | 'create' | 'details'
 
-// Cockpit's status types are Linear's categories; the open ones, in the order the inbox lists them.
+// Flightdeck's status types are Linear's categories; the open ones, in the order the inbox lists them.
 const ACTIVE = ['started', 'unstarted', 'triage', 'backlog']
 
 export async function ticketSystem($: $): Promise<Tickets | undefined> {
@@ -106,7 +106,7 @@ export async function ticketDetail($: $, id: string) {
 // Moves a ticket to its "Done" state, else the first completed one it can reach, and says which.
 export async function completeTicket($: $, ticket: string) {
   const config = await ticketSystem($)
-  if (!config) throw new Error('tickets are off: run /cockpit:setup')
+  if (!config) throw new Error('tickets are off: run /flightdeck:setup')
   const states = await ticketStates($, config, ticket)
   const done = states.find(s => s.type === 'completed' && /^done$/i.test(s.name)) ?? states.find(s => s.type === 'completed')
   if (!done) throw new Error(`no completed state for ${ticket}`)

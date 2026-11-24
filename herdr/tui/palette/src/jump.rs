@@ -24,7 +24,7 @@ pub struct Jump {
     pub stage: String,
     /// It waits on you: it needs an answer, stopped with an error, or its PR needs fixing.
     pub waiting: bool,
-    /// A session cockpit drives: no terminal to focus, its chat is where it is.
+    /// A session flightdeck drives: no terminal to focus, its chat is where it is.
     pub driven: bool,
     /// One line: whose move, for how long, and where ("needs you · 6m · api › quotas").
     pub help: String,
@@ -82,7 +82,7 @@ fn word(row: &Value, stage: &str) -> String {
 /// Every agent of an agents view model (of one frontend, or all), in the palette's order: stage first, then within a
 /// stage the longest waiting first for those waiting on you and the latest change first for the others.
 pub fn jumps(agents: &Value, frontend: Option<&str>, now: u64) -> Vec<Jump> {
-    let table = cockpit_core::agent::all();
+    let table = flightdeck_core::agent::all();
     let rank = |stage: &str| ORDER.iter().position(|s| *s == stage).unwrap_or(ORDER.len());
     let mut rows: Vec<(usize, u64, Jump)> = agents["agents"]
         .as_array()
@@ -102,7 +102,7 @@ pub fn jumps(agents: &Value, frontend: Option<&str>, now: u64) -> Vec<Jump> {
             // The row's own icon, else one from the agent it runs; a row naming none gets the neutral one.
             let icon = text(&r["icon"]).unwrap_or_else(|| {
                 let id = text(&r["agent"]).or_else(|| text(&r["program"])).unwrap_or_default();
-                if id.is_empty() { "agent".into() } else { cockpit_core::agent::icon_in(&table, &id).to_string() }
+                if id.is_empty() { "agent".into() } else { flightdeck_core::agent::icon_in(&table, &id).to_string() }
             });
             let jump = Jump {
                 address: text(&r["address"]).unwrap_or_else(|| terminal.trim_start_matches("app:").to_string()),
@@ -111,7 +111,7 @@ pub fn jumps(agents: &Value, frontend: Option<&str>, now: u64) -> Vec<Jump> {
                 waiting: WAITING.contains(&stage.as_str()),
                 driven: r["driven"] == true,
                 help: help.into_iter().flatten().collect::<Vec<_>>().join(" · "),
-                mark: cockpit_core::agent::mark_in(&table, &text(&r["agent"]).or_else(|| text(&r["program"])).unwrap_or_else(|| icon.clone())),
+                mark: flightdeck_core::agent::mark_in(&table, &text(&r["agent"]).or_else(|| text(&r["program"])).unwrap_or_else(|| icon.clone())),
                 icon,
                 stage,
                 terminal,

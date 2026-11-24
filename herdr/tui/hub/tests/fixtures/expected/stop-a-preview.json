@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/requests/<MS>-stop-preview.req": {
+    "home/.cache/flightdeck/requests/<MS>-stop-preview.req": {
       "label": "stop pv-eng-401",
       "preview": "pv-eng-401",
       "type": "stop-preview"

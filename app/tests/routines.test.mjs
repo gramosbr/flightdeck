@@ -10,7 +10,7 @@ async function fixture() {
   const hub = () => { throw new Error("no hub call expected"); };
   const imports = { herdr: { run: (...args) => calls.push(args) }, "./hub.js": { act: hub, go: hub, subscribe: hub, openUrl: hub } };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -63,10 +63,10 @@ test("Routines loads on a Herdr without the multi-line field, whose natives it n
 test("a routine run that needs a look opens in Routines in the layout you are in", async () => {
   const { needs, calls, context } = await fixture();
   const heard = [];
-  context.cockpitRemoteFocus = { targets: new Map(), listeners: new Set([(target) => (heard.push(target.key), true)]) };
+  context.flightdeckRemoteFocus = { targets: new Map(), listeners: new Set([(target) => (heard.push(target.key), true)]) };
   needs.openRoutine("standup/run/1794424000285");
-  assert.deepEqual(calls, [["cockpit.go:routines"]], "no layout switch: the routines screen of this layout");
-  assert.equal(context.cockpitRemoteFocus.targets.get("routines").key, "standup/run/1794424000285", "kept for a view that has no model yet");
+  assert.deepEqual(calls, [["flightdeck.go:routines"]], "no layout switch: the routines screen of this layout");
+  assert.equal(context.flightdeckRemoteFocus.targets.get("routines").key, "standup/run/1794424000285", "kept for a view that has no model yet");
   assert.deepEqual(heard, ["standup/run/1794424000285"], "a view that is ready selects it at once");
 });
 

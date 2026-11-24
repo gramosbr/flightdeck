@@ -57,7 +57,7 @@ export default class PanelPeek {
       .w(WIDTH)
       .h(MAX_H)
       .text_color(k.foreground)
-      .child(peekHead(k, "Beside the agent", null, { tooltip: hint("Keep the panel open", "cockpit.panel"), onPin: () => openPanel(null) }))
+      .child(peekHead(k, "Beside the agent", null, { tooltip: hint("Keep the panel open", "flightdeck.panel"), onPin: () => openPanel(null) }))
       .child(div().flex_1().min_h(0).child(this.show.render(cx)));
     // The bar is on the edge side: this drawer comes out of the right.
     return h_flex().id("panel-peek").child(body).child(peekBar(k));

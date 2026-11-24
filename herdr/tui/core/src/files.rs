@@ -1,4 +1,4 @@
-//! Where cockpit keeps its files, JSON read and written whole, the config, and a watcher that says when files change.
+//! Where flightdeck keeps its files, JSON read and written whole, the config, and a watcher that says when files change.
 
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, channel};
@@ -11,16 +11,16 @@ pub fn home() -> PathBuf {
 }
 
 pub fn cache() -> PathBuf {
-    home().join(".cache/cockpit")
+    home().join(".cache/flightdeck")
 }
 
 pub fn config_dir() -> PathBuf {
-    home().join(".config/cockpit")
+    home().join(".config/flightdeck")
 }
 
 /// The herdr plugin folder, where its scripts live: app.sh says so, else the binary's own place.
 pub fn herdr_dir() -> PathBuf {
-    if let Ok(dir) = std::env::var("COCKPIT_HERDR_DIR") {
+    if let Ok(dir) = std::env::var("FLIGHTDECK_HERDR_DIR") {
         return PathBuf::from(dir);
     }
     // A release binary sits in herdr/bin/, a dev build in herdr/tui/target/release/; a link to it (~/.local/bin) is followed.

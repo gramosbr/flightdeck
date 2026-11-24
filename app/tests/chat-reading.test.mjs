@@ -4,11 +4,11 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-const MODS = new URL("../mods/cockpit/", import.meta.url);
+const MODS = new URL("../mods/flightdeck/", import.meta.url);
 
 async function subjectFixture({ focusedOn = "t41", answers = {}, views = {} } = {}) {
   const calls = [], acts = [];
-  const shared = { layout: "cockpit-chat", "cockpit.app": "chat" };
+  const shared = { layout: "flightdeck-chat", "flightdeck.app": "chat" };
   // Herdr's focus as it is with an agent in front: its pane's terminal, its tab, and the agent its blocks would show.
   const focus = focusedOn ? { agent: focusedOn, terminal: focusedOn, tab: `tab-${focusedOn}` } : {};
   const context = createContext({ console });
@@ -30,7 +30,7 @@ async function subjectFixture({ focusedOn = "t41", answers = {}, views = {} } = 
       openUrl: () => {},
       sleep: async () => {},
       install: async () => ({}),
-      cockpit: async () => ({ code: 0, stdout: "", stderr: "" }),
+      flightdeck: async () => ({ code: 0, stdout: "", stderr: "" }),
       isUnconfirmed: (e) => Boolean(e?.unconfirmed),
       remoteMachine: () => null,
     },

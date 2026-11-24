@@ -6,7 +6,7 @@
   {
    "slug": "morning-sweep",
    "name": "Morning sweep",
-   "path": "/home/me/.config/cockpit/routines/morning-sweep.md",
+   "path": "/home/me/.config/flightdeck/routines/morning-sweep.md",
    "when": "weekdays at 09:00",
    "whenText": "weekdays 09:00",
    "trigger": "schedule",
@@ -43,7 +43,7 @@
   {
    "slug": "fix-ci",
    "name": "Fix CI on checkout",
-   "path": "/home/me/.config/cockpit/routines/fix-ci.md",
+   "path": "/home/me/.config/flightdeck/routines/fix-ci.md",
    "when": "on CI failing · checkout",
    "whenText": "on ci-failed checkout",
    "trigger": "event",
@@ -81,7 +81,7 @@
   {
    "slug": "notes-pull",
    "name": "Pull my notes",
-   "path": "/home/me/.config/cockpit/routines/notes-pull.md",
+   "path": "/home/me/.config/flightdeck/routines/notes-pull.md",
    "when": "every 30 min",
    "whenText": "every 30m",
    "trigger": "every",
@@ -105,7 +105,7 @@
   {
    "slug": "weekly-digest",
    "name": "Weekly digest",
-   "path": "/home/me/.config/cockpit/routines/weekly-digest.md",
+   "path": "/home/me/.config/flightdeck/routines/weekly-digest.md",
    "when": "Fri at 16:00",
    "whenText": "fri 16:00",
    "trigger": "schedule",
@@ -136,7 +136,7 @@
   {
    "slug": "standup",
    "name": "Standup notes",
-   "path": "/home/me/.config/cockpit/routines/standup.md",
+   "path": "/home/me/.config/flightdeck/routines/standup.md",
    "when": "when? manual, every 30m, daily 09:00",
    "whenText": "every morning",
    "trigger": "broken",
@@ -167,7 +167,7 @@
   {
    "slug": "ping-team",
    "name": "Ping the team",
-   "path": "/home/me/.config/cockpit/routines/ping-team.md",
+   "path": "/home/me/.config/flightdeck/routines/ping-team.md",
    "when": "daily at 10:00",
    "whenText": "daily 10:00",
    "trigger": "schedule",
@@ -201,7 +201,7 @@
   {
    "slug": "review-digest",
    "name": "Review digest",
-   "path": "/home/me/.config/cockpit/routines/review-digest.md",
+   "path": "/home/me/.config/flightdeck/routines/review-digest.md",
    "when": "cron */15 8-18 * * 1-5 in Europe/London",
    "whenText": "cron */15 8-18 * * 1-5",
    "trigger": "schedule",

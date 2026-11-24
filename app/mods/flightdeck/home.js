@@ -119,7 +119,7 @@ export default class Home {
     cx.spawn(async (cx) => {
       try {
         const { cache, home } = await hub.install();
-        const text = (await readTextFile(`${cache}/config.json`)) ?? (await readTextFile(`${home}/.config/cockpit/config.json`));
+        const text = (await readTextFile(`${cache}/config.json`)) ?? (await readTextFile(`${home}/.config/flightdeck/config.json`));
         const spaces = text ? JSON.parse(text).spaces : null;
         if (Array.isArray(spaces)) this.pinned = spaces.map((s) => (typeof s === "string" ? s : s.name));
       } catch {}
@@ -427,8 +427,8 @@ export default class Home {
     else if (action === "stop" && a?.row?.stoppable && !a.remote && !this.busy.has(card.key)) cx.spawn(async (cx) => this.act(cx, card.key, "Stopping…", () => agentAct("interrupt", { terminal: a.handle }), `Stopping ${a.title}…`));
     else if (action === "queue" && a && !available(layoutName(), "queue")) goToAgent(a);
     else if (action === "queue" && a) {
-      setShared("cockpit.queue.for", a.address);
-      run("cockpit.queue", {});
+      setShared("flightdeck.queue.for", a.address);
+      run("flightdeck.queue", {});
     }
     else if (action === "pr" && pr?.url) this.openUrl(cx, pr.url);
     else if (action === "merge" && pr?.url) this.merge(cx, pr);
@@ -553,7 +553,7 @@ export default class Home {
     const q = this.drawn?.get(a.address) ?? a.question;
     const c = q.choices[i];
     if (!c) return;
-    // A permission cockpit cannot show in full is answered in the agent's terminal, in the hub's own words.
+    // A permission flightdeck cannot show in full is answered in the agent's terminal, in the hub's own words.
     if (q.terminal_only) return this.toasts.push(cx, q.terminal_only, { kind: "info" });
     if (q.kind === "multi") {
       const set = new Set(this.picks.get(a.address) ?? q.choices.filter((x) => x.checked).map((x) => x.n));
@@ -669,7 +669,7 @@ export default class Home {
       .child(this.toasts.render() ?? div());
   }
 
-  /** No cockpit in this Herdr home (the layout copied on its own): what cockpit is and the two ways to install it. */
+  /** No flightdeck in this Herdr home (the layout copied on its own): what flightdeck is and the two ways to install it. */
   installPanel(k) {
     const command = (id, text) =>
       h_flex()
@@ -719,27 +719,27 @@ export default class Home {
                 h_flex()
                   .gap(14)
                   .items_center()
-                  .child(image("mods/cockpit/cockpit.svg").w(44).h(44).flex_none())
+                  .child(image("mods/flightdeck/flightdeck.svg").w(44).h(44).flex_none())
                   .child(
                     v_flex()
                       .gap(2)
-                      .child(div().text_size(TEXT.xl).font_semibold().text_color(k.foreground).child("cockpit isn't installed"))
-                      .child(div().text_size(TEXT.sm).text_color(k.mutedFg).child("This layout is the front of cockpit, which needs its own install.")),
+                      .child(div().text_size(TEXT.xl).font_semibold().text_color(k.foreground).child("flightdeck isn't installed"))
+                      .child(div().text_size(TEXT.sm).text_color(k.mutedFg).child("This layout is the front of flightdeck, which needs its own install.")),
                   ),
               )
               .child(
                 div()
                   .text_size(TEXT.base)
                   .text_color(k.foreground)
-                  .child("cockpit puts every coding agent beside its work: whose move it is, its ticket, PR, CI and deploy, with your inbox, runbooks, meetings and releases one key away."),
+                  .child("flightdeck puts every coding agent beside its work: whose move it is, its ticket, PR, CI and deploy, with your inbox, runbooks, meetings and releases one key away."),
               )
-              .child(way("install-claude", "In Claude Code", ["/plugin install cockpit --marketplace quaresc/cockpit", "/cockpit:setup"]))
-              .child(way("install-shell", "With any other agent, in a shell", ["curl -fsSL https://raw.githubusercontent.com/quaresc/cockpit/main/install.sh | sh", "cockpit setup"]))
+              .child(way("install-claude", "In Claude Code", ["/plugin install flightdeck --marketplace gramosbr/flightdeck", "/flightdeck:setup"]))
+              .child(way("install-shell", "With any other agent, in a shell", ["curl -fsSL https://raw.githubusercontent.com/gramosbr/flightdeck/main/install.sh | sh", "flightdeck setup"]))
               .child(
                 h_flex()
                   .gap(10)
                   .items_center()
-                  .child(Button("install-guide", { label: "Install guide", icon: "external", variant: "outline", size: "sm", onClick: () => hub.openUrl("https://github.com/quaresc/cockpit#install").catch(() => {}) }))
+                  .child(Button("install-guide", { label: "Install guide", icon: "external", variant: "outline", size: "sm", onClick: () => hub.openUrl("https://github.com/gramosbr/flightdeck#install").catch(() => {}) }))
                   .child(div().flex_1().text_size(TEXT.xs).text_color(k.dim).child("Home fills in by itself once setup is done; your agents stay in the sidebar meanwhile.")),
               ),
           ),
@@ -995,8 +995,8 @@ export default class Home {
         ),
       actions: [
         Button("lost-dismiss", { label: "Leave stopped", variant: "ghost", size: "sm", onClick: (_e, cx) => cx.spawn(async () => Promise.all(lost.map((e) => hub.act("home", "dismiss", [e.handle])))) }),
-        // Its key as Cockpit binds it, on the button; Cockpit Chat keeps keys out of its buttons.
-        ToneButton("lost-resume", { label: "Resume all", tone: k.info, kbd: layoutName() === "cockpit" && keyFor("cockpit.resume") ? keyText(keyFor("cockpit.resume")) : undefined, onClick: (_e, cx) => cx.spawn(async (cx) => this.act(cx, "lost", "Resuming…", () => hub.act("home", "resume", []))) }),
+        // Its key as Flightdeck binds it, on the button; Flightdeck Chat keeps keys out of its buttons.
+        ToneButton("lost-resume", { label: "Resume all", tone: k.info, kbd: layoutName() === "flightdeck" && keyFor("flightdeck.resume") ? keyText(keyFor("flightdeck.resume")) : undefined, onClick: (_e, cx) => cx.spawn(async (cx) => this.act(cx, "lost", "Resuming…", () => hub.act("home", "resume", []))) }),
       ],
     });
   }
@@ -1017,7 +1017,7 @@ export default class Home {
           : choices.length && !q?.terminal_only
             ? this.choiceRow(a, "next", 6)
             : null;
-      // A permission shows what it would allow, in full, above its choices; one cockpit cannot show in full has none.
+      // A permission shows what it would allow, in full, above its choices; one flightdeck cannot show in full has none.
       const allows = !q?.permission
         ? null
         : q.view
@@ -1188,7 +1188,7 @@ export default class Home {
     const ch = a?.changes;
     if (ch && (ch.added || ch.removed)) facts.push(h_flex().gap(4).child(Mono(`+${ch.added ?? 0}`, { color: k.success })).child(Mono(`−${ch.removed ?? 0}`, { color: k.destructive })));
     if (ch?.files) facts.push(Mono(plural(ch.files, "file")));
-    // The session's cost as cockpit estimates it from the transcript.
+    // The session's cost as flightdeck estimates it from the transcript.
     if (a?.cost) facts.push(Mono(`~${money(a.cost)} estimated`));
     // What its processes cost the machine: a hot one shows in warning, a runaway in red.
     if (a?.load) {

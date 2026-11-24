@@ -5,7 +5,7 @@
 #   ask-session.sh <pane or -> <session or -> [agent]
 . "$(dirname "$0")/lib.sh"
 PATH="$HOME/.local/bin:$PATH"
-HC=${COCKPIT_HC_BIN:-hc}
+HC=${FLIGHTDECK_HC_BIN:-hc}
 pane=$1 session=$2 agent=${3:-claude}
 
 # The Herdr app: an agent's status from `herdr-app ls`, "shell" when a shell is in front, nothing once it is gone.
@@ -24,10 +24,10 @@ run_in() { case "$pane" in app:*) "$HC" send --force "${pane#app:}" "$1" >/dev/n
 
 st=$(state)
 if [ -z "$st" ]; then
-  case "$pane" in app:*) COCKPIT_FRONTEND=app && export COCKPIT_FRONTEND ;; esac
-  pane=$(sh "$ROOT/cockpit.sh" actions tab "$REPOS" runbook)
+  case "$pane" in app:*) FLIGHTDECK_FRONTEND=app && export FLIGHTDECK_FRONTEND ;; esac
+  pane=$(sh "$ROOT/flightdeck.sh" actions tab "$REPOS" runbook)
   case "$pane" in
-    "") [ "${COCKPIT_FRONTEND:-}" = app ] || pane=$("$H" workspace create --cwd "$REPOS" --label runbook --focus | jq -r '.result.root_pane.pane_id') ;;
+    "") [ "${FLIGHTDECK_FRONTEND:-}" = app ] || pane=$("$H" workspace create --cwd "$REPOS" --label runbook --focus | jq -r '.result.root_pane.pane_id') ;;
   esac
   [ -n "$pane" ] || exit 1
   st=shell
@@ -35,9 +35,9 @@ fi
 if [ "$st" = "shell" ]; then
   if [ "$session" != "-" ]; then
     sleep 1
-    line=$(sh "$ROOT/cockpit.sh" agent argv resume --agent "$agent" --session "$session")
+    line=$(sh "$ROOT/flightdeck.sh" agent argv resume --agent "$agent" --session "$session")
   else
-    line=$(sh "$ROOT/cockpit.sh" agent argv start --agent "$agent")
+    line=$(sh "$ROOT/flightdeck.sh" agent argv start --agent "$agent")
   fi
   [ -n "$line" ] || exit 1
   run_in "$line"
@@ -51,7 +51,7 @@ while :; do
 done
 case "$pane" in
   app:*)
-    herdr-app "do" cockpit.go:work >/dev/null 2>&1
+    herdr-app "do" flightdeck.go:work >/dev/null 2>&1
     herdr-app "do" pane.focus "{\"terminal\": \"${pane#app:}\"}" >/dev/null 2>&1
     ;;
   *)
@@ -59,5 +59,5 @@ case "$pane" in
     "$H" tab focus "$tab" >/dev/null 2>&1
     ;;
 esac
-# The hub delivers the prompt itself (cockpit's one way to send words to an agent), never typed from here.
+# The hub delivers the prompt itself (flightdeck's one way to send words to an agent), never typed from here.
 printf 'pane=%s\n' "$pane"

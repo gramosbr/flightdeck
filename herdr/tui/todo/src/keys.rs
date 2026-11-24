@@ -1,13 +1,13 @@
 //! Keys and clicks: the text fields first (adding, editing, the filter), then the rows, the selection's actions, the
 //! marks, and the palette over all of them.
 
-use cockpit_core::acts::Act;
-use cockpit_core::dialog::Answer;
-use cockpit_core::input::Edit;
-use cockpit_core::keys::{self, Move};
-use cockpit_core::palette::{Entry, Outcome};
-use cockpit_core::pointed::MOVE_FIRST;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind};
+use flightdeck_core::acts::Act;
+use flightdeck_core::dialog::Answer;
+use flightdeck_core::input::Edit;
+use flightdeck_core::keys::{self, Move};
+use flightdeck_core::palette::{Entry, Outcome};
+use flightdeck_core::pointed::MOVE_FIRST;
 use ratatui::layout::Position;
 
 use crate::app::{App, Cmd, Sel};
@@ -134,7 +134,7 @@ impl App {
                         self.run(cmd);
                     }
                 }
-                Outcome::Elsewhere(target) => cockpit_core::hub::go(&target),
+                Outcome::Elsewhere(target) => flightdeck_core::hub::go(&target),
                 _ => {}
             }
             return false;
@@ -172,7 +172,7 @@ impl App {
         }
         // An item a focus request selected takes no key that acts until the person moves to it; space toggles here.
         if self.pointed.holds(&key) || (self.pointed.is_on() && key.code == KeyCode::Char(' ')) {
-            self.toasts.push(MOVE_FIRST, cockpit_core::toast::Kind::Note);
+            self.toasts.push(MOVE_FIRST, flightdeck_core::toast::Kind::Note);
             return false;
         }
         if let Some(to) = keys::movement(&key) {

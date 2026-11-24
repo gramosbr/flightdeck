@@ -13,13 +13,13 @@ use std::time::Duration;
 use crossterm::event::Event;
 use ratatui::Frame;
 
-/// `cockpit review`: the review space in the terminal until it quits.
+/// `flightdeck review`: the review space in the terminal until it quits.
 pub fn run() -> std::io::Result<()> {
     let mut app = app::App::start();
-    cockpit_core::term::run(&mut app)
+    flightdeck_core::term::run(&mut app)
 }
 
-impl cockpit_core::term::App for app::App {
+impl flightdeck_core::term::App for app::App {
     fn draw(&mut self, frame: &mut Frame) {
         app::App::draw(self, frame);
     }
@@ -28,7 +28,7 @@ impl cockpit_core::term::App for app::App {
         app::App::event(self, event)
     }
 
-    fn help(&self) -> Option<(String, Vec<cockpit_core::acts::Act>)> {
+    fn help(&self) -> Option<(String, Vec<flightdeck_core::acts::Act>)> {
         let busy = self.dialog.is_some() || self.palette.is_open || self.diff().is_typing();
         (!busy).then(|| ("review".to_string(), self.acts().into_iter().map(|(act, _)| act).collect()))
     }

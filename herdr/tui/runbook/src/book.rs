@@ -56,9 +56,9 @@ impl Book {
     }
 }
 
-/// `~/.config/cockpit/runbooks`, or another folder to try the app on.
+/// `~/.config/flightdeck/runbooks`, or another folder to try the app on.
 pub fn dir() -> PathBuf {
-    std::env::var("COCKPIT_RUNBOOKS_DIR").map(PathBuf::from).unwrap_or_else(|_| cockpit_core::files::config_dir().join("runbooks"))
+    std::env::var("FLIGHTDECK_RUNBOOKS_DIR").map(PathBuf::from).unwrap_or_else(|_| flightdeck_core::files::config_dir().join("runbooks"))
 }
 
 pub fn parse(path: &Path) -> std::io::Result<Book> {

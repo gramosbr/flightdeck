@@ -10,14 +10,14 @@ use image::{Delay, Frame, Rgba, RgbaImage};
 use ratatui_image::picker::Picker;
 use regex::Regex;
 
-use cockpit_core::files::Density;
-use cockpit_core::term::App;
-use cockpit_show::ShowApp;
+use flightdeck_core::files::Density;
+use flightdeck_core::term::App;
+use flightdeck_show::ShowApp;
 
 static TIME: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\b\d\d:\d\d(:\d\d)?\b").unwrap());
 
 fn root() -> PathBuf {
-    std::env::temp_dir().join(format!("cockpit-show-snapshots-{}", std::process::id()))
+    std::env::temp_dir().join(format!("flightdeck-show-snapshots-{}", std::process::id()))
 }
 
 fn fixtures() -> PathBuf {
@@ -36,7 +36,7 @@ fn setup() {
     static ONCE: Once = Once::new();
     ONCE.call_once(|| {
         let home = root().join("home");
-        let cache = home.join(".cache/cockpit");
+        let cache = home.join(".cache/flightdeck");
         std::fs::create_dir_all(&cache).unwrap();
         std::fs::copy(fixtures().join("ci-cache.json"), cache.join("ci.json")).unwrap();
         std::fs::copy(fixtures().join("inbox-cache.json"), cache.join("inbox.json")).unwrap();
@@ -52,11 +52,11 @@ fn setup() {
             gif.encode_frame(Frame::from_parts(gradient(120, 60, warm), 0, 0, Delay::from_numer_denom_ms(600_000, 1))).unwrap();
         }
         // One bundled font for every picture's text, so their pixels match on macOS and on the Linux CI.
-        assert!(cockpit_show::use_only_font(&fixtures().join("fonts/FiraCode-subset.ttf")));
+        assert!(flightdeck_show::use_only_font(&fixtures().join("fonts/FiraCode-subset.ttf")));
         // SAFETY: set once, before any test thread reads the environment.
         unsafe {
             std::env::set_var("HOME", &home);
-            std::env::set_var("COCKPIT_HERDR_DIR", Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
+            std::env::set_var("FLIGHTDECK_HERDR_DIR", Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
         }
     });
 }
@@ -74,7 +74,7 @@ fn app(fixture: &str, width: u16, density: Density, test: &str) -> ShowApp {
 }
 
 fn screen(app: &mut ShowApp, width: u16) -> String {
-    TIME.replace_all(&cockpit_core::testing::render(app, width, 40), "hh:mm").into_owned()
+    TIME.replace_all(&flightdeck_core::testing::render(app, width, 40), "hh:mm").into_owned()
 }
 
 fn press(app: &mut ShowApp, keys: &[KeyCode]) {

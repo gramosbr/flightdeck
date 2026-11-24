@@ -1,7 +1,7 @@
 //! A TCP sender named by the process holding its port, alone in a binary of its own: a socket of this process that a
 //! child of another test inherited would be held by that child too, and name it.
 
-use cockpit_core::peer::{Sender, current, set_tcp};
+use flightdeck_core::peer::{Sender, current, set_tcp};
 
 #[test]
 fn a_tcp_peer_is_named_by_its_process_once_and_an_unnamed_one_is_unknown() {

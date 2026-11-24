@@ -5,7 +5,7 @@ import { MCP } from './tools'
 // fallback: allowed once show was tried in the turn, when the person asked for that medium, or with a stated reason.
 
 export const DRAWING_SECTION = {
-  id: 'cockpit:drawing',
+  id: 'flightdeck:drawing',
   scope: 'session' as const,
   text: MCP.drawing.map(line => line.replaceAll('{show}', SHOW_TOOL_FULL)).join('\n'),
 }
@@ -25,7 +25,7 @@ export function subagentTurn(parent: Turn, brief: string): Turn {
   return { ...parent, page: parent.page || own.page, artifact: parent.artifact || own.artifact }
 }
 
-const FALLBACK = /\bCOCKPIT_SHOW_FALLBACK=("[^"]+"|'[^']+'|\S+)/
+const FALLBACK = /\bFLIGHTDECK_SHOW_FALLBACK=("[^"]+"|'[^']+'|\S+)/
 
 /** The local HTML file a Bash command opens beside the session (browse.sh, terminal-browser), if any. */
 export function openedPage(command: string): string | undefined {
@@ -48,7 +48,7 @@ export function pageRefusal(command: string, turn: Turn): string | undefined {
   return (
     `Draw this with ${SHOW_TOOL_FULL} instead of opening ${page}: stats tiles, line/area/bar/donut charts (stacked, ` +
     'percent, horizontal), tables, flow, Mermaid and sequence diagrams all draw natively beside the session. If no block ' +
-    'can draw it, show what it can first, or prefix the command with COCKPIT_SHOW_FALLBACK="<what show cannot draw>".'
+    'can draw it, show what it can first, or prefix the command with FLIGHTDECK_SHOW_FALLBACK="<what show cannot draw>".'
   )
 }
 

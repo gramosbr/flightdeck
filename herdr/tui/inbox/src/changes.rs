@@ -4,7 +4,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use cockpit_core::anim;
+use flightdeck_core::anim;
 use serde_json::Value;
 
 use crate::facts::{has_ticket, is_failing, list, s};

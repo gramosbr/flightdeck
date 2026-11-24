@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::{Duration, Instant};
 
-use cockpit_core::hub;
-use cockpit_core::theme::{DIM, FG, GREEN, ORANGE, RED, dim, fg};
+use flightdeck_core::hub;
+use flightdeck_core::theme::{DIM, FG, GREEN, ORANGE, RED, dim, fg};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use serde_json::{Value, json};
@@ -125,7 +125,7 @@ fn render(fetched: &Fetched) -> Vec<Line<'static>> {
         for (place, author, body) in fetched.threads.iter().take(THREADS) {
             let mut spans = vec![Span::styled(format!("  {place}  "), dim()), Span::styled(format!("{author}  "), fg(ORANGE))];
             // The comment's code, emphasis and links marked as GitHub shows them.
-            spans.extend(cockpit_show::markdown_inline(body).into_iter().map(|span| Span::styled(span.content, fg(FG).patch(span.style))));
+            spans.extend(flightdeck_show::markdown_inline(body).into_iter().map(|span| Span::styled(span.content, fg(FG).patch(span.style))));
             lines.push(Line::from(spans));
         }
     }

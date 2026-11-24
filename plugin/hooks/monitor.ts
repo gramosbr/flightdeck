@@ -41,7 +41,7 @@ const unquote = (value: string) => {
   return v
 }
 
-// The Error Tracking issues of a search, which answers a YAML list: the fields cockpit shows, a message to its first line.
+// The Error Tracking issues of a search, which answers a YAML list: the fields flightdeck shows, a message to its first line.
 export function parseIssues(body: string, since: number): Issue[] {
   const items: Record<string, string>[] = []
   let block: { key: string; lines: string[] } | null = null
@@ -116,7 +116,7 @@ export function verdictOf(phase: string, before: Health | null, after: Health | 
 // Fetching
 
 async function datadog($: $, server: string, tool: string, args: Record<string, unknown>) {
-  const result = await $.mcp.call(server, tool, { ...args, telemetry: { intent: 'cockpit monitor space: health of recent releases' } })
+  const result = await $.mcp.call(server, tool, { ...args, telemetry: { intent: 'flightdeck monitor space: health of recent releases' } })
   const block = result.content.find(c => c.type === 'text')
   const body = block && 'text' in block ? String(block.text) : ''
   if (result.isError) throw new Error(`Datadog ${tool}: ${body.slice(0, 160)}`)
@@ -193,7 +193,7 @@ const repoName = (url: string) => url.replace(/\.git$/, '').split('/').pop() ?? 
 // The app ids pinned (watched even without a release) or muted (never watched) in the monitor space.
 async function markedApps($: $, file: 'monitor-pinned.json' | 'monitor-muted.json'): Promise<string[]> {
   try {
-    return JSON.parse(await $.fs.read(`${await home($)}/.config/cockpit/${file}`)) as string[]
+    return JSON.parse(await $.fs.read(`${await home($)}/.config/flightdeck/${file}`)) as string[]
   } catch {
     return []
   }

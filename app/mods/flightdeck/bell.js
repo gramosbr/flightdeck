@@ -1,4 +1,4 @@
-// The bell at the top right of the cockpit layout: how many agents wait for you, breathing while any does. A click
+// The bell at the top right of the flightdeck layout: how many agents wait for you, breathing while any does. A click
 // goes to the one that has waited longest; resting the pointer lists them with their questions; a right-click picks one.
 
 import { div } from "gpui-kit";
@@ -52,7 +52,7 @@ export default class Bell {
     const list = this.waiting();
     const done = fleet(this.rows, this.home).filter((a) => a.status === "done").length;
     const n = list.length;
-    const nextKey = keyFor("cockpit.next-waiting");
+    const nextKey = keyFor("flightdeck.next-waiting");
     const button = h_flex()
       .id("bell-button")
       .size(32)

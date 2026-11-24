@@ -5,13 +5,13 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant, SystemTime};
 
-use cockpit_core::anim::{Effects, Kind};
-use cockpit_core::bridge::Bridge;
-use cockpit_core::files::{self, Density};
-use cockpit_core::hub::{self, Docs};
-use cockpit_core::palette::Palette;
-use cockpit_core::pointed::Pointed;
-use cockpit_core::toast::{Kind as Toast, Toasts};
+use flightdeck_core::anim::{Effects, Kind};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::files::{self, Density};
+use flightdeck_core::hub::{self, Docs};
+use flightdeck_core::palette::Palette;
+use flightdeck_core::pointed::Pointed;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
 use ratatui::layout::Rect;
 use ratatui::style::Color;
 use ratatui_image::picker::Picker;
@@ -252,7 +252,7 @@ impl App {
     /// in view, and its brief open.
     fn take_focus(&mut self) -> bool {
         let notified = pinned::take_focus(&mut self.notified_seen);
-        let jumped = cockpit_core::focus::take("meetings", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string));
+        let jumped = flightdeck_core::focus::take("meetings", &mut self.focus_seen).and_then(|t| t["key"].as_str().map(str::to_string));
         let Some(id) = jumped.or(notified) else { return false };
         self.focus(&id);
         true

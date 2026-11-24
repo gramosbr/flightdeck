@@ -1,8 +1,8 @@
 // Prompt condensation adapts naming.sh from https://github.com/qu8n/herdr-automatic-rename (MIT).
 // The word lists and condensation rules are translated to Rust; see THIRD_PARTY_NOTICES.md.
-//! What cockpit calls an agent: the name the person gave it, else the agent's own title for its work, else its first
+//! What flightdeck calls an agent: the name the person gave it, else the agent's own title for its work, else its first
 //! prompt in a few words, else the agent's name. A Herdr tab takes that name only while its label is a placeholder or
-//! the one cockpit gave it last, so a name the person typed, or another tool gave, always stays.
+//! the one flightdeck gave it last, so a name the person typed, or another tool gave, always stays.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -17,7 +17,7 @@ use crate::transcripts::{Detail, Follow, Transcripts};
 /// The most characters an automatic name takes, as a tab label shows it.
 pub const MAX: usize = 28;
 
-/// Whether cockpit names agents, tabs and spaces itself: `names` in the config, on unless `false`.
+/// Whether flightdeck names agents, tabs and spaces itself: `names` in the config, on unless `false`.
 pub fn on(config: &Value) -> bool {
     config["names"] != false
 }
@@ -50,30 +50,30 @@ pub fn agent_names(program: &str, agent: Option<&crate::agent::Agent>) -> Vec<St
     out
 }
 
-/// Who a tab's label belongs to, from the label and the name cockpit gave that tab last.
+/// Who a tab's label belongs to, from the label and the name flightdeck gave that tab last.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Owner {
-    /// Nobody chose it: cockpit may name the tab.
+    /// Nobody chose it: flightdeck may name the tab.
     Placeholder,
-    /// The name cockpit gave it last: cockpit may name it again.
-    Cockpit,
-    /// The person typed it, or another tool gave it: cockpit never writes over it.
+    /// The name flightdeck gave it last: flightdeck may name it again.
+    Flightdeck,
+    /// The person typed it, or another tool gave it: flightdeck never writes over it.
     Someone,
 }
 
-/// Who owns `label`: a placeholder is nobody's, a label cockpit gave last is its own, anything else ("Claude" too) is
+/// Who owns `label`: a placeholder is nobody's, a label flightdeck gave last is its own, anything else ("Claude" too) is
 /// someone's.
 pub fn owner(label: &str, given: Option<&str>) -> Owner {
     if placeholder(label) {
         Owner::Placeholder
     } else if given.is_some_and(|g| g == label) {
-        Owner::Cockpit
+        Owner::Flightdeck
     } else {
         Owner::Someone
     }
 }
 
-/// Whether cockpit writes `name` into a tab labelled `label`: a real name, different from the label, over a label that
+/// Whether flightdeck writes `name` into a tab labelled `label`: a real name, different from the label, over a label that
 /// is a placeholder or its own.
 pub fn writes(label: &str, given: Option<&str>, name: &str, source: Source) -> bool {
     source != Source::Default && !name.trim().is_empty() && name != label && owner(label, given) != Owner::Someone
@@ -87,7 +87,7 @@ fn given_path() -> PathBuf {
     dir().join("given.json")
 }
 
-/// The name cockpit gave each tab and space last, by id: read again only when the file changed.
+/// The name flightdeck gave each tab and space last, by id: read again only when the file changed.
 pub fn given() -> HashMap<String, String> {
     type Kept = (Option<SystemTime>, HashMap<String, String>);
     static READ: Mutex<Option<Kept>> = Mutex::new(None);
@@ -104,7 +104,7 @@ pub fn given() -> HashMap<String, String> {
     map
 }
 
-/// Keeps the names cockpit gave, for `given` and the next round.
+/// Keeps the names flightdeck gave, for `given` and the next round.
 pub fn keep(given: &HashMap<String, String>) {
     let _ = std::fs::create_dir_all(dir());
     let _ = files::write(&given_path(), &json!(given));
@@ -295,7 +295,7 @@ impl Source {
 pub struct Sources<'a> {
     /// Its tab's label, empty without a tab (a driven session).
     pub label: &'a str,
-    /// The name cockpit gave that tab last.
+    /// The name flightdeck gave that tab last.
     pub given: Option<&'a str>,
     /// The name the person gave the session in the agent itself.
     pub renamed: Option<&'a str>,
@@ -435,7 +435,11 @@ mod tests {
         assert_eq!(opening("/review 412").as_deref(), Some("Review 412"), "the verb stays when only a number would be left");
         assert_eq!(opening("/deploy-preview api").as_deref(), Some("Deploy-preview api"));
         assert_eq!(opening("   "), None);
-        assert_eq!(opening("/tmp/cockpit-paste.ab12/pasted-ab12.png\nFix the quota banner").as_deref(), Some("Quota banner"), "a file sent first is skipped");
+        assert_eq!(
+            opening("/tmp/flightdeck-paste.ab12/pasted-ab12.png\nFix the quota banner").as_deref(),
+            Some("Quota banner"),
+            "a file sent first is skipped"
+        );
         assert_eq!(opening("/Users/me/Desktop/Screen shot.png"), None);
     }
 
@@ -448,11 +452,11 @@ mod tests {
     }
 
     #[test]
-    fn cockpit_names_a_tab_only_while_the_label_is_a_placeholder_or_its_own() {
+    fn flightdeck_names_a_tab_only_while_the_label_is_a_placeholder_or_its_own() {
         let ours = Some("Daily quota limiter");
         assert_eq!(owner("3", ours), Owner::Placeholder);
         assert_eq!(owner("", None), Owner::Placeholder);
-        assert_eq!(owner("Daily quota limiter", ours), Owner::Cockpit);
+        assert_eq!(owner("Daily quota limiter", ours), Owner::Flightdeck);
         assert_eq!(owner("my tab", ours), Owner::Someone, "the person renamed it");
         assert_eq!(owner("[2] claude", None), Owner::Someone, "another renamer's: never written over");
         // The rounds: a placeholder is named, its own name moves with the work, the person's rename stops it for good,
@@ -479,7 +483,7 @@ mod tests {
         };
         assert_eq!(pick(&all, true), ("quotas".into(), Source::Person), "the label the person typed first");
         let ours = Sources { given: Some("quotas"), ..all.clone() };
-        assert_eq!(pick(&ours, true), ("Quota work".into(), Source::Person), "cockpit's own label: the person's rename");
+        assert_eq!(pick(&ours, true), ("Quota work".into(), Source::Person), "flightdeck's own label: the person's rename");
         let no_rename = Sources { label: "3", renamed: None, ..all.clone() };
         assert_eq!(pick(&no_rename, true), ("Daily quota limiter".into(), Source::Agent));
         let terminal = Sources { label: "3", renamed: None, titled: None, terminal: "⠐ Fixing the CSV export", ..all.clone() };
@@ -511,7 +515,7 @@ mod tests {
         let claude: Vec<&str> = claude();
         assert!(default_label("claude-code", &claude) && default_label("Claude Code", &claude));
         assert!(!default_label("claude", &agent), "another agent's name is a name like any other");
-        // A person who names a tab "Claude", or a renamer's bare "claude", keeps it: cockpit only shows another name.
+        // A person who names a tab "Claude", or a renamer's bare "claude", keeps it: flightdeck only shows another name.
         for label in ["Claude", "claude", "[2] claude", "zsh"] {
             assert_eq!(owner(label, Some("Daily quota limiter")), Owner::Someone, "{label:?}");
             assert!(!writes(label, None, "Daily quota limiter", Source::Agent), "{label:?} is never written over");

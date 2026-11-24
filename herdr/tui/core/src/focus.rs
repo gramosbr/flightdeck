@@ -1,4 +1,4 @@
-//! Requests for an app to bring something into view, one file per app in ~/.cache/cockpit/focus/, written by the hub
+//! Requests for an app to bring something into view, one file per app in ~/.cache/flightdeck/focus/, written by the hub
 //! when the palette jumps across apps.
 
 use std::path::PathBuf;

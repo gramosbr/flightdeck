@@ -1,4 +1,4 @@
-//! The runbooks for the Herdr app's cockpit mod: the view model the hub pushes (every runbook, its steps with their
+//! The runbooks for the Herdr app's flightdeck mod: the view model the hub pushes (every runbook, its steps with their
 //! state, actions, session and PR, its refresh) and the edits the mod makes in the files, each undoable while nobody
 //! else wrote the file since.
 
@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use cockpit_core::acts::Act;
-use cockpit_core::files;
+use flightdeck_core::acts::Act;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use crate::acts::{book_acts, handoff_id, pr_ref, step_acts};
@@ -212,7 +212,7 @@ pub fn act(action: &str, args: &[Value]) -> Option<Result<String, String>> {
     if !EDITS.contains(&action) {
         return None;
     }
-    if let Err(why) = cockpit_core::peer::person(&format!("{action} edits a runbook: a person does it, not an agent's tools")) {
+    if let Err(why) = flightdeck_core::peer::person(&format!("{action} edits a runbook: a person does it, not an agent's tools")) {
         return Some(Err(why));
     }
     let today = chrono::Local::now().format("%d %b").to_string();
@@ -311,7 +311,7 @@ mod tests {
 
     #[test]
     fn an_edit_is_a_person_s_never_an_agent_s_tools() {
-        use cockpit_core::peer::{Sender, Who, adopt};
+        use flightdeck_core::peer::{Sender, Who, adopt};
         let asked = |who: Option<Who>, action: &'static str| {
             std::thread::spawn(move || {
                 if let Some(who) = who {
@@ -325,7 +325,7 @@ mod tests {
         for action in EDITS {
             let refused = asked(Some(Who::Agent("app:t3".into())), action).expect("a view action").expect_err("an agent's tools");
             assert!(refused.contains("not an agent's tools"), "{refused}");
-            assert!(asked(None, action).expect("a view action").is_err(), "a sender cockpit cannot place");
+            assert!(asked(None, action).expect("a view action").is_err(), "a sender flightdeck cannot place");
         }
         assert!(asked(Some(Who::Agent("app:t3".into())), "dance").is_none(), "not the view's");
     }

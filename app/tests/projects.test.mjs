@@ -6,7 +6,7 @@ import { test } from "node:test";
 /** One of the panels' modules on stand-ins for everything it imports: only its pure functions are called. */
 async function load(name, stubs = {}) {
   const context = createContext({ console });
-  const source = await readFile(new URL(`../mods/cockpit/${name}`, import.meta.url), "utf8");
+  const source = await readFile(new URL(`../mods/flightdeck/${name}`, import.meta.url), "utf8");
   const mod = new SourceTextModule(source, { context, identifier: name });
   const stub = (spec) => {
     const values = stubs[spec] ?? {};

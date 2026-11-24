@@ -62,7 +62,7 @@ async function send(toasts, cx, a, armed) {
 
 /** Opens the release (or any row) as a window that stays, and comes back after a restart until closed. */
 export function popOut(key, title) {
-  openOverlay({ mod: "cockpit", kind: "window", frame: "none", key: `monitor:${key}`, keep: true, width: 460, height: 620, props: { app: "monitor-window", key, title } });
+  openOverlay({ mod: "flightdeck", kind: "window", frame: "none", key: `monitor:${key}`, keep: true, width: 460, height: 620, props: { app: "monitor-window", key, title } });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -916,7 +916,7 @@ export default class Monitor {
         title: "No monitor data yet",
         description: m?.connected
           ? "The hub reads your deploy platform and monitoring, then this fills in."
-          : "No deploy platform or monitoring is connected. cockpit setup adds them.",
+          : "No deploy platform or monitoring is connected. flightdeck setup adds them.",
         action: Button("empty-refresh", { label: "Refresh", icon: "refresh-cw", kbd: "R", onClick: (_e, cx) => this.refresh(cx) }),
       });
     const wide = this.width >= SIDE_AT;
@@ -1101,7 +1101,7 @@ export class MonitorWindow {
     this.sub?.stop();
   }
 
-  /** `cockpit.monitor:close-windows` closes every release window, `monitor:close:<key>` this one. */
+  /** `flightdeck.monitor:close-windows` closes every release window, `monitor:close:<key>` this one. */
   command(c) {
     if (c === "monitor:close-windows" || c === `monitor:close:${this.key}`) closeOverlay(props().overlay);
   }

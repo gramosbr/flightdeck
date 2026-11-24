@@ -3,7 +3,7 @@
 
 use std::collections::HashSet;
 
-use cockpit_core::acts::Act;
+use flightdeck_core::acts::Act;
 
 use crate::row::Kind;
 use crate::tree::Tree;

@@ -1,5 +1,5 @@
 //! The pinned actions space: a tab per one-off agent session the inbox or the runbook starts, remembered by key in
-//! actions.json so pressing the same action again brings its tab back. The hub and the `cockpit` CLI both open them.
+//! actions.json so pressing the same action again brings its tab back. The hub and the `flightdeck` CLI both open them.
 
 use std::path::PathBuf;
 

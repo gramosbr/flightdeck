@@ -1,10 +1,10 @@
-//! What `cockpit focus todo:<text>` writes reaches the running to-do app: that item selected, pointed at.
+//! What `flightdeck focus todo:<text>` writes reaches the running to-do app: that item selected, pointed at.
 
 use std::path::PathBuf;
 
-use cockpit_core::files::Density;
-use cockpit_todo::app::{App, Sel};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use flightdeck_core::files::Density;
+use flightdeck_todo::app::{App, Sel};
 use serde_json::json;
 
 #[test]
@@ -19,7 +19,7 @@ fn a_focus_request_for_an_item_selects_it_pointed_at() {
     let mut app = App::with(path, config, serde_json::Value::Null, Density::Comfortable, false);
     assert!(!app.pointed.is_on());
     std::thread::sleep(std::time::Duration::from_millis(20));
-    cockpit_core::focus::request("todo", &json!({"app": "todo", "key": "ADR Noor"}));
+    flightdeck_core::focus::request("todo", &json!({"app": "todo", "key": "ADR Noor"}));
     assert!(app.tick(), "the request is taken on the next tick");
     assert_eq!(app.sel, Sel::Item("ADR Noor".into()));
     assert!(app.pointed.is_on(), "pointed at from outside: its keys wait for a move");

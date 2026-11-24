@@ -71,13 +71,13 @@
   ],
   "error": null,
   "files": {
-    "home/.cache/cockpit/actions.json": {
+    "home/.cache/flightdeck/actions.json": {
       "fix · tools.gh": "wT:p1",
       "plan eng-401": "w9:p2",
       "review web#9": "w9:p1",
       "talk eng-403": "w9:p4"
     },
-    "home/.cache/cockpit/doctor.json": {
+    "home/.cache/flightdeck/doctor.json": {
       "agents": [],
       "at": 0,
       "checks": [
@@ -115,7 +115,7 @@
         {
           "category": "claude",
           "fix": {
-            "label": "/plugin install cockpit --marketplace quaresc/cockpit"
+            "label": "/plugin install flightdeck --marketplace gramosbr/flightdeck"
           },
           "id": "claude.plugin",
           "message": "Claude plugin not installed",
@@ -153,7 +153,7 @@
           "status": "warn"
         }
       ],
-      "cockpit": "<VERSION>",
+      "flightdeck": "<VERSION>",
       "getting_started": [],
       "stale": true,
       "summary": {

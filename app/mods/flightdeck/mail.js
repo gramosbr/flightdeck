@@ -462,7 +462,7 @@ export default class Mail {
           title: "No mail yet",
           description: v.enabled
             ? "The hub fetches it from your mail connector, within two minutes."
-            : "Pick mail in cockpit setup to see the messages that need you here.",
+            : "Pick mail in flightdeck setup to see the messages that need you here.",
         }),
       );
       return toasts ? root.child(toasts) : root;

@@ -1,5 +1,5 @@
 {
-  "about": "Made-up agents of the acme world, for the sandbox and the screenshots (COCKPIT_AGENTS_DEMO=<this file>). Ages are minutes before now.",
+  "about": "Made-up agents of the acme world, for the sandbox and the screenshots (FLIGHTDECK_AGENTS_DEMO=<this file>). Ages are minutes before now.",
   "agents": [
     {
       "terminal": "app:t41", "space": {"id": "sp-api", "name": "api"}, "tab": {"id": "tb-412", "name": "quotas"},
@@ -79,7 +79,7 @@
     {"ticket": "ENG-398", "terminal": "app:t44", "start_min": 2900, "end_min": 2700},
     {"ticket": "ENG-410", "terminal": "app:t47", "start_min": 4300, "end_min": 4080}
   ],
-  "//driven": "Sessions cockpit drives itself, answered in memory: one waits on a permission, so its card shows without an account.",
+  "//driven": "Sessions flightdeck drives itself, answered in memory: one waits on a permission, so its card shows without an account.",
   "driven": [
     {"key": "claude:demo-421", "agent": "claude", "session": "demo-421", "cwd": "/Users/me/code/api", "mode": "default", "model": "claude-opus-4-5", "cost": 0.38, "started_min": 9,
      "messages": [

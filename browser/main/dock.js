@@ -1,5 +1,5 @@
 // Docking: the browser's window is laid exactly over a slot of the Herdr window and kept one step above it. The slot
-// comes from cockpit's mod (a rectangle inside the window), the window's place on screen from the tracker.
+// comes from flightdeck's mod (a rectangle inside the window), the window's place on screen from the tracker.
 
 /** The smallest slot a browser is shown in. */
 const MIN = { width: 160, height: 120 };

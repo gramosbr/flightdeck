@@ -1,6 +1,6 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/sources/browser-cookie-decryption.ts,
 // sources/chromium-encryption-key-contract.ts and the macOS key derivation of sources/browser-cookie-key.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 import { createDecipheriv, createHash, pbkdf2Sync } from "node:crypto";
 

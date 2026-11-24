@@ -2,7 +2,7 @@
 
 use std::sync::{Arc, Barrier};
 
-use cockpit_agents::{gui, session::CHANGED};
+use flightdeck_agents::{gui, session::CHANGED};
 use serde_json::{Value, json};
 
 #[test]
@@ -16,10 +16,10 @@ fn two_answers_to_one_question_at_once_take_turns_and_the_second_is_refused() {
     // SAFETY: this test binary holds this one test, so nothing reads the environment meanwhile.
     unsafe {
         std::env::set_var("HOME", home.path());
-        std::env::set_var("COCKPIT_AGENTS_DEMO", &world);
+        std::env::set_var("FLIGHTDECK_AGENTS_DEMO", &world);
     }
-    // These answers are the person's: the test says so, as only cockpit's own code may.
-    cockpit_core::peer::trusted();
+    // These answers are the person's: the test says so, as only flightdeck's own code may.
+    flightdeck_core::peer::trusted();
     let view = gui::view(&json!({}), &|_| Value::Null);
     let asked = view["agents"][0]["question"]["asked"].as_str().expect("the question carries its fingerprint").to_string();
     let start = Arc::new(Barrier::new(2));
@@ -27,7 +27,7 @@ fn two_answers_to_one_question_at_once_take_turns_and_the_second_is_refused() {
         .map(|i| {
             let (start, asked) = (Arc::clone(&start), asked.clone());
             std::thread::spawn(move || {
-                cockpit_core::peer::trusted();
+                flightdeck_core::peer::trusted();
                 start.wait();
                 gui::act("answer", &[json!({"terminal": "app:t41", "choice": 1, "asked": asked, "source": format!("test:click{i}")})]).unwrap()
             })
@@ -37,6 +37,6 @@ fn two_answers_to_one_question_at_once_take_turns_and_the_second_is_refused() {
     done.sort_by_key(|d| d.is_err());
     assert!(done[0].as_ref().is_ok_and(|n| n.contains("The plan's default")), "{done:?}");
     assert_eq!(done[1], Err(CHANGED.to_string()), "the second looks again after the first and finds another screen");
-    let log = std::fs::read_to_string(home.path().join(".cache/cockpit/agents/answers.log")).unwrap();
+    let log = std::fs::read_to_string(home.path().join(".cache/flightdeck/agents/answers.log")).unwrap();
     assert_eq!(log.lines().count(), 2, "{log}");
 }

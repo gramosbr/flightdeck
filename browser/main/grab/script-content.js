@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/element-grab/grab-guest-content-script.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /** Reads the selected text, a script-free HTML snippet, the safe attributes and the accessible name of an element. */
 export const GRAB_CONTENT_SCRIPT = `  function getSelectedText() {

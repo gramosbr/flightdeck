@@ -1,28 +1,28 @@
-# cockpit in the Herdr app
+# flightdeck in the Herdr app
 
-The Herdr desktop app half of cockpit: two layouts (`app/layouts/`) and one mod (`app/mods/cockpit/`), drawn
-natively by Herdr from JavaScript, on the same hub as the herdr TUI half. `cockpit app install` copies them into the
+The Herdr desktop app half of flightdeck: two layouts (`app/layouts/`) and one mod (`app/mods/flightdeck/`), drawn
+natively by Herdr from JavaScript, on the same hub as the herdr TUI half. `flightdeck app install` copies them into the
 Herdr home (`HERDR_APP_HOME`, else `~/.config/herdr-app`) with the themes in `app/themes/` (a theme already there is
-left alone), writes `cockpit.json` there (where the binary and cache are), merges `keys.json` (the person's own keys stay;
-the exact bindings cockpit replaced, `RETIRED` in `cli/src/gui.rs`, are taken out), and switches the window
-to the cockpit layout the first time.
+left alone), writes `flightdeck.json` there (where the binary and cache are), merges `keys.json` (the person's own keys stay;
+the exact bindings flightdeck replaced, `RETIRED` in `cli/src/gui.rs`, are taken out), and switches the window
+to the flightdeck layout the first time.
 
-`cockpit` is the default: the agents' terminals, with Home, the spaces and the side panel around them.
-`cockpit-chat` reads them instead — see [The reading layout](#the-reading-layout-cockpit-chat). ⌘⇧L switches.
+`flightdeck` is the default: the agents' terminals, with Home, the spaces and the side panel around them.
+`flightdeck-chat` reads them instead — see [The reading layout](#the-reading-layout-flightdeck-chat). ⌘⇧L switches.
 
 ## How it fits
 
 ```
-Herdr window ── mods/cockpit (JS) ── TCP 127.0.0.1 (hub.json: port, token) ──┐
-herdr TUI ───── cockpit apps (Rust) ── unix socket ────────────────────────────┤── cockpit hub ── store, views, actions
-Claude Code ─── plugin hooks ─────────── cockpit CLI / socket ─────────────────┘
+Herdr window ── mods/flightdeck (JS) ── TCP 127.0.0.1 (hub.json: port, token) ──┐
+herdr TUI ───── flightdeck apps (Rust) ── unix socket ────────────────────────────┤── flightdeck hub ── store, views, actions
+Claude Code ─── plugin hooks ─────────── flightdeck CLI / socket ─────────────────┘
 ```
 
-- **One mod, many views.** Herdr refuses imports outside a mod's folder, so every place uses the `cockpit` mod with
+- **One mod, many views.** Herdr refuses imports outside a mod's folder, so every place uses the `flightdeck` mod with
   `props.app`: `sidebar`, `todo`, `inbox`, ..., `palette`, `menu`, `kit`. `main.js` maps names to view classes.
 - **Rust keeps the logic, JS draws.** A view's model is built by its app crate and served by the hub (`view`, and
   pushed on `subscribe`); edits are hub actions (`act`). TUI and GUI never drift.
-- **Frontend.** `cockpit_core::frontend` picks the herdr TUI (`herdr` CLI) or the Herdr app (`herdr-app do`, `hc`)
+- **Frontend.** `flightdeck_core::frontend` picks the herdr TUI (`herdr` CLI) or the Herdr app (`herdr-app do`, `hc`)
   per request: GUI requests carry `"frontend": "app"`, sessions in an app terminal have `HC_TERMINAL_ID`. Handles of
   app terminals are `app:t3`; use `frontend::{actions_tab, new_space, run_in, focus, alive, tab_of, show_app}`, never
   the `herdr` CLI directly, in anything both halves reach.
@@ -33,13 +33,13 @@ Claude Code ─── plugin hooks ─────────── cockpit CLI
    Option<Result<note, error>>` (None for actions the hub's `act` already has) and `dirs() -> Vec<PathBuf>`. Register
    it in `herdr/tui/cli/src/gui.rs` `register()`:
    ```rust
-   views::register(Def { name: "inbox", docs: &["inbox", "ci"], dirs: cockpit_inbox::gui::dirs, build: cockpit_inbox::gui::view, act: cockpit_inbox::gui::act });
+   views::register(Def { name: "inbox", docs: &["inbox", "ci"], dirs: flightdeck_inbox::gui::dirs, build: flightdeck_inbox::gui::view, act: flightdeck_inbox::gui::act });
    ```
    The hub rebuilds the view when one of `docs` changes, a file in `dirs` changes, or after its own action, and pushes
-   it only when it differs. `cockpit_todo::gui` is the reference, with its test.
-2. **JS**: `app/mods/cockpit/<app>.js`, a class with `init(props, cx)`, `render(cx)`, optional `key(e, cx)` (returns true
+   it only when it differs. `flightdeck_todo::gui` is the reference, with its test.
+2. **JS**: `app/mods/flightdeck/<app>.js`, a class with `init(props, cx)`, `render(cx)`, optional `key(e, cx)` (returns true
    when it used the key), `command(c, cx)` and `close()`; add it to `VIEWS` in `main.js`. The layout already has a
-   block `{ "mod": "cockpit", "props": { "app": "<app>" } }` in the `center` stack. `todo.js` is the reference.
+   block `{ "mod": "flightdeck", "props": { "app": "<app>" } }` in the `center` stack. `todo.js` is the reference.
 3. Every TUI key and action exists, as a visible button with its key as a `Kbd` hint, plus the pointer patterns below.
 
 ## The hub from JS (`hub.js`)
@@ -50,9 +50,9 @@ this.sub = hub.subscribe(cx, { views: ["todo"], docs: ["inbox"], focus: "todo" }
 await hub.act("todo", "add", ["text"]);   // {note, pending, refreshing, error}
 await hub.view("todo");  await hub.search("quota");  await hub.go(target);  await hub.fetchDetails("ci_log", args);
 await hub.events("inbox", sinceMs);  await hub.history("ci_duration", key);
-await hub.cockpit(["focus", "space:inbox"]);  // the cockpit binary, on the install's HOME, driving this window
+await hub.flightdeck(["focus", "space:inbox"]);  // the flightdeck binary, on the install's HOME, driving this window
 await hub.openUrl(url);  // open (macOS), xdg-open (Linux), start (Windows): never exec("open") directly
-hub.isNotInstalled(state);  // a subscription's "error: …" when the Herdr home has no cockpit.json
+hub.isNotInstalled(state);  // a subscription's "error: …" when the Herdr home has no flightdeck.json
 ```
 
 **One subscription per view and window** (`feed.js`): the agents, Home and queue views are followed through
@@ -79,61 +79,61 @@ monitor redraw their ages and poll, instead of a timer each.
 
 `subscribe` reconnects by itself: a connection reads hub.json and pings the hub it names, and when there is no
 hub.json or the ping fails it asks for a hub (`startHub`: one start at a time for every view, a failed one tried again
-after 30 s); stop it in `close()`. A hub stopped with `cockpit hub stop` (it writes `hub.stopped`, which only `cockpit
+after 30 s); stop it in `close()`. A hub stopped with `flightdeck hub stop` (it writes `hub.stopped`, which only `flightdeck
 hub start` takes away) and a remote runner's hub are started by no window on its own, only by Start it
 (`startHub({explicit: true})`, in the chat, Needs, Home, the inbox, Usage, the Start work forms, the sidebar and the
-status bar, each saying "The cockpit hub was stopped" or "The cockpit hub isn't running" through `hub.downWords`, ui.js's
+status bar, each saying "The flightdeck hub was stopped" or "The flightdeck hub isn't running" through `hub.downWords`, ui.js's
 `HubDown` card where content goes; a remote runner's offers no Start it). The window keeps why it last failed to reach
 the hub, in the error's own words (`hub.lastFailure()`: `{message, at}`, set when a connection and the start after it
-both fail, or a followed link breaks; cleared once the window reaches the hub, and said for ten minutes at most): the status bar's item and Cockpit Chat's hub dot say it in their tooltip
-(`hub.downTip(state)`: "The cockpit hub isn't running: <the error>"), and Cockpit settings says it under Health. The CLI, MCP and notifications,
-which go through `core::hub::request`, say "the cockpit hub was stopped: run cockpit hub start" instead of starting
-one, and the doctor warns so, `cockpit hub start` its fix. `cockpit hub start` never stops a hub whose socket takes a connection: it waits for its answer and hub.json.
+both fail, or a followed link breaks; cleared once the window reaches the hub, and said for ten minutes at most): the status bar's item and Flightdeck Chat's hub dot say it in their tooltip
+(`hub.downTip(state)`: "The flightdeck hub isn't running: <the error>"), and Flightdeck settings says it under Health. The CLI, MCP and notifications,
+which go through `core::hub::request`, say "the flightdeck hub was stopped: run flightdeck hub start" instead of starting
+one, and the doctor warns so, `flightdeck hub start` its fix. `flightdeck hub start` never stops a hub whose socket takes a connection: it waits for its answer and hub.json.
 Every step of a connection is bounded (`within(cx, promise, ms, what)`): a task Herdr spawns while layouts switch can
-die with its read pending. A connection waiting on the window's shared `cockpit hub start` reads hub.json again every
+die with its read pending. A connection waiting on the window's shared `flightdeck hub start` reads hub.json again every
 half second and takes a hub started another way at once (Start it, the CLI, another window), so a slow start (Herdr
 stops a command after 30 s) never keeps a view down once a hub answers. Each copy beats once a second for all its subscriptions, and a task following the hub beats
 on its own timer: one that went quiet (its context died) or took longer than every bounded step and the slowest hub
 start (`STUCK_MS`, 40 s) is replaced, and so is one the hub never answered (live or an error) whose step outlasts 12 s
-(`FIRST_MS`): a first task made mid-switch can hang on a read that has no bound while its timer still beats. One watchdog per window (`globalThis.cockpitHubSubscriptions`, every 12 s while
+(`FIRST_MS`): a first task made mid-switch can hang on a read that has no bound while its timer still beats. One watchdog per window (`globalThis.flightdeckHubSubscriptions`, every 12 s while
 all is live, 3 s otherwise) pings the hub, closes the sockets of subscriptions on another hub's port it knows, parks
 those whose copy stopped beating (their own beat follows again; none is parked just after the machine slept, when
 every copy looks behind), and asks for a hub itself only after two of its pings failed in a row. A one-off request is
 bounded on its caller's `cx` when it gives one, closes a connection that comes after it gave up, and one sent but
 never answered throws with `isUnconfirmed(e)`: it may have been done. Every socket belongs to the evaluation of hub.js
-that opened it (`globalThis.cockpitHubOwned`). Herdr 0.1.12 evaluates the mod once per copy, and Herdr may evaluate a
+that opened it (`globalThis.flightdeckHubOwned`). Herdr 0.1.12 evaluates the mod once per copy, and Herdr may evaluate a
 build it never runs, so a newer load takes nothing from an older one: a load is gone only once none of its copies beats
 or asks the hub for 10 s (`liveLoad`), and the watchdog's `sweep` then closes its sockets past every bound of a request
 (90 s), a save or an update having left its tasks waiting on their reads; its subscriptions are parked as any silent
 copy's are.
 `{focus, target}` arrives when the palette or a notification asks the view to bring `target.key` into view
-(`cockpit focus`, `hub.go`). Without `cockpit.json` Home draws the install panel and `AgentsModel` (agentsui.js) falls
+(`flightdeck focus`, `hub.go`). Without `flightdeck.json` Home draws the install panel and `AgentsModel` (agentsui.js) falls
 back to Herdr's `agents()`. Only the app's main view sets `focus`; count
 subscriptions leave it out, so they cannot consume a pending remote-desk navigation.
 
 ## A remote desk (preview)
 
 The Herdr app can read a Linux or macOS runner's hub, including from Windows. Both ends need this version of the
-cockpit mod/hub. Connect the runner through Herdr's machine settings first, then put the cockpit layout and mod in
-the desktop's Herdr home. The desktop needs no cockpit binary. The runner needs no window of its own: with neither the
+flightdeck mod/hub. Connect the runner through Herdr's machine settings first, then put the flightdeck layout and mod in
+the desktop's Herdr home. The desktop needs no flightdeck binary. The runner needs no window of its own: with neither the
 Herdr app nor the herdr TUI running there, its hub lists the agents from herdr-core, in the spaces and tabs the
 desktop placed them in.
 
-On the runner, start the hub with `COCKPIT_HUB_LISTEN` set to its Tailscale IP, for example
-`COCKPIT_HUB_LISTEN=100.64.0.10 cockpit hub start`. If a hub already runs, restart it deliberately with that variable;
+On the runner, start the hub with `FLIGHTDECK_HUB_LISTEN` set to its Tailscale IP, for example
+`FLIGHTDECK_HUB_LISTEN=100.64.0.10 flightdeck hub start`. If a hub already runs, restart it deliberately with that variable;
 `hub start` reuses an existing process and cannot change its interface. The default is loopback. Wildcard and
 multicast addresses are refused, as is an address no interface holds: the hub says why on stderr and leaves the
 running one alone.
 
-In the desktop's Herdr home, write `cockpit.json` using the runner's paths and its name in Herdr:
+In the desktop's Herdr home, write `flightdeck.json` using the runner's paths and its name in Herdr:
 
 ```json
 {
   "machine": "runner",
   "host": "100.64.0.10",
-  "bin": "/home/sam/.local/bin/cockpit",
+  "bin": "/home/sam/.local/bin/flightdeck",
   "home": "/home/sam",
-  "cache": "/home/sam/.cache/cockpit"
+  "cache": "/home/sam/.cache/flightdeck"
 }
 ```
 
@@ -152,18 +152,18 @@ terminals or tabs with matching IDs.
 
 The review panel works on a runner agent: focus it (Go from the agents list) and the panel reads its folder, a runner
 path, over TCP. Its three actions, `review send`, `review walkthrough` and `review stop_walkthrough`, travel as
-`cockpit hub act review <action> <JSON args>` run on the runner through Herdr's machine connection, the way `hub start`
+`flightdeck hub act review <action> <JSON args>` run on the runner through Herdr's machine connection, the way `hub start`
 does; that command checks the arguments and hands the action to the runner's hub on its unix socket. Comments go only to
 an agent of the runner (`runner/t7` reaches the runner as `t7`).
 
-The runbook's step actions travel the same way, as `cockpit hub act runbook <action> <JSON args> [armed]`: `done`, `set`
+The runbook's step actions travel the same way, as `flightdeck hub act runbook <action> <JSON args> [armed]`: `done`, `set`
 (edit a cell or the status), `add`, `undo` and `run_step`. Run still asks first, and its confirm key goes along as
 `armed`. Copy writes the desk's clipboard and never calls the hub. Every other action (refresh, talk, delete, open the
 session or the PR) and Archive stay unavailable in this preview.
 
 TCP has no TLS: use an encrypted private network such as Tailscale, and keep `hub.json` private. A hub listening
 off loopback answers reads only, whoever holds the token; the mod keeps the same list so a remote desk says so
-without asking. That holds for the runner's own window too, so leave `COCKPIT_HUB_LISTEN` unset on a machine whose
+without asking. That holds for the runner's own window too, so leave `FLIGHTDECK_HUB_LISTEN` unset on a machine whose
 desktop writes. On loopback, the token is a file the same user can read, so any process of theirs that reads it can
 act as the window: the hub tells processes apart on its unix socket only, where it refuses permission answers from an
 agent's own process tree (see `answer` under View `agents`).
@@ -172,71 +172,71 @@ Desktop checks: `node --experimental-vm-modules --test app/tests/*.test.mjs`.
 
 ## Window-wide plumbing (`commands.js`)
 
-- Keys (`app/keys.json`, sections `layout:cockpit` and `layout:cockpit-chat`): `cmd-shift-p` → `cockpit.palette`
-  (cockpit's palette, a superset of Herdr's), `cmd-/` → `cockpit.keys` (the keys sheet), `cmd-alt-1..7` →
-  `cockpit.go:<inbox|runbook|todo|meetings|monitor|routines|mail>`. A `cockpit.<command>` reaches every shown copy's
+- Keys (`app/keys.json`, sections `layout:flightdeck` and `layout:flightdeck-chat`): `cmd-shift-p` → `flightdeck.palette`
+  (flightdeck's palette, a superset of Herdr's), `cmd-/` → `flightdeck.keys` (the keys sheet), `cmd-alt-1..7` →
+  `flightdeck.go:<inbox|runbook|todo|meetings|monitor|routines|mail>`. A `flightdeck.<command>` reaches every shown copy's
   `command()` (a hidden one, such as a sidebar ⌘B closed or a screen behind another, hears nothing); prefix your own
   with your view's name (`todo:delete:<key>`).
 - The window's commands live in `commands.js` and run in the one copy each layout always shows, its *runner*
-  (`RUNNER`): `status` in Cockpit, `chat-top` in Cockpit Chat, each through `runCommand(c, cx, layout)`, which acts only
-  while its layout (or a copy of it, such as `cockpit-chat-copy`) is shown. Both layouts: `palette`, `keys`,
+  (`RUNNER`): `status` in Flightdeck, `chat-top` in Flightdeck Chat, each through `runCommand(c, cx, layout)`, which acts only
+  while its layout (or a copy of it, such as `flightdeck-chat-copy`) is shown. Both layouts: `palette`, `keys`,
   `recap[:<tab>]`, `next-waiting`, `next:blocked|done`, `panel[:<child>]`, `doc:<name>`, `go:<screen>` (a screen the
   layout has, or `work`: where you deal with an agent), `via:<screen>|<command>` (shows that screen, then hands its
   view the command), `pr`, `ticket`, `resume`, `link:<url>`, `target:<row>`, `update`, `kit[:<tab>]`,
-  `code:open:<path>`; Cockpit only `home` and `agent-view`; Cockpit Chat only `sidebar`, `new`, `terminal` (⌃`: the
+  `code:open:<path>`; Flightdeck only `home` and `agent-view`; Flightdeck Chat only `sidebar`, `new`, `terminal` (⌃`: the
   chat's subject in a terminal; for a driven session, the chat's question before it is handed over to one) and
-  `session` (⌘⌥N: a session cockpit drives, opened in the chat). `via:chat|chat:open:<key>` pins the chat's subject
-  at once (`pinChat`), and going to an agent on purpose (`goToAgent`, a row, a tab pill) unpins it. The queue drawer (`queue`, Cockpit) and the chat (`chat:open:<key>`, and from the
-  palette `chat:mode` and `chat:stop`, Cockpit Chat) handle their own; the chat's keys (⇧⇥, ⎋, Tab, the digits) are its
+  `session` (⌘⌥N: a session flightdeck drives, opened in the chat). `via:chat|chat:open:<key>` pins the chat's subject
+  at once (`pinChat`), and going to an agent on purpose (`goToAgent`, a row, a tab pill) unpins it. The queue drawer (`queue`, Flightdeck) and the chat (`chat:open:<key>`, and from the
+  palette `chat:mode` and `chat:stop`, Flightdeck Chat) handle their own; the chat's keys (⇧⇥, ⎋, Tab, the digits) are its
   own while the keyboard is in it, never window bindings, so a menu or the palette keeps them (`CHAT_KEYS` lists them
-  in the keys sheet). Tab, ⇧⇥, ⎋ and ⏎ are bindings scoped to the chat's key context (`chatBindings`, `CockpitChat`
-  and `CockpitChat > Input`), whose flags say which of them the chat has a use for now (`chatContext`): GPUI gives a key
+  in the keys sheet). Tab, ⇧⇥, ⎋ and ⏎ are bindings scoped to the chat's key context (`chatBindings`, `FlightdeckChat`
+  and `FlightdeckChat > Input`), whose flags say which of them the chat has a use for now (`chatContext`): GPUI gives a key
   to the box's own bindings and the window's focus moves before any `on_key_down`. The keymap is the app's, so a binding
   stays bound until Herdr restarts; one with no handler on the focus path falls to Herdr's commands. A question's digits
   stay `on_key_down`, and the next steps' 1, 2, 3 and 0 are bindings flagged only while the strip shows; a held ⏎ never
-  sends. The palette, the drawer and Needs open a chat as `cockpit.via:chat|chat:open:<key>`, and the
-  Cockpit layout reads a driven session in Cockpit Chat (`readInChat`, its row and menu). `app/tests/keys.test.mjs` checks every binding and
+  sends. The palette, the drawer and Needs open a chat as `flightdeck.via:chat|chat:open:<key>`, and the
+  Flightdeck layout reads a driven session in Flightdeck Chat (`readInChat`, its row and menu). `app/tests/keys.test.mjs` checks every binding and
   every palette entry reaches exactly one handler in its layout.
 - `CATALOGUE` names every command (title, icon, group, the layouts and screen whose view handles it, whether it is a
   driven session's), for the palette and the keys sheet; `available(layout, c, {driven})` says whether one does
   something in a layout. `hint(label, action)` writes a tooltip with the key the shown layout binds ("Home  ⌘⌥0" in
-  Cockpit, "Home  ⌘⌥8" in Cockpit Chat): the shell's views write no window key by hand.
+  Flightdeck, "Home  ⌘⌥8" in Flightdeck Chat): the shell's views write no window key by hand.
 - The runners and the agents drawer lend the agents view they follow (`lend`); ⌘J and the palette read it from there
   (`lent()`) and only ask the hub when no copy follows it. ⌘J passes an agent with no running terminal (Herdr's
   `terminals()`), and one the last press could not bring up, and says which it passed. Each lender notes the load of hub.js it runs, the newest
-  load's asked first, and a load that stopped running lends nothing (`globalThis.cockpitAgentLent`). A runner starting puts `cockpit.app` back on one of its
+  load's asked first, and a load that stopped running lends nothing (`globalThis.flightdeckAgentLent`). A runner starting puts `flightdeck.app` back on one of its
   layout's screens (`settle`).
 - `screens.js` lists each layout's screens (`screens().list`: child, label, icon, the command its key is bound to);
   `show(child)` switches the layout's stack and gives that view the keyboard (`show:<app>`), `showWork()` brings up
   where you deal with an agent, `showPanes()` the tab's panes.
-- Notifications (`notify.js`): everything goes through `cockpit_core::notify::post` (or `cockpit notify`). With the app
+- Notifications (`notify.js`): everything goes through `flightdeck_core::notify::post` (or `flightdeck notify`). With the app
   frontend the hub hands `{title, body, action, row, buttons}` to the sidebar (`subscribe {notify: true}`), which posts
   Herdr's own toast while the window is in front, else the system notification. `row` is where the one click leads:
   the row the notification is about (`inbox:<PR url>`, `inbox:<ticket id>`, `runbook:<slug>`, `routine:<slug>`, ...),
-  where its other buttons are; the toast runs `cockpit.target:<row>` → `cockpit focus <row>` → the hub's `go`, so the
+  where its other buttons are; the toast runs `flightdeck.target:<row>` → `flightdeck focus <row>` → the hub's `go`, so the
   view gets `{focus, target: {app, key}}`. A system notification posted for the app prefixes its click and buttons
-  with `herdr-app:`, so `cockpit focus` drives the app whatever environment the notifier runs it in. A click or a
+  with `herdr-app:`, so `flightdeck focus` drives the app whatever environment the notifier runs it in. A click or a
   button only ever navigates: `act:<review|ci|rerun|merge>:<PR>` leads to the PR's row, `act:plan:<ticket>` to the
-  ticket's and `act:routine:<slug>` to the routine, where the person acts (`notify.js` `rowOf`, `cockpit focus act:…`),
-  and `update` opens the update dialog; only `resume` resumes, as `cockpit focus resume` does. Act buttons
+  ticket's and `act:routine:<slug>` to the routine, where the person acts (`notify.js` `rowOf`, `flightdeck focus act:…`),
+  and `update` opens the update dialog; only `resume` resumes, as `flightdeck focus resume` does. Act buttons
   (`act:<review|ci|rerun|plan|merge|routine>:<ref>`) are the hub's own threads' alone: a notification that comes over the
-  socket (any client, `cockpit notify` included) keeps only targets that bring something into view (`inbox:`,
+  socket (any client, `flightdeck notify` included) keeps only targets that bring something into view (`inbox:`,
   `runbook:`, `space:`, a tab, a URL; `notify::navigation`), an act turned into the row it is about, and reaches the
   window as `{title: "From <sender>: <title>", body, action, row, buttons, from: <sender>}`, its words plain text
-  (`fetch::untrusted`) that name who sent it (`a terminal`, `an agent's tools (<handle>)`, `a process cockpit cannot
-  place`). `cockpit notify` itself turns an act into its row before it posts.
+  (`fetch::untrusted`) that name who sent it (`a terminal`, `an agent's tools (<handle>)`, `a process flightdeck cannot
+  place`). `flightdeck notify` itself turns an act into its row before it posts.
 - Palette (`palette.js`): a full-window frameless popup drawing Herdr's palette geometry (620 wide, 60 from the top,
   10 rows of 32). Its entries are the shown layout's: its screens, the commands that do something there, each with the
-  key it has there as a Kbd chip in Cockpit (Cockpit Chat keeps keys to tooltips and the sheet). With nothing typed it
+  key it has there as a Kbd chip in Flightdeck (Flightdeck Chat keeps keys to tooltips and the sheet). With nothing typed it
   lists the agents in the hub's order (`view palette {agents: "app", rows}`, below), under "Waiting on you" and
   "Agents", then what was picked lately; picking one brings its terminal into view and marks it seen. When no command
   matches what was typed, every palette ends with one entry, id `start-work`, that starts work on those words, after
   what the hub found: the desktop's "Start work: <query>" opens the Start work dialog on them (`openStart(query)`) in
-  Cockpit and the chat's own start box in Cockpit Chat (`cockpit.via:chat|chat:start:new:<text>`, keyed), started by
-  the person from there; the herdr TUI popup's "start work: <query>" runs `cockpit start-work <query>` in its popup.
-  `cockpit.palette`
-  again closes it; `cockpit.palette:type:<text>` types into it in a sandbox only (tests). Opened with `{sheet: "keys"}`
-  (`cockpit.keys`, ⌘/) it is the keys sheet: the layout's bindings by group (Screens, Agents, This agent, Side panel, Window, In the
+  Flightdeck and the chat's own start box in Flightdeck Chat (`flightdeck.via:chat|chat:start:new:<text>`, keyed), started by
+  the person from there; the herdr TUI popup's "start work: <query>" runs `flightdeck start-work <query>` in its popup.
+  `flightdeck.palette`
+  again closes it; `flightdeck.palette:type:<text>` types into it in a sandbox only (tests). Opened with `{sheet: "keys"}`
+  (`flightdeck.keys`, ⌘/) it is the keys sheet: the layout's bindings by group (Screens, Agents, This agent, Side panel, Window, In the
   apps, then Herdr's own keys the layout leaves alone), searchable by name or caps, ⏎ running the row's command;
   ⌘/ and ⌘⇧P turn one into the other in place. A popup the mod opens passes `popup: true` in its props (Herdr's own
   `overlay` is the overlay's id), so `front.js` treats it as one. Over a Claude
@@ -244,14 +244,14 @@ Desktop checks: `node --experimental-vm-modules --test app/tests/*.test.mjs`.
   cwd, title, session?}`; forking the session itself is `act agents fork {terminal: "app:t3", place}`. Open in
   editor is `editor.js`'s `openInEditor(folder, machine)` (the config's `editor`, else VS Code; Remote-SSH for a
   remote space).
-- **Window commands** (`person.js`). `herdr-app do 'cockpit.<command>'` reaches the views as a menu click or a key binding
+- **Window commands** (`person.js`). `herdr-app do 'flightdeck.<command>'` reaches the views as a menu click or a key binding
   does, from any process of the user, so a command alone only navigates: it opens a view, a menu or a dialog, selects,
   scrolls, fills a box. What acts (an agent's recap, snooze, seen or fork, a row's action, a merge, a ticket's state, a
   mail reply, a brief, a step run, a session's model or stop, Start work's picks, who gets a review) takes a one-time key
   minted in the window: `openMenu` mints one per opening for its items, the palette and the views' clicks one per pick,
   and the command arrives as `<command>~<key>`; `main.js` takes the key off and hands it to `command(c, cx, key)`,
   whose handler uses it once (`take`). Without it the handler only brings the row into view, or opens its menu
-  (`review:to`, a session's start), and such a menu takes a click only (`clickOnly`): `cockpit.session` from its key
+  (`review:to`, a session's start), and such a menu takes a click only (`clickOnly`): `flightdeck.session` from its key
   binding opens a one-item menu to click. A selection or a focus a command made never arms a key: Home's digits answer
   only the card the person moved to or clicked, the recap's keys only the row moved to, the chat's digits wait for
   another key or a click after `chat:open` or `reply`, and a `show` block brought into view by `show:go` or a hub focus
@@ -259,18 +259,18 @@ Desktop checks: `node --experimental-vm-modules --test app/tests/*.test.mjs`.
   moves to it or clicks (`holds`, core's `pointed::Pointed` in the TUI). What a command typed (`start:type:`,
   `chat:start:type:`) starts from a click on Start or ↑ only, never from ⏎, until the box is emptied;
   `chat:start:send` starts only with a key, or in a sandbox.
-- `cockpit.key:<keystroke>` presses a key in the view in front only, and only in a sandbox: a window whose own process
-  was started with `COCKPIT_SANDBOX` and `COCKPIT_TEST_KEYS=1` (`scripts/sandbox.sh` starts it so; `cockpit app install`
+- `flightdeck.key:<keystroke>` presses a key in the view in front only, and only in a sandbox: a window whose own process
+  was started with `FLIGHTDECK_SANDBOX` and `FLIGHTDECK_TEST_KEYS=1` (`scripts/sandbox.sh` starts it so; `flightdeck app install`
   never writes it, and no file says so), else it is dropped, so nothing outside the window answers or confirms.
   In front is the newest popup that takes keys, else the screen the shown layout's stack shows (`front.js` reads
   `layout()`), else the panes beside an agent's terminal; a copy a layout switch dropped stops counting once it stops
   beating (every second). The key arrives marked `injected`, and the chat's digits ignore it. A hidden Home or chat
   answers nothing; a permission's number answers only the card the person moved to (Home, the recap) or focused (the
-  chat's Tab), never a key held down, and no chord answers one. `cockpit.chat:<command>` reaches the chat only when it is in front.
+  chat's Tab), never a key held down, and no chord answers one. `flightdeck.chat:<command>` reaches the chat only when it is in front.
 
 ## The shell: layout, Home, status bar, bell, side panel, queue
 
-`app/layouts/cockpit.json`: sidebar · a top bar (`tabs` + `bell`) · the `center` stack, `home` first and shown at start
+`app/layouts/flightdeck.json`: sidebar · a top bar (`tabs` + `bell`) · the `center` stack, `home` first and shown at start
 (the board, with a hidden `home-agent` column: `agent-head` over `{agent: "focused"}`), `work` (a `view` stack: `main` =
 the tab, `agent` = the focused agent alone), the apps · the `status` bar; in `work`, the right `panel` (stack
 `panel-body`: `show`, `review`, `runbook-panel` (`runbook {scope: "focused"}`), `files`, `changes`, then the `activity`
@@ -280,7 +280,7 @@ bar); floating on the root, the `queue` drawer (right edge, 44px peek, shown onl
   tiles (agents needing you, reviews for you, your PRs, merged this week, agent spend, estimated), the NEXT MOVE callout
   (only an agent waiting on you: its question with its choices as buttons and a reply field), the agents by stage as wrapped
   cards (empty stages on one line; the agents pinned here or in the sidebar first, in a Pinned row, out of their stage's
-  row but still in its counts; pins live in the shared `cockpit.pins`), then your PRs no agent works on (to fix, to
+  row but still in its counts; pins live in the shared `flightdeck.pins`), then your PRs no agent works on (to fix, to
   land). On the right: Up next (meetings),
   Apps (each pinned app in a few words, a click away) and Activity (the hub's events of the last days). "Needs you" means
   agents only. With no card picked, the keys act on the NEXT MOVE agent, except `1–9`, which answer only a card moved to.
@@ -294,17 +294,17 @@ bar); floating on the root, the `queue` drawer (right edge, 44px peek, shown onl
   (the agents view's `links`: PR, ticket, CI, deploy dashboard and run, then the
   pages its transcript cites, each named after its service, always in that order), queued prompts, agents to resume,
   the hub only while it does not answer, and its `documents` at the right end. It is this layout's runner (`commands.js`):
-  `cmd-alt-0` → `cockpit.home` (Home ↔ work), `cmd-alt-a` `agent-view`, `cmd-alt-b` `panel`, `ctrl-cmd-1..5`
+  `cmd-alt-0` → `flightdeck.home` (Home ↔ work), `cmd-alt-a` `agent-view`, `cmd-alt-b` `panel`, `ctrl-cmd-1..5`
   `panel:<show|review|runbook|files|changes>`, `cmd-j` `next-waiting`, `cmd-shift-j`/`cmd-shift-u` `next:blocked`/
-  `next:done`, `cmd-g` `pr`, `cmd-l` `ticket`, `cmd-alt-r` `resume`, `cmd-r` → `cockpit.recap` (view `agents`' popup),
-  `cmd-/` the keys sheet. `cmd-alt-q` → `cockpit.queue` (the queue dialog) is the queue drawer's own.
+  `next:done`, `cmd-g` `pr`, `cmd-l` `ticket`, `cmd-alt-r` `resume`, `cmd-r` → `flightdeck.recap` (view `agents`' popup),
+  `cmd-/` the keys sheet. `cmd-alt-q` → `flightdeck.queue` (the queue dialog) is the queue drawer's own.
 - **Code** (`code.js`, `{app: "code", file, line?, terminal?, tab?}`): a file in a pane beside the agent, to read and edit:
   syntax highlighting, ⌘S saves (refused when the file changed on disk since it was opened), the agent's edits show
   as it makes them, and Markdown gets a live preview beside it (⌘⇧V). "Ask the agent" turns a note on the file, or on
   some lines (`12-18: …`), into a one-comment review. `openCode(file, {terminal, line})` keeps one per tab; `e` in
-  Review opens the file under the cursor, and `cockpit.code:open:<path>` any file. In Cockpit Chat the file opens in
+  Review opens the file under the cursor, and `flightdeck.code:open:<path>` any file. In Flightdeck Chat the file opens in
   the side panel beside the chat instead (`{app: "code", panel: true}` in `panel-body`, reading shared
-  `cockpit.code.panel` = {file, line, terminal, at, back}); its Close gives the panel back to what it showed, or closes
+  `flightdeck.code.panel` = {file, line, terminal, at, back}); its Close gives the panel back to what it showed, or closes
   it, and the activity bar gets a button for the file. The chat's messages link their bare paths and URLs, and a code
   span holding only one (`textlinks.js`): a path opens here (`path:12` on its line), a folder or an image in the system's
   own app, a URL in the browser; the local images an answer names show under it, each opened full size with a click.
@@ -335,43 +335,43 @@ bar); floating on the root, the `queue` drawer (right edge, 44px peek, shown onl
   go, so the words are never offered to send again), `edit [handle, id, text]`, `remove`, `move [handle, id, to]`, `clear`, `send [handle,
   id | "all"]` (now, paused or not; all = one numbered prompt; refused while the agent waits on a question, and put back
   where they stood), `resume [handle]` (the queue is this agent's now). An agent's own tools write only to its own
-  queue. Handles are `app:t3`, herdr pane ids, or a driven session's key. Shared `cockpit.queue.for` picks the agent.
+  queue. Handles are `app:t3`, herdr pane ids, or a driven session's key. Shared `flightdeck.queue.for` picks the agent.
   herdr's popup (prefix+shift+q) tells a typed line to the agent; its commands start with a colon (`:s`, `:s <n>`, `:e
   <n> <text>`, `:m <n> <to>`, `:d <n>`, `:c`, `:r`, `:q`).
 - **Resume after a restart** (`core/src/resume.rs`, both halves): every minute the hub notes which Claude session each
   terminal runs (`~/.claude/sessions/<pid>.json` for app terminals, herdr's `agent_session` for TUI panes) in
-  `~/.cache/cockpit/resume/agents.json`. A session not running after a reboot or a herdr-core restart is lost: one
-  notification (its click resumes them all), Home's banner, the status bar, `cockpit resume [look|all|<handle>|dismiss
-  <handle>]` and `cockpit focus resume`. Resuming types `cd '<cwd>' && claude --resume <id>` into its terminal when it
+  `~/.cache/flightdeck/resume/agents.json`. A session not running after a reboot or a herdr-core restart is lost: one
+  notification (its click resumes them all), Home's banner, the status bar, `flightdeck resume [look|all|<handle>|dismiss
+  <handle>]` and `flightdeck focus resume`. Resuming types `cd '<cwd>' && claude --resume <id>` into its terminal when it
   sits at a shell, opens a space in its folder when it is gone, and refuses when another program runs there.
 
 
 **Links, badge and drags.** Both layouts list the mod in `link_handlers` (Herdr 0.1.17): `link.js` takes a Cmd-click on
-a web link in a terminal, passes it back to Herdr unless `links.open` is `side`, and then runs `cockpit browse` for the
+a web link in a terminal, passes it back to Herdr unless `links.open` is `side`, and then runs `flightdeck browse` for the
 clicked terminal. The sidebar puts the count of agents that need you on the Dock icon (`setBadge`, `dockBadge`), Files
 and Changes rows drag their paths into a terminal (`drag_paths`), and the mod starts, asks and follows nothing while
-`herdr-app check` loads it (`hub.checking()`). In Cockpit Chat the boundary between the conversation and the side panel
+`herdr-app check` loads it (`hub.checking()`). In Flightdeck Chat the boundary between the conversation and the side panel
 drags. The pane header shows a name given with Rename (`pane.rename`), and ctrl-alt-arrows move a pane's edge
 (`pane.resize`).
-## The reading layout (`cockpit-chat`)
+## The reading layout (`flightdeck-chat`)
 
-`app/layouts/cockpit-chat.json`, its brief in `app/RECIPE-cockpit-chat.md`. It draws the conversation instead of
-showing the terminal: a `screen` stack over a 56px `chat-top` bar, beside the cockpit layout's own sidebar (the same
+`app/layouts/flightdeck-chat.json`, its brief in `app/RECIPE-flightdeck-chat.md`. It draws the conversation instead of
+showing the terminal: a `screen` stack over a 56px `chat-top` bar, beside the flightdeck layout's own sidebar (the same
 `workspace-chrome` brand row, `sidebar` view and footer), which ⌘B opens and closes. Its agent screen is a row of the
-`view` stack (`chat` and `tab`) beside the same `panel` the cockpit layout has, so `show`'s charts, the review screen,
+`view` stack (`chat` and `tab`) beside the same `panel` the flightdeck layout has, so `show`'s charts, the review screen,
 files and changes are ⌘⌥B away in both, and so is `web`, the Chromium side browser's slot. Its panel also has `browser`, a block of the tab in front: a terminal-browser
 split beside the agent opens the panel there, at least 600px wide, with its tab zoomed on the browser (`browser.js`,
 on the top bar's clock), and the chat's box keeps the keyboard. The panel put on another child or closed, the Tab
 screen, or another layout gives the tab back unzoomed; the Tab screen hands the browser back to the panel on the way
 back to the chat, and a browser closing closes its panel. Its own theme pair,
-`themes/cockpit-chat.json` and `cockpit-chat-light.json`: near-monochrome greys with colour kept for what an agent is
+`themes/flightdeck-chat.json` and `flightdeck-chat-light.json`: near-monochrome greys with colour kept for what an agent is
 doing, and for the providers' own logos.
 
 - `chat` (`chat.js`) follows one named agent, its *subject*: the agent in view (`frontAgent`: the focused pane's, else
   the one in the tab in front; none on a tab no agent runs in, where the chat is empty, never the first agent Herdr
   names for its blocks), or the one `chat:open:<key>` named until another agent comes in front (shared as
-  `cockpit.chat.subject`). The focus landing on a shell, or on nothing, keeps that one, and so does a hub restart: a pinned agent goes only once the answering hub has not listed it for a while. It subscribes to the hub's `chat` view for that terminal,
-  the `queue` view, and the `session` view `{key}` only for a session cockpit drives, and draws a 760px reading column:
+  `flightdeck.chat.subject`). The focus landing on a shell, or on nothing, keeps that one, and so does a hub restart: a pinned agent goes only once the answering hub has not listed it for a while. It subscribes to the hub's `chat` view for that terminal,
+  the `queue` view, and the `session` view `{key}` only for a session flightdeck drives, and draws a 760px reading column:
   a one-line header (status, title, place, branch, PR; the PR chip's menu says how ready it is from the row's CI and
   reviews and the hub's `pr_merge`, and offers the inbox's `merge`/`automerge` acts that apply, each asked once more
   under the header), what you said as a bubble, what the agent said as Markdown
@@ -413,45 +413,45 @@ doing, and for the providers' own logos.
   **Starting work.** With no subject (no agent in front), the empty chat is Start work (`chatstart.js`): what the box
   holds is a prompt, a ticket's key or a PR's URL, planned by `start_work` as it is typed and drawn in place of the
   conversation with its blockers and their fixes, and the getting-started checklist under it. The folder chip turns
-  into the repo and worktree picker, and an agent chip picks the agent: one cockpit drives (`drives`: its agent table
+  into the repo and worktree picker, and an agent chip picks the agent: one flightdeck drives (`drives`: its agent table
   row has a `stream` column, Claude Code today) starts as a session in this chat, any other in a terminal the chat
   follows; model, effort and speed chips follow it where its agent takes them at start. ⏎ runs `start work` and the
   steps show as they go;
   once the run made its terminal or its session (`made.pane`) the chat follows it there, the run on show until its
   agent has a conversation to draw, and what is typed next is a new form with the same picks.
-  For checks driven from a shell, `cockpit.chat:start:type:<text>` types in the empty box of the chat in front (⏎ then
-  leaves it to a click on ↑) and `cockpit.chat:start:send` starts it, in a sandbox or with a key only.
-  `cockpit.chat:start:new:<text>` gives the chat a start box of its own, whatever agent is in front, holding the text:
+  For checks driven from a shell, `flightdeck.chat:start:type:<text>` types in the empty box of the chat in front (⏎ then
+  leaves it to a click on ↑) and `flightdeck.chat:start:send` starts it, in a sandbox or with a key only.
+  `flightdeck.chat:start:new:<text>` gives the chat a start box of its own, whatever agent is in front, holding the text:
   with the palette's key ⏎ starts it, without one only a click on ↑ does.
-- `chat-top` draws the capsule tab bar, with a pill per session cockpit drives (the agents view's driven rows, a paused
+- `chat-top` draws the capsule tab bar, with a pill per session flightdeck drives (the agents view's driven rows, a paused
   one marked so), the active tab's pill lit only while the chat is not pinned elsewhere. A tab's pill and its "+N" menu
   item bring in front what the tab holds (`showTab`): its agent's chat, the agent named to Herdr with
   `agent.focus`, or its panes on the Tab screen when no agent runs there (a shell, a tab Herdr numbers "3"). Pills fit the bar from the
   widths they were measured at (`fitPills`), the active one always; the rest wait behind a
-  "+N" pill whose menu ⌘⇧A (`cockpit.tabs`) opens from the keyboard, under the pill, with its first item picked (a click
+  "+N" pill whose menu ⌘⇧A (`flightdeck.tabs`) opens from the keyboard, under the pill, with its first item picked (a click
   opens it there with nothing picked). A pill names the tab by its agent's title while the
   label is Herdr's number or the agent's own name (`tabName`). The active pill's × closes the tab (`tab.close`, the
   next tab brought in front first), asking for a second click while its agent works or waits. A monochrome dot in the right capsule says whether the hub runs; down on this machine
   it reads "Hub stopped" or "Hub not running" and starts it on a click. Its last button shows the chat agent's terminal
-  (`cockpit.terminal`), drawn with that agent's logo and named in its tooltip ("Show Claude Code's terminal"; a session
-  cockpit drives asks before it moves to one), the terminal glyph only while no agent is in front. Each pill wears its
+  (`flightdeck.terminal`), drawn with that agent's logo and named in its tooltip ("Show Claude Code's terminal"; a session
+  flightdeck drives asks before it moves to one), the terminal glyph only while no agent is in front. Each pill wears its
   agent's logo too. Being the view always shown, it is this layout's
   runner (`commands.js`): ⌘B,
-  ⌘T, ⌘⌥B, ⌘J and ⌘⇧J/⌘⇧U, ⌘R, ⌘/, `cockpit.doc:<name>` and `cockpit.go:<screen>` (⌘⌥0 Chat, ⌘⌥9 Needs you,
+  ⌘T, ⌘⌥B, ⌘J and ⌘⇧J/⌘⇧U, ⌘R, ⌘/, `flightdeck.doc:<name>` and `flightdeck.go:<screen>` (⌘⌥0 Chat, ⌘⌥9 Needs you,
   ⌘⌥8 Home, ⌘⌥T Tab). The sidebar's app strip and the left drawer's head lead to Needs you too.
 - `side-peek` and `panel-peek` are the drawers on the two edges, floating blocks with `peek: 10`. Each draws nothing
   and drops its subscription while its pinned half is open, so the sidebar and its drawer — and the panel and its
   drawer — are never both following the hub. Whether a half is open is the layout's to say (`sidebarShown`,
-  `panelOpen`), never a flag carried over from the other layout: `cockpit.chat.sidebar` and `cockpit.panel.open` follow
+  `panelOpen`), never a flag carried over from the other layout: `flightdeck.chat.sidebar` and `flightdeck.panel.open` follow
   it, so each drawer is there from the first frame and ⌘⌥B acts at the first press. The sidebar is open or put away, never between: the brand row's
   fold to a rail (`sidebar` under 160 px) puts it away at its kept width (`settleSidebar`, on the top bar's clock), as
   ⌘B does. The left drawer's head pins it back; under it, the palette and each app's screen as a row of icons, then the
   agents by stage, in the agents view's order and words, then Places: the window's spaces (six, then a link to the palette, which lists every one for the keyboard), a
-  click bringing one in front; they stay under the list, outside its scroll. It carries the sidebar's update tag (`UpdateTag`, without colour) when a newer cockpit
+  click bringing one in front; they stay under the list, outside its scroll. It carries the sidebar's update tag (`UpdateTag`, without colour) when a newer flightdeck
   is out. `panel-peek` holds a `Show` of its own for exactly as long as it draws.
 - `needs` lists every waiting agent as a question card, then the agents stopped with an error.
 - `screens.js` holds each layout's stack and the screen it deals with an agent on (`chat` here, the panes in the
-  cockpit layout), so `show()` and `goToAgent()` land in the right place.
+  flightdeck layout), so `show()` and `goToAgent()` land in the right place.
 - The rows are drawn with `list`, which measures each as it draws it; a list renderer takes no handlers, so a chip
   opens through the list's own `on_item_click` and the scroll is driven with a `VirtualListScrollHandle`.
 
@@ -481,7 +481,7 @@ messages a build takes 0.8 ms with nothing new and 1 ms after a turn, against 38
 `chat::tests::measure_a_5000_message_chat`). The last 400 messages, `more` true when there were more. It has no
 actions: a chat answers through `agents` and sends through `queue`.
 
-**How a turn draws** (`app/mods/cockpit/chat.js`, `rowsOf`). A turn is what you said, then one row for everything
+**How a turn draws** (`app/mods/flightdeck/chat.js`, `rowsOf`). A turn is what you said, then one row for everything
 the agent did and thought, then the one thing it answers with — its last words. The work row says how long it took
 ("Worked for 2m 14s") and opens on a click to every call it made and everything it said on the way; a rule under it
 separates the work from the answer. A turn still running keeps all its words in the fold and counts up to now; under
@@ -492,10 +492,10 @@ where its agent has them (`cycle`, `focus` in its row of the table), the mode is
 agent's own ⇧⇥ until its footer shows the mode picked (one that asks less going through the confirm), and Focus a click
 that types `/focus` once it rests.
 
-**Files and Changes** (`files.js`, `changes.js`, `projects.js`). In Cockpit Chat the side panel's Files and Changes are
-cockpit's, unless `chat.projectPanels` is off. The chat view's `session.repos` names the git repositories its agent
+**Files and Changes** (`files.js`, `changes.js`, `projects.js`). In Flightdeck Chat the side panel's Files and Changes are
+flightdeck's, unless `chat.projectPanels` is off. The chat view's `session.repos` names the git repositories its agent
 works in, the latest first: its folder's own and those its calls changed or went into (a file written, a `cd`, a path
-under its folder in a command), never one only read. The chat shares them with its folder (`cockpit.panel.where`);
+under its folder in a command), never one only read. The chat shares them with its folder (`flightdeck.panel.where`);
 Files lists the folder as a tree opened down to each of them, marked, with a repository outside the folder listed above
 it and every changed file coloured by its git status, and Changes shows their uncommitted changes one at a time, a
 switcher on top, with each file's diff and a commit of the one shown. Review follows the latest of them too.
@@ -505,12 +505,12 @@ switcher on top, with each file's diff and a commit of the one shown. Review fol
 `@` the folder's files (`git ls-files`, else everything not hidden), by `hintsFor`.
 
 **Next steps** (`chat.nextSteps: true` in the config, off by default; `herdr/tui/agents/src/next.rs`,
-`app/mods/cockpit/next-steps.js`). When the subject's turn ends with an answer of at least 80 characters (at rest,
+`app/mods/flightdeck/next-steps.js`). When the subject's turn ends with an answer of at least 80 characters (at rest,
 not stopped, not failed, no question, its last message its answer), the chat view's `next` is `{turn, state:
 "loading", by}` while that agent is asked for up to three prompts the person is likely to send next, then `{turn, state:
 "ready", by, commands, items: [{label, prompt}]}`, else null; `by` names the agent that writes them. Any provider's conversation gets them: the agent that answers is the
 followed one where its row has `aside` switches (it forks its own session), else `chat.nextStepsAgent`, else the first
-installed agent that has them, given the conversation as cockpit read it; with none installed the view says
+installed agent that has them, given the conversation as flightdeck read it; with none installed the view says
 `{turn, state: "unavailable", reason}` and starts nothing. The `aside` switches exist for Claude Code only: safe mode
 disables plugins, hooks, MCP servers and other customizations, user and project settings stay unread, an empty tool set
 removes read, write, shell and network tools, strict MCP configuration starts no servers, and session persistence is
@@ -523,7 +523,7 @@ agent that writes them, the option's line says so (Claude Code writes them for a
 tools, billed to the person's Claude account); a fork reads the whole conversation again. Only
 the person's own look starts a run: the hub builds a view as the person's when a subscriber placed as theirs follows it
 (`peer::with`), and an agent's tools reading `chat` get only what is kept. One run at most per turn (a turn is keyed by its answer,
-kept in `~/.cache/cockpit/agents/next/<session>.json` across restarts), and a run for a turn the person has moved on
+kept in `~/.cache/flightdeck/agents/next/<session>.json` across restarts), and a run for a turn the person has moved on
 from is stopped with its entire process group and its answer dropped; a failure shows nothing and goes to the hub's log. The answer is untrusted
 (D9): only the JSON array between its first `[` and last `]` is read, at most three entries, a prompt of 600
 characters and a label of 48, text holding Unicode tag characters refused, escape sequences and control, format,
@@ -540,10 +540,10 @@ box, focused, for the person to edit and send; 0 or ⎋ put them away for that t
 under the header is up. Nothing is ever sent or run from a suggestion, and a key held down or sent from outside the
 window picks nothing.
 
-### View `session` (an agent cockpit drives itself)
+### View `session` (an agent flightdeck drives itself)
 
 `herdr/tui/agents/src/session.rs`. The agent runs under `claude -p --input-format stream-json --output-format
-stream-json --verbose`, so cockpit owns its stdin and stdout: what it says, the tools it calls and what they returned
+stream-json --verbose`, so flightdeck owns its stdin and stdout: what it says, the tools it calls and what they returned
 arrive as events, already folded into the `{role, at, text, tool}` shape the chat draws. Its actions are `start {agent,
 cwd, mode, model?, effort?, fast?}`, `model {key, model}`, `effort {key, effort}`, `fast {key, fast}` (fast mode on only
 from a person), `send {key, text}`, `deliver {key, text}`, `stop {key, confirm?}` (End: its stdin closes and its process
@@ -587,8 +587,8 @@ where it sits, `more` that older ones come before it. To read further back, ask 
 cursor.from` and put that page in front.
 
 **Surviving a restart.** The command line comes from the agent table: its `stream` switches, the permission mode, the
-model, effort level (`effort`) and fast mode (`fast`) when set, then a new session under the id cockpit picks (`new_session`: `--session-id <id>`) or the table's
-`resume` (`--resume <id>`). `~/.cache/cockpit/driven/registry.json` (`{sessions: [{key, agent, session_id, cwd, mode,
+model, effort level (`effort`) and fast mode (`fast`) when set, then a new session under the id flightdeck picks (`new_session`: `--session-id <id>`) or the table's
+`resume` (`--resume <id>`). `~/.cache/flightdeck/driven/registry.json` (`{sessions: [{key, agent, session_id, cwd, mode,
 model, effort, fast, pid, hub, prompted, started}]}`, `hub` the pid of the hub its process hangs off, written atomically when one
 changes and never after the hub handed over) knows it from the start. A hub that starts (after a restart or an update's
 hand-over) reads it and puts every session back `paused` first, its history read from its transcript and a mode that
@@ -630,21 +630,21 @@ leaves `pending`: no card may stay up offering an answer nothing is waiting for.
 in full (`preview`: the command, the diff, the file, the plan, an MCP tool's input). The modes that run tools without
 asking, `bypassPermissions` and `auto`, are set by `start` or `mode` only with `confirm: true`; the chat asks first,
 naming the session, and ⇧⇥'s cycle never reaches them. Each session writes what it asked, what it was answered and
-from where to `~/.cache/cockpit/driven/<key>.log` (kept 14 days). `cockpit session answer <ask> allow|deny` answers one
+from where to `~/.cache/flightdeck/driven/<key>.log` (kept 14 days). `flightdeck session answer <ask> allow|deny` answers one
 from a shell, at a terminal only: without a verdict, or with no terminal on its input, it refuses. The session runs
 without the hub's terminal variables (`HC_*`, `HERDR_*`, `CLAUDECODE`, …), the hub stays up while one runs (idle exit
 and an update's hand-over both wait), and its process is reaped when it ends.
 
-**What the answer checks stop (D9).** Cockpit stops the person's own windows from answering the wrong thing, and stops
-an agent's own tools, and any process cockpit started, from answering for the person, loosening a mode, acting on
-another agent, starting agents, running commands with effects or bringing the window to an agent through cockpit. It
+**What the answer checks stop (D9).** Flightdeck stops the person's own windows from answering the wrong thing, and stops
+an agent's own tools, and any process flightdeck started, from answering for the person, loosening a mode, acting on
+another agent, starting agents, running commands with effects or bringing the window to an agent through flightdeck. It
 does not claim to stop a determined process of the same user that drives terminals or windows itself; the routes that
 remain are listed below, and nothing else is claimed.
 
 *The person's windows.* A card answers only the question it drew, by its `ask` or `asked`; a permission takes a number
 picked on purpose, from a card moved to or focused, never a held or injected key. A choice in the question's `unasked`
 (every tool runs unasked: Claude's bypass, Codex's full access) takes a step of its own, Cancel first, whose item carries a
-one-time key made when that menu opened: a window command from outside (`herdr-app do 'cockpit.home:unasked:…'`) names
+one-time key made when that menu opened: a window command from outside (`herdr-app do 'flightdeck.home:unasked:…'`) names
 no key and answers nothing. The chat's mode menu is keyed the same way; a mode that asks less (`acceptEdits`,
 `bypassPermissions`, `auto`) set any other way, the palette's ⇧⇥ entry included, goes through the chat's confirm (a real
 ⇧⇥ pressed in the chat cycles at once; an injected key does nothing). A permission the
@@ -655,14 +655,14 @@ menu's opening, a palette pick or a click (`person.js`), and a test sends every 
 A menu a command opened (a session's start, `review:to`) takes a click only. A selection, a focus or text a command made
 arms nothing: a digit answers only a card or row the person moved to or clicked (Home, the recap), the chat's digits and
 a `show` block a command put in view wait for the person's own key or click, and typed text starts from a click only. A
-row a hub focus selected (a notification's click, `cockpit focus inbox:<PR>`) is pointed at, in the inbox, monitor,
+row a hub focus selected (a notification's click, `flightdeck focus inbox:<PR>`) is pointed at, in the inbox, monitor,
 routines, mail, meetings, runbook and to-do of the desktop and the TUI: ⏎, its letters and digits (and the to-do's
 space, which ticks an item there) say "Move to it first" until the person moves to it or clicks.
-Keys and typing from a shell (`cockpit.key:`, `palette:type:`, `chat:start:send`) work only in a sandbox's own window,
-started with `COCKPIT_SANDBOX` and `COCKPIT_TEST_KEYS=1`, which an install never writes. A notification's click or
-button, `cockpit.target:` and `cockpit focus` only navigate: an act target leads to its row, where the person acts,
-`link:` opens web pages only, and `update` opens the update dialog (`cockpit focus update` run by a process updates,
-as `cockpit update` would).
+Keys and typing from a shell (`flightdeck.key:`, `palette:type:`, `chat:start:send`) work only in a sandbox's own window,
+started with `FLIGHTDECK_SANDBOX` and `FLIGHTDECK_TEST_KEYS=1`, which an install never writes. A notification's click or
+button, `flightdeck.target:` and `flightdeck focus` only navigate: an act target leads to its row, where the person acts,
+`link:` opens web pages only, and `update` opens the update dialog (`flightdeck focus update` run by a process updates,
+as `flightdeck update` would).
 
 *Who sent a request.* The hub names the sender (the unix socket's peer; over TCP, the process holding the source port,
 looked up once per connection) and reads its whole line of parents, to the system's root:
@@ -670,22 +670,22 @@ looked up once per connection) and reads its whole line of parents, to the syste
   makes it that agent's; the agents are looked at again when the line passes an agent's program none of them is known
   by, so a new agent's tools act on it at once;
 - an agent's program anywhere on it (a name from the agent table, by the process's name, its executable or, under node,
-  bun, deno, python or ruby, its script) makes it an agent cockpit does not watch, which may act on no agent;
-- cockpit's own work is refused: the hub itself and what it runs (a routine, a driven start's setup), what a `cockpit
-  show` pane runs for a block, and `cockpit focus`, `cockpit act` and `cockpit setup-run`, the sender itself as well as
-  what they start. `focus` and `act` run what a click or a window command names (the window's `cockpit()` helper, the
+  bun, deno, python or ruby, its script) makes it an agent flightdeck does not watch, which may act on no agent;
+- flightdeck's own work is refused: the hub itself and what it runs (a routine, a driven start's setup), what a `flightdeck
+  show` pane runs for a block, and `flightdeck focus`, `flightdeck act` and `flightdeck setup-run`, the sender itself as well as
+  what they start. `focus` and `act` run what a click or a window command names (the window's `flightdeck()` helper, the
   notifier), never the person's hand; `setup-run` runs start work's setup command, the repo's code, in the person's
   terminal;
 - else the first window or terminal the person uses makes it theirs. A front is known by its executable's real path,
   never by the name a process gives itself nor by the PATH the hub runs on: the bundles Terminal (`Terminal`), iTerm2
   (`iTerm2`, `iTermServer` and the copy it keeps in `~/Library/Application Support/iTerm2/`), Ghostty (`ghostty`),
-  WezTerm (`wezterm-gui`), kitty, Alacritty, Warp (`stable`), Herdr (`Herdr`), Herdr Core (`herdr-core`) and cockpit's
-  notifier (`Cockpit.app`'s `cockpit-notify`, which runs a click only once clicked); and herdr, herdr-core, tmux,
+  WezTerm (`wezterm-gui`), kitty, Alacritty, Warp (`stable`), Herdr (`Herdr`), Herdr Core (`herdr-core`) and flightdeck's
+  notifier (`Flightdeck.app`'s `flightdeck-notify`, which runs a click only once clicked); and herdr, herdr-core, tmux,
   mosh-server, sshd and the common Linux terminals where they are installed: the system's own folders (`/usr` but
   `/usr/local`, `/bin`, `/sbin`), MacPorts, Nix, snaps, Homebrew's Cellars, and the account's `~/.local/bin` and
   `~/.cargo/bin` (its home from the user database), so a copy under that name elsewhere is none. An ssh login counts
   from another machine only: one from this machine (`ssh localhost`) is refused unless the config says
-  `"trust_loopback_ssh": true`, and one whose client cockpit cannot read is refused. VS Code and Cursor are no fronts:
+  `"trust_loopback_ssh": true`, and one whose client flightdeck cannot read is refused. VS Code and Cursor are no fronts:
   their own agents run commands in their terminals, so a request from them is refused. An agent run in the background
   (`claude --bg`) sits under no front either; its tools are an agent's by its program.
 - Nothing of these (a pid the table does not list, a process detached to the system's root) is refused.
@@ -703,7 +703,7 @@ answer (an agent neither answers its own confirm nor comments on another's view)
 person: merge, auto-merge, ready, draft, dequeue, rerun, redeploy, roll back, previews, closing spaces, removing
 worktrees, ticket and mail changes, deleting, editing or changing routines (`routines update`) and runbooks (a step
 marked done, the runbook view's `done`, `set`, `add` and `undo`), dismissing a start's record (`start dismiss`, the
-inbox's `start_dismiss`), sign-in, `doctor fix` and `doctor fix_all`, and `inbox run`, which runs nothing but a herdr or cockpit focus by
+inbox's `start_dismiss`), sign-in, `doctor fix` and `doctor fix_all`, and `inbox run`, which runs nothing but a herdr or flightdeck focus by
 the hub's own binaries. `routines add` is open to an agent's tools only for a routine whose mode is absent, `default`
 or `plan`; any other mode, one that asks less, needs a person, and a mode Claude Code does not name is refused. A runbook action names its runbook by slug alone (`{"$book": slug}`): the path its
 prompt quotes and the session its owner file names come from the runbooks folder, never from the caller. An agent's
@@ -712,13 +712,13 @@ a stop, its recap, snooze and seen, its driven session's model and the modes tha
 `queue` document: the hub hands its items to agents, so they come in through the queue's actions alone.
 
 *What reaches the person or an agent from a client.* A notification's act buttons and act click are the hub's own
-threads' alone: one that comes over the socket (any client, `cockpit notify` included) only brings something into view,
+threads' alone: one that comes over the socket (any client, `flightdeck notify` included) only brings something into view,
 an act turned into the row it is about, and its words are plain text that say who sent it ("From an agent's tools
-(app:t3): …"), never cockpit's own; the plugin's notifications, posted from hooks that run inside agents, read so too.
-`cockpit notify` turns an act into its row before it posts a system notification itself. CI news reaches an agent's queue only from events the hub's own fetches made (`by: "hub"`): a red run a client
+(app:t3): …"), never flightdeck's own; the plugin's notifications, posted from hooks that run inside agents, read so too.
+`flightdeck notify` turns an act into its row before it posts a system notification itself. CI news reaches an agent's queue only from events the hub's own fetches made (`by: "hub"`): a red run a client
 writes into the inbox or ci document is never news. Text from outside (a mail, a monitor's error, a ticket, a PR's
-branch, an event's title) never reaches an interactive shell as typed text: every agent cockpit starts reads its prompt
-from a file of its own, made safe (`fetch::untrusted`), and the lines cockpit still types (a script's path, a resume, a
+branch, an event's title) never reaches an interactive shell as typed text: every agent flightdeck starts reads its prompt
+from a file of its own, made safe (`fetch::untrusted`), and the lines flightdeck still types (a script's path, a resume, a
 fork, an editor) drop the control characters a line editor acts on even inside quotes (`value::quote`,
 `agent::shell_line`). A routine's prompt quotes the event that set it off; a runbook step goes to its session through
 `deliver`, which refuses while the agent waits on a question.
@@ -736,16 +736,16 @@ starter's ssh agent, temp folder and language: a PATH, a herdr or hc binary (`HE
 test's stand-ins the starter carried are dropped. A hub whose cache is another (the sandbox, a test) keeps its
 environment: it serves its own socket, not the person's.
 
-*What remains, by design.* Each of these is a process of the same user acting by itself; cockpit sees none of it:
+*What remains, by design.* Each of these is a process of the same user acting by itself; flightdeck sees none of it:
 - `herdr pane run|send-keys|send-text`, `herdr agent prompt`, `hc keys|send`, and AppleScript or System Events keys:
   they type into any terminal, an agent's menu included, as a person's keys would. They do not make the hub answer.
 - `herdr-app do <command>`: any window command that navigates (focus, open a view, a menu, a dialog); what acts takes a
   one-time key or a click the window draws. Herdr's own commands (`agent.focus`, `tab.select`, the pane commands) are
-  Herdr's, which cockpit cannot gate: one that moves the chat to another agent leaves a digit typed into its focused,
+  Herdr's, which flightdeck cannot gate: one that moves the chat to another agent leaves a digit typed into its focused,
   empty box able to answer that agent's plain question (a permission still takes its card).
-- What stays a window command by design: `cockpit.resume` (⌘⌥R) and `target:resume` resume the agents a restart
+- What stays a window command by design: `flightdeck.resume` (⌘⌥R) and `target:resume` resume the agents a restart
   stopped, and a mode's `mode:<id>` without its menu's key opens the chat's confirm, which takes a click only.
-- A Herdr window started with a sandbox's environment (`COCKPIT_SANDBOX`, `COCKPIT_TEST_KEYS=1`), or a login shell that
+- A Herdr window started with a sandbox's environment (`FLIGHTDECK_SANDBOX`, `FLIGHTDECK_TEST_KEYS=1`), or a login shell that
   sets them for the person's own window: its keys and typing from a shell are taken.
 - A command started in a front: `open -a Terminal|iTerm|Ghostty …`, AppleScript's `do script`, a new herdr or Herdr
   window, `tmux new -d` or `send-keys`, `mosh-server`. It runs under a front past no agent, so the hub takes it for the
@@ -753,14 +753,14 @@ environment: it serves its own socket, not the person's.
 - `ssh localhost`, once the config trusts it.
 - Files the person's processes may write: the config, routines, runbooks, a show view's `.answer` file, the notifier,
   and the install folders a front is known by that the user owns (Homebrew's Cellars, `~/.local/bin`, `~/.cargo/bin`);
-  cockpit's own CLI run by the agent (`cockpit focus resume`, `cockpit update`) does in that process what the agent could
+  flightdeck's own CLI run by the agent (`flightdeck focus resume`, `flightdeck update`) does in that process what the agent could
   do itself.
-- The notifier run directly (`Cockpit.app/Contents/MacOS/cockpit-notify post …`): a system notification with any words
-  and cockpit's icon. Its click goes through `cockpit focus`, so it only navigates, except `resume` and `update`, which
-  resume the agents a restart stopped and update cockpit as `cockpit focus resume` or `cockpit update` run by the agent
+- The notifier run directly (`Flightdeck.app/Contents/MacOS/flightdeck-notify post …`): a system notification with any words
+  and flightdeck's icon. Its click goes through `flightdeck focus`, so it only navigates, except `resume` and `update`, which
+  resume the agents a restart stopped and update flightdeck as `flightdeck focus resume` or `flightdeck update` run by the agent
   itself would.
-- `cockpit hub stop`, or `kill`, from an agent's tools: the person's hub stops, and nothing starts it again until
-  `cockpit hub start`.
+- `flightdeck hub stop`, or `kill`, from an agent's tools: the person's hub stops, and nothing starts it again until
+  `flightdeck hub start`.
 - Pid recycling: the hub names a sender by its pid and reads its parents when the request is served; a sender that
   exits first leaves its pid to whatever process the system gives it next, which is placed in its stead.
 
@@ -776,7 +776,7 @@ per session).
 **Control.** `control_request` on the same pipe takes `set_permission_mode`, `set_model` and `interrupt`, answered by a
 `control_response` the session believes — so ⇧⇥ cycles default → acceptEdits → plan and ⎋ stops the turn, without the
 model being asked anything, while the chat is the screen in front and holds the keyboard (its own key bindings, which
-no injected key reaches). The palette's `cockpit.chat:mode` and `cockpit.chat:stop` do the same, except that the palette's
+no injected key reaches). The palette's `flightdeck.chat:mode` and `flightdeck.chat:stop` do the same, except that the palette's
 cycle moves into acceptEdits only through the chat's confirm, since a window command may come from outside the window.
 The mode cycle uses the names the agent reports back, which is why the resting one is `default` rather than `manual`. An
 interrupted turn reports the same `is_error` result a real failure does; the
@@ -791,14 +791,14 @@ The `applies` facts distinguish a setter accepted while a turn runs from when it
 call for a model, by the next turn for effort and speed. Each dropdown choice names its originating subject and is
 refused after navigation to another agent.
 
-Only Claude Code has a protocol cockpit speaks; `session::start` refuses any other agent, which keeps reading its
-transcript as before. `cockpit session run <agent> <cwd> <prompt>` drives one from a shell, without the window.
+Only Claude Code has a protocol flightdeck speaks; `session::start` refuses any other agent, which keeps reading its
+transcript as before. `flightdeck session run <agent> <cwd> <prompt>` drives one from a shell, without the window.
 
 ## The hub on its own
 
-- **Words for an agent** (`core/src/deliver.rs`): `deliver(handle, text)` is the one way cockpit sends an agent words
+- **Words for an agent** (`core/src/deliver.rs`): `deliver(handle, text)` is the one way flightdeck sends an agent words
   (the queue, a review's comments, the palette's Ask, the `show` tool's answers, the chat): typed as its next prompt
-  (`hc send`, which waits out a person's unfinished draft; `herdr agent prompt` in the TUI), or handed to a session cockpit
+  (`hc send`, which waits out a person's unfinished draft; `herdr agent prompt` in the TUI), or handed to a session flightdeck
   drives through the handler `cli` registers. It refuses while the agent waits on a question or a permission, "<agent>
   is waiting on a question: answer it first" (a driven session's `pending`, or a terminal the poller saw blocked or
   whose screen shows a menu, read or not), looking and typing under the lock answers to that terminal take. Outside
@@ -809,21 +809,21 @@ transcript as before. `cockpit session run <agent> <cwd> <prompt>` drives one fr
   without what needs them; `agents.commands.<id>.mode|interrupt|permission` in the config overrides them.
 
 - **Servers** (`connectors/`, `hub/src/feed/mcp.rs`): the hub is an MCP client. A source whose `server` names an entry
-  of `servers` in `config.json` (a URL cockpit logged in to with `cockpit connector login`, a URL with headers or a
+  of `servers` in `config.json` (a URL flightdeck logged in to with `flightdeck connector login`, a URL with headers or a
   `bearerCommand`, or a local command) is fetched by the hub itself through the section's mapping, the same `tools` and
   `fields` the Claude plugin reads: tickets (with their assign, create and details verbs), CI runs, meetings, deploys and
   previews, the monitor's numbers (`observability`: Datadog's own tools, or any metrics and errors tool through `metric`,
   `monitors` and `issues` verbs and `queries` in its own language), and the show panes' Metabase, Datadog and `metrics`
-  sources (`cockpit connector rows`), pull requests from a code host other than GitHub (`code`, with merge, ready and
+  sources (`flightdeck connector rows`), pull requests from a code host other than GitHub (`code`, with merge, ready and
   draft), and unread mail (`mail`, with archive and mark read; a reply is drafted by an agent, never sent). Agents read
-  every source through the `cockpit_read` and `cockpit_health` tools (`cockpit mcp`, and the Claude plugin), which
+  every source through the `flightdeck_read` and `flightdeck_health` tools (`flightdeck mcp`, and the Claude plugin), which
   meeting briefs, deploy watches, runbook refreshes and CI investigations point to. Logins live in the macOS keychain
-  (`cockpit-mcp`), else in `~/.config/cockpit/credentials/`. The hub also carries out the apps' requests (reruns, preview
-  actions, ticket releases) for those sources, and warns of meetings where no Claude Code runs. `cockpit setup` finds the
-  servers the agents' own configs hold, logs cockpit in, and has the default agent map a server cockpit has no mapping
-  for (`cockpit connector map`).
+  (`flightdeck-mcp`), else in `~/.config/flightdeck/credentials/`. The hub also carries out the apps' requests (reruns, preview
+  actions, ticket releases) for those sources, and warns of meetings where no Claude Code runs. `flightdeck setup` finds the
+  servers the agents' own configs hold, logs flightdeck in, and has the default agent map a server flightdeck has no mapping
+  for (`flightdeck connector map`).
 - **Fetcher** (`hub/src/fetcher.rs`): while a source needs Claude Code's connectors (no server of the hub's own and no
-  token), the hub keeps one Claude Code session idle at its prompt in a hidden herdr-core terminal named `cockpit-fetch`
+  token), the hub keeps one Claude Code session idle at its prompt in a hidden herdr-core terminal named `flightdeck-fetch`
   (no space, no pane, haiku, no tokens spent while idle); its plugin refreshes the inbox, CI, meetings and monitor like
   any session. `fetcher: false` turns it off. The store also refuses Claude Code's "$.mcp.call is not available in this
   mode" errors, so a session that cannot call MCP yet never writes over good data.
@@ -833,9 +833,9 @@ transcript as before. `cockpit session run <agent> <cwd> <prompt>` drives one fr
   Code's `ai-title`, else its terminal's title without spinner glyphs or brand, never the agent's name, its folder or a
   path), else its first prompt in a few words (a slash command as "name args", its leading verb and filler words
   dropped), else the agent's name; automatic names are capped at 28 characters, cut at a word. No model is asked. Every
-  20 s a tab takes its agent's name only while its label is Herdr's placeholder (empty or a number) or the name cockpit
-  gave it last (`~/.cache/cockpit/names/given.json`): a label the person typed, or another tool such as
-  herdr-automatic-rename gave, is never written over, and cockpit stops naming that tab until its label is cleared. A
+  20 s a tab takes its agent's name only while its label is Herdr's placeholder (empty or a number) or the name flightdeck
+  gave it last (`~/.cache/flightdeck/names/given.json`): a label the person typed, or another tool such as
+  herdr-automatic-rename gave, is never written over, and flightdeck stops naming that tab until its label is cleared. A
   label that only names what runs there (`names::default_label`: a shell, or the program or agent by one of its names,
   as "Claude", "zsh" or "[2] claude") stays in the tab but is never shown as the agent's name. A
   space at its folder's name takes its agents' ticket ("ENG-412 · Store and enforce") or repo. `names: false` turns
@@ -844,7 +844,7 @@ transcript as before. `cockpit session run <agent> <cwd> <prompt>` drives one fr
 
 ## View `agents` (every agent terminal, both halves)
 
-Built by `cockpit_agents::gui` in the hub, pushed again when an agent's status changes (the hub follows `hc events`
+Built by `flightdeck_agents::gui` in the hub, pushed again when an agent's status changes (the hub follows `hc events`
 and looks when a terminal is made, ends or changes status, else every 10 s; every 2 s while an agent waits on a
 question, the herdr TUI runs or the events are not followed), when the `inbox`/`ci`/`agents` documents change, when a driven session moves, or after its own action. Subscribe with
 `{name: "agents", args: {frontend: "app"}}` (the Herdr app's terminals; `"tui"` for herdr's panes, no args for both).
@@ -877,7 +877,7 @@ question, the herdr TUI runs or the events are not followed), when the `inbox`/`
       "submit": false,                       // multi: a Submit item follows the choices
       "preview": "",                         // a permission: what it would allow, in full; else the box Claude draws beside a choice
       "permission": false,                   // asks before a tool runs, edits go in, a plan is carried out or a folder trusted
-      "cut": false,                          // a permission cockpit cannot show in full: no frame on the screen tells where it
+      "cut": false,                          // a permission flightdeck cannot show in full: no frame on the screen tells where it
       "terminal_only": null,                 // starts, or nothing of it was read; then the one wording every surface shows,
                                              // and no surface offers its choices: it is answered in the agent's terminal
       "unasked": [],                         // the choices that turn on a mode running every tool unasked (Claude's bypass,
@@ -957,7 +957,7 @@ Actions: `hub.act("agents", action, [{…}])`, one object argument.
 
 | Action | Argument | Does |
 | --- | --- | --- |
-| `answer` | `{terminal, choice: n}` · `{terminal, choices: [n…]}` (multi, then Submit) · `{terminal, text, choice?}`, each with the question's `ask` or `asked` and `source` (`"<view>:<click\|key\|command>"`) | Reads the screen again and checks it still asks what `asked` names (after every look, so a question that changes midway stops it), then presses the keys (`hc keys` / `herdr pane send-keys`), pastes text; a driven session's ask goes to the session. A missing or different `ask`/`asked` is refused: "The question changed — look again". Nothing is allowed by default: a terminal's permission takes only the numbered `choice` the person picked (Claude's "Yes, and don't ask again" included), a driven session's takes `1` (allow) or `2` (deny), and words, ticks or a number its screen does not show are refused. A permission is told by its agent's prompt shapes (the `permission` column of `core/src/agent.rs`: Claude Code's tool, plan and folder-trust prompts, Codex's command and edit approvals) and by its structure (no free-text field). Answers to one terminal take turns. Every answer, and a mode that runs tools unasked, comes from a person: the hub refuses one from an agent's process tree (its tools), which it names by the unix socket's peer or, over TCP, by the process holding the source port, and one whose process it cannot name. What that does and does not stop is D9's (see the session view). Detection fails closed: a menu whose choices read like a permission's ("Yes…", "don't ask again", "No, and tell…") is one, whatever the agent; its block runs from the full-width rule at column 0 above it; with no such rule on the screen nothing tells where it starts, so it is `cut` and refused with `terminal_only`'s wording, as is one with nothing of what it would do read. Its card always shows the first lines of what it would do. A plan approval (Claude Code scrolls the plan in a box, so its screen holds part of it) takes the whole plan from the transcript instead, where the agent's table (`PLANS` in `core/src/agent.rs`) says it is kept: the unanswered plan call's argument (Claude Code's `ExitPlanMode`, Qwen Code's `exit_plan_mode`), the plan file that call names (Gemini CLI), or the last message of a turn in plan mode (Codex); its `preview` is then the plan, `markdown` true, nothing cut, and the menu a permission whatever the agent's shapes say. The approval is told by its question or a choice naming the plan, or by Qwen Code's documented choices. Each plan of an app terminal or a driven session is also kept once as a show view of its session, `plan-<session>-<n>` titled "Plan n · <its first heading>", so it stays in the session's documents and side panel after it is carried out, and a revised plan is the next number; the question's `view` names it. Every card then shows the plan as one line that opens it in the side panel, and Cockpit Chat opens the panel on it by itself the first time it asks. A choice in the question's `unasked` ("Yes, and bypass permissions", Codex's "Full Access") is picked only with `confirm: true`. Every answer, taken or refused, is a line in `~/.cache/cockpit/agents/answers.log` with its `source` |
+| `answer` | `{terminal, choice: n}` · `{terminal, choices: [n…]}` (multi, then Submit) · `{terminal, text, choice?}`, each with the question's `ask` or `asked` and `source` (`"<view>:<click\|key\|command>"`) | Reads the screen again and checks it still asks what `asked` names (after every look, so a question that changes midway stops it), then presses the keys (`hc keys` / `herdr pane send-keys`), pastes text; a driven session's ask goes to the session. A missing or different `ask`/`asked` is refused: "The question changed — look again". Nothing is allowed by default: a terminal's permission takes only the numbered `choice` the person picked (Claude's "Yes, and don't ask again" included), a driven session's takes `1` (allow) or `2` (deny), and words, ticks or a number its screen does not show are refused. A permission is told by its agent's prompt shapes (the `permission` column of `core/src/agent.rs`: Claude Code's tool, plan and folder-trust prompts, Codex's command and edit approvals) and by its structure (no free-text field). Answers to one terminal take turns. Every answer, and a mode that runs tools unasked, comes from a person: the hub refuses one from an agent's process tree (its tools), which it names by the unix socket's peer or, over TCP, by the process holding the source port, and one whose process it cannot name. What that does and does not stop is D9's (see the session view). Detection fails closed: a menu whose choices read like a permission's ("Yes…", "don't ask again", "No, and tell…") is one, whatever the agent; its block runs from the full-width rule at column 0 above it; with no such rule on the screen nothing tells where it starts, so it is `cut` and refused with `terminal_only`'s wording, as is one with nothing of what it would do read. Its card always shows the first lines of what it would do. A plan approval (Claude Code scrolls the plan in a box, so its screen holds part of it) takes the whole plan from the transcript instead, where the agent's table (`PLANS` in `core/src/agent.rs`) says it is kept: the unanswered plan call's argument (Claude Code's `ExitPlanMode`, Qwen Code's `exit_plan_mode`), the plan file that call names (Gemini CLI), or the last message of a turn in plan mode (Codex); its `preview` is then the plan, `markdown` true, nothing cut, and the menu a permission whatever the agent's shapes say. The approval is told by its question or a choice naming the plan, or by Qwen Code's documented choices. Each plan of an app terminal or a driven session is also kept once as a show view of its session, `plan-<session>-<n>` titled "Plan n · <its first heading>", so it stays in the session's documents and side panel after it is carried out, and a revised plan is the next number; the question's `view` names it. Every card then shows the plan as one line that opens it in the side panel, and Flightdeck Chat opens the panel on it by itself the first time it asks. A choice in the question's `unasked` ("Yes, and bypass permissions", Codex's "Full Access") is picked only with `confirm: true`. Every answer, taken or refused, is a line in `~/.cache/flightdeck/agents/answers.log` with its `source` |
 | `recap` | `{terminal, force?}` | A digest of the session's transcript (its task and latest exchanges) handed to an agent run kept aside: no tools, no slash commands, nothing saved; the session's own agent where it has that isolation, else one that does (cached per transcript); fills the row's `recap`. Asked by itself on haiku a minute after a turn ends when the agent was not seen meanwhile (config `agents.recap`: `auto`, or `manual`) |
 | `snooze` | `{terminal, until}` | `until`: ms, `"1h"`, `"18:00"`, `"tomorrow"`, `"done"` (till its status changes), or null to wake |
 | `seen` | `{terminal}` | Looked at in its current status (`unread` goes) |
@@ -979,35 +979,35 @@ its frontend still calls blocked once its screen shows no prompt takes its statu
 `done` when its transcript closed the turn, `working` or `idle` when the person's own words are the last thing above its
 box; a menu on its screen, read or not, or a limit it reached keeps it blocked.
 
-Dismissing is on every surface that lists what needs you, never as a snooze or seen: the Cockpit sidebar's Needs you
-band, Home's NEXT MOVE and its cards (`x` on the card moved to), the recap dialog (`x`), Cockpit Chat's Needs screen,
+Dismissing is on every surface that lists what needs you, never as a snooze or seen: the Flightdeck sidebar's Needs you
+band, Home's NEXT MOVE and its cards (`x` on the card moved to), the recap dialog (`x`), Flightdeck Chat's Needs screen,
 the chat's question card; each card's ✕ button, the agents' right-click menus ("Dismiss until it asks again", "Bring back
-to Needs you"), and the palette's This agent entries `cockpit.dismiss` and `cockpit.dismiss:back[:<terminal>]` (a bare
+to Needs you"), and the palette's This agent entries `flightdeck.dismiss` and `flightdeck.dismiss:back[:<terminal>]` (a bare
 window command opens a menu naming the agent in front; only its keyed pick acts). Undo shows on the view's toast, as a row
 above the cards in the sidebar and the chat, and as the click of Herdr's toast for the palette's. A dismissed agent stays
 in the Agents lists with its real status, its mark a still ring and the word "dismissed", with Bring back on its row.
 
 Facts per agent come from the plugin: store document `agents`, patched by terminal handle,
 `{"app:t3": {session, transcript, cwd, branch, repo, ticket, task, page, context, cost, account, at}}`; the hub fills
-what is missing from git, the inbox and `ci`. `quota` comes from `cockpit_core::usage`, as view `usage` below.
+what is missing from git, the inbox and `ci`. `quota` comes from `flightdeck_core::usage`, as view `usage` below.
 
 Drawn by `sidebar.js` (Needs you band answered in place, agents by ticket / space / whose move, Herdr's spaces list,
 quota bars) and `recap.js` (the cmd-r dialog, its Time tab the week's ledger), from `agentsui.js`: `AgentsModel`
-(follows the view, runs its actions, menu commands `cockpit.agents|<what>|<terminal>|<arg>` run by the sidebar copy),
+(follows the view, runs its actions, menu commands `flightdeck.agents|<what>|<terminal>|<arg>` run by the sidebar copy),
 `QuestionCard`, `Chips`, `QuotaBars`, `StageMark`; every agent named on the desktop has its logo beside it (`AgentLogo`).
 The TUI has no pictures: there an agent's mark is one lowercase word, Herdr's own (`claude`, `codex`, `qoder`:
 `agent::mark`), on a line that lists agents without naming them (the popup below), and a line that names the agent
-keeps its name. In a shell or herdr's popup: `cockpit agents [pick|answer|recap|
+keeps its name. In a shell or herdr's popup: `flightdeck agents [pick|answer|recap|
 snooze|seen|dismiss|stop|fork|week]` (`pick` and `answer` send the question they printed; a permission is answered there only at
 a terminal; `pick` snoozes with `z 1 <when>`, dismisses with `x 1` (the apps' shared dismiss key), lists the dismissed
 ones as `[d1]`, brought back with `x d1`, prints its keys with `?`, lists the working agents it can stop as `[s1]`, stopped with `s 1` (the
-review and routines apps' stop key), and the sessions cockpit drives
+review and routines apps' stop key), and the sessions flightdeck drives
 as `[o1]` with their title and ask, ended with `end 1` (asking first while one works) or handed over to a terminal of
-this herdr with `o 1`). `COCKPIT_AGENTS_DEMO=herdr/tui/agents/demo.json` (set before `sandbox.sh start`) replaces the
+this herdr with `o 1`). `FLIGHTDECK_AGENTS_DEMO=herdr/tui/agents/demo.json` (set before `sandbox.sh start`) replaces the
 terminals with the acme demo's made-up agents, answered in memory, and adds its `driven` sessions, one waiting on a permission;
 a session started there runs for real and comes back after a restart like any other.
 `herdr/tui/agents/tests/fixtures/stub-claude` speaks Claude Code's stream-json and control protocol without an account:
-point `agents.commands.claude.bin` (or `COCKPIT_CLAUDE`) at it to drive sessions that ask ("ask", "ask twice", "ask
+point `agents.commands.claude.bin` (or `FLIGHTDECK_CLAUDE`) at it to drive sessions that ask ("ask", "ask twice", "ask
 both" in the prompt).
 
 Recaps run through an agent that can answer with no tools, currently Claude Code with its built-in command templates
@@ -1017,9 +1017,9 @@ and without one the recap says it is unavailable.
 
 ## View `palette` (its pages and the agents' order, both halves)
 
-`cockpit_palette::gui` in the hub. `{report: "doctor" | "brief"}` is that page (`{title, rows: [{mark, tone, text,
+`flightdeck_palette::gui` in the hub. `{report: "doctor" | "brief"}` is that page (`{title, rows: [{mark, tone, text,
 url}]}`). Otherwise `{pinned}`, and with `{agents: "app" | "tui" | "all", rows?}` that frontend's agents in the order
-every palette lists them, the herdr TUI popup included (`cockpit_palette::jumps`): the `rows` given (the fields of the
+every palette lists them, the herdr TUI popup included (`flightdeck_palette::jumps`): the `rows` given (the fields of the
 agents view's rows the order reads, from a copy of the window that follows it), else the agents view built for it.
 
 ```jsonc
@@ -1030,16 +1030,16 @@ agents view's rows the order reads, from a copy of the window that follows it), 
 ```
 
 The order is by stage: waiting on you (`needs_you`, `failed`, `fixing`), the longest waiting first; then `done`,
-`working`, `review`, `idle`, `merged`, `snoozed`, each the latest change first. A `driven` row is a session cockpit
-drives: the herdr TUI leaves it out (and lists its own panes only), Cockpit Chat opens its chat. Its repo, branch,
+`working`, `review`, `idle`, `merged`, `snoozed`, each the latest change first. A `driven` row is a session flightdeck
+drives: the herdr TUI leaves it out (and lists its own panes only), Flightdeck Chat opens its chat. Its repo, branch,
 ticket, PR and CI come from git in its folder and the inbox, as a terminal's do. Actions: `insert`,
 `ask`, `fork` with `[over, found]` (above).
 
 ## View `usage` (every agent's limits and tokens, both halves)
 
-Built by `cockpit_core::usage` in the hub from what already exists on the machine: Claude Code's status line
-(`~/.cache/cockpit/limits.json`, `{at, limits: [{name, percent, resetsAt}]}`, which the plugin writes), the
-`rate_limit_event`s of the sessions cockpit drives (`claude-stream`, as of the session's `rate_limit_at`, which may carry
+Built by `flightdeck_core::usage` in the hub from what already exists on the machine: Claude Code's status line
+(`~/.cache/flightdeck/limits.json`, `{at, limits: [{name, percent, resetsAt}]}`, which the plugin writes), the
+`rate_limit_event`s of the sessions flightdeck drives (`claude-stream`, as of the session's `rate_limit_at`, which may carry
 a verdict and no percent), and the last `token_count` of each limit bucket (`limit_id`) in the newest Codex rollout of
 the last 8 days' folders (`codex-rollout`: `rate_limits.primary/secondary`, plan and credits), Copilot's quotas as
 GitHub keeps them while Copilot's CLI is installed (`copilot-gh`: `gh api /copilot_internal/user` with the sign-in `gh`
@@ -1091,9 +1091,9 @@ did, and `usage` each time; the views only read what that thread keeps.
 }
 ```
 
-The hub alone writes the herdr TUI's `$limits` token, source `cockpit` on the inbox space's row: on its first pass
+The hub alone writes the herdr TUI's `$limits` token, source `flightdeck` on the inbox space's row: on its first pass
 whatever it is, then when it changes and every 5 minutes, each write lasting 11 minutes (`--ttl-ms`), so a hub that
-dies leaves no reading behind for long. When the hub stops idle or on SIGTERM (`cockpit hub stop`), SIGINT or SIGHUP,
+dies leaves no reading behind for long. When the hub stops idle or on SIGTERM (`flightdeck hub stop`), SIGINT or SIGHUP,
 it stops serving, removes its socket, and clears the token (herdr given 2 s) only while hub.json still names it, so a
 newer hub's token stays. herdr keeps a token per name, the last write winning whatever its source, and a clear from any source
 clears it, so the plugin only writes limits.json (to a temporary file moved over it) and never clears the token.
@@ -1102,19 +1102,19 @@ Home's `spend` is this count's today and week, `{today, week, estimated, unprice
 the week has a price (never a made-up $0); its tile adds `covers` ("· Claude only"). The same count prices each Claude
 session, every message once: to the session that started first (its first line's time, then when its file was made,
 never when it was last written), and never to another once a count charged it, its transcript kept or deleted. The
-result goes to `~/.cache/cockpit/estimates.json` `{at, sessions: {id: usd}, owned: {id: [message hashes]}, gone: {id:
+result goes to `~/.cache/flightdeck/estimates.json` `{at, sessions: {id: usd}, owned: {id: [message hashes]}, gone: {id:
 since}, tickets: {id: usd}, archived: {ticket: usd}}`, one process at a time (`estimates.lock`) and never over a newer
 count; the count itself is kept in `usage-scan.json`, so a new hub reads only what the transcripts gained. A booked
 session whose transcript is gone keeps its last estimate for 30 days, then its tickets' share goes to `archived` and
 its book is deleted, so no ticket total drops. A ticket's estimate is each session's,
-split over the tickets its cost book (`~/.cache/cockpit/costs/<session>.json`, the plugin's) names in the book's
-proportions; spend made on no ticket is booked under `(no ticket)`, which weighs in and is never shown. Every cost cockpit
+split over the tickets its cost book (`~/.cache/flightdeck/costs/<session>.json`, the plugin's) names in the book's
+proportions; spend made on no ticket is booked under `(no ticket)`, which weighs in and is never shown. Every cost flightdeck
 shows is this one, marked estimated: the inbox's ticket costs and their `ticket_estimate` history, Home's spend and each
 agent's `cost` in the agents view. Books of sessions that never got an estimate go after 30 days. Drawn by `usage.js` (the Usage
 sheet, each agent under its logo with its state, account and windows, from a quota bar, Home's spend tile or the
 palette's "Usage and limits"; ⇧R reads every agent's files again), `QuotaGroups` (as `QuotaBars`) in the sidebar and the
 recap, each provider's logo and name over its windows, a provider with no source saying "not reported", one awaiting its source saying "no reading yet", and each provider's tightest window beside its logo in the Chat drawer, tinted with its text. In a shell:
-`cockpit usage [--json]` (without a hub, the windows at once and the tokens once counted), also the TUI palette's
+`flightdeck usage [--json]` (without a hub, the windows at once and the tokens once counted), also the TUI palette's
 "Usage and limits".
 
 ## Claude sessions (the plugin)
@@ -1129,32 +1129,32 @@ Herdr app. In the app it writes no herdr tokens: what the TUI's sidebar rows sho
   `space`, `tab`, `version`, `pr` (`{number, url, failing}`), `ci` (`{running, done, total}`), `clash` (`{label,
   space, tab}`: another session on the same branch), `views` (`[{name, open}]`, its show panes) and `last` (`{at,
   durationMs, text}`: its last answer's first line). Unknown is null.
-- **Show panes**: the show tool splits the agent's pane with `pane.split {direction, pane, mod: "cockpit", props:
-  {app: "show", name, session}}` (then `pane.zoom` for `zoomed`); the view reads `~/.cache/cockpit/show/<name>.json`
+- **Show panes**: the show tool splits the agent's pane with `pane.split {direction, pane, mod: "flightdeck", props:
+  {app: "show", name, session}}` (then `pane.zoom` for `zoomed`); the view reads `~/.cache/flightdeck/show/<name>.json`
   (its `terminal` is the session's app terminal, `t3`)
   and leaves each answer as `<name>.<block>.answer` (`{block, type, value, label}`), as the TUI pane does. A show view
-  subscribes with `{views: [{name: "show", args: {name}}]}`: the hub's `shown {view}` op (`cockpit hub shown show`)
+  subscribes with `{views: [{name: "show", args: {name}}]}`: the hub's `shown {view}` op (`flightdeck hub shown show`)
   lists the args of live subscriptions, which is how the plugin knows a view's pane is open.
-- **Browser beside an agent**: `cockpit browse <url> [session]` opens a tab in the terminal-browser already in the
+- **Browser beside an agent**: `flightdeck browse <url> [session]` opens a tab in the terminal-browser already in the
   agent's tab, else splits the agent's pane right with `terminal-browser open <url>` and returns once it lists. App
   terminals carry Ghostty's variables and none of herdr's, so every terminal-browser call gets the session's pane
   (`HERDR_PANE_ID`, from `herdr-app ls`: the terminal `HC_TERMINAL_ID` names, else the one the caller descends from) and
-  the app's socket (`HERDR_SOCKET_PATH`); `cockpit browse --env` prints them as exports, and the plugin sets them for a
+  the app's socket (`HERDR_SOCKET_PATH`); `flightdeck browse --env` prints them as exports, and the plugin sets them for a
   Claude Code session at its start. A session the window shows nowhere gets the reason and the default browser.
-  Cockpit Chat shows that browser in its side panel (below).
-- **The Chromium side browser** (`sideBrowser: chromium`, macOS; [browser.md](browser.md) is its guide): cockpit's own
+  Flightdeck Chat shows that browser in its side panel (below).
+- **The Chromium side browser** (`sideBrowser: chromium`, macOS; [browser.md](browser.md) is its guide): flightdeck's own
   Electron shell (`browser/`), one process the hub starts (`cli/src/browser/hub.rs`) and every command reaches on
-  `~/.cache/cockpit/browser.sock`, one JSON request per line (`browser/main/protocol.js` lists the ops). A browser
-  belongs to a session and is named by its owner, the session's app terminal (`app:t3`). `cockpit browse` goes there
+  `~/.cache/flightdeck/browser.sock`, one JSON request per line (`browser/main/protocol.js` lists the ops). A browser
+  belongs to a session and is named by its owner, the session's app terminal (`app:t3`). `flightdeck browse` goes there
   instead of terminal-browser (`core/src/browser.rs` `engine_for`): `act browser open {url, owner, session, cwd}` starts
-  the shell and opens the page in that session's browser, and `cockpit browse action` pins agent-browser to its active
+  the shell and opens the page in that session's browser, and `flightdeck browse action` pins agent-browser to its active
   tab on Chromium's debugging port. The window is docked from three sides. The `web` view (`web.js`, the `web` child of
-  `panel-body` in both layouts) only draws the slot and writes its size to the shared store (`cockpit.web.size`). The
+  `panel-body` in both layouts) only draws the slot and writes its size to the shared store (`flightdeck.web.size`). The
   sidebar, which is in every layout, follows it (`followBrowser`): ten times a second it tells the hub the slot with
   `act browser slot` when it changed (its rectangle inside the window, whether the panel shows it, whether something of
-  cockpit's covers it, the terminal in front), one request at a time, and it moves the panel with the session in front
+  flightdeck's covers it, the terminal in front), one request at a time, and it moves the panel with the session in front
   (`panelSteps`). The hub adds the Herdr app's process, the owner, the worktree of the folder in focus and its servers;
-  the shell follows the Herdr window on screen through `cockpit browser track` and lays its window on the slot, one
+  the shell follows the Herdr window on screen through `flightdeck browser track` and lays its window on the slot, one
   step above the Herdr window, when the session in front has a browser. The hub's `browser` view (`{enabled, installed,
   docked, running, run, shown, frame, current, tabs: {owner: count}, opened: {owner, at}}`) is what the slot draws: the
   shell's last frame while its window is hidden, and `opened` is what brings the panel to a page an agent opens. Notes
@@ -1165,14 +1165,14 @@ Herdr app. In the app it writes no herdr tokens: what the TUI's sidebar rows sho
 
 ## View `inbox` (the inbox tree, both halves)
 
-Built by `cockpit_inbox::gui` from the same rows the TUI inbox draws (`model::model`), pushed again when the `inbox`,
+Built by `flightdeck_inbox::gui` from the same rows the TUI inbox draws (`model::model`), pushed again when the `inbox`,
 `ci` or `brief` documents change, a request's outcome lands, `muted.json` or the costs change, or after its own action.
 Subscribe with `{name: "inbox", args: {group: "feature" | "status"}}` (feature by default).
 
 ```jsonc
 {
   "at": 1793611507779, "updated": "14:05",     // when the cache was written; "" before any data
-  "state": "ok",                                // ok | empty (no data yet) | other_version (another cockpit version wrote it)
+  "state": "ok",                                // ok | empty (no data yet) | other_version (another flightdeck version wrote it)
   "message": "",                                // what to say for empty/other_version
   "errors": ["Previews failed"],                // error lines no source chip tells: the mod's, a CI the hub does not read
   "sources": [Source],                          // GitHub, tickets, CI, deploys: see "How fresh each source is"
@@ -1211,7 +1211,7 @@ Actions (`hub.request("act", {app: "inbox", action, args, armed})`), positional 
 | --- | --- | --- |
 | `review` `rerun` `redeploy` `create_preview` `plan` `continue_ticket` `talk` `mark_done` `extend` `stop_preview` `close_space` `set_muted` `dismiss_brief` `request_refresh` `open_url` `details` | as the rows' `acts` give them | The TUI inbox's actions |
 | `fix_ci` | `[pr, ci run, "here" \| "new"]` (or `[pr url]`) | What to do first, then, fenced and labelled as data, the PR, its branch, the failing job, checks and tests (`failed_tests`) and the end of the failing jobs' logs of the PR's head commit (`ci_log`, at most 12 000 characters); a log it could not read is said so, the reason in the data. "here" goes to the agent working on the PR through its queue's `tell`, else to a new one on the branch (a new tab in a space open there); "new" to a new one off main. A second press while the log is fetched is refused |
-| `address_review` | `[pr]` | The PR's unresolved threads and its reviews' own words (`review_threads`), quoted as data, one JSON line per comment saying who wrote it and whether they collaborate on the repo, people's threads first and bots' comments left out unless `github.reviewBots` is true (a person's reply in a bot's thread stays). It goes to the agent working on the PR (the agents view's row on its URL, else on its branch, in its repo by owner and name) through its queue's `tell`; with none there, the first press asks and the second (or `address-<url>` armed) starts one on the branch. The TUI and Cockpit show it as `address review` (`F`), never the main action |
+| `address_review` | `[pr]` | The PR's unresolved threads and its reviews' own words (`review_threads`), quoted as data, one JSON line per comment saying who wrote it and whether they collaborate on the repo, people's threads first and bots' comments left out unless `github.reviewBots` is true (a person's reply in a bot's thread stays). It goes to the agent working on the PR (the agents view's row on its URL, else on its branch, in its repo by owner and name) through its queue's `tell`; with none there, the first press asks and the second (or `address-<url>` armed) starts one on the branch. The TUI and Flightdeck show it as `address review` (`F`), never the main action |
 | `merge` | `[pr, method?]` (`squash` / `merge` / `rebase`) | `gh pr merge` pinned to the head commit, the merge written to the inbox's `merged` (with `headSha`) for its worktree's cleanup; adds to the merge queue where the base has one |
 | `automerge` | `[pr, method \| "off"]` | Auto-merge on (by method) or off |
 | `ready` / `draft` | `[pr]` | Draft ↔ ready for review |
@@ -1225,7 +1225,7 @@ Actions (`hub.request("act", {app: "inbox", action, args, armed})`), positional 
 | `open_worktree` | `[path]` | The space open on it in view, else a new space there |
 | `forget_result` | `[file]` | Drops a request's outcome once shown |
 
-**What keeps a worktree** (`cockpit_core::cleanup`, one rule set for the inbox, `remove_worktree`, the routines' run
+**What keeps a worktree** (`flightdeck_core::cleanup`, one rule set for the inbox, `remove_worktree`, the routines' run
 worktrees and their cleanup template). Each blocker is `{id, words}`, said alike on every surface: `uncommitted` "N
 uncommitted change(s)" (untracked files counted whatever the config hides), `unpushed` "N commit(s) not pushed" (past its
 upstream, else past the commit the code host merged or a prune last saw, else past every remote and other local
@@ -1241,7 +1241,7 @@ excepted (the Alerts say those): `merged, nothing keeps it` with Remove worktree
 (`o`). Picked together (`v`/`V`), `D` asks once ("Goes: …. Stays: … (why).", long lists shortened) and removes only
 the ones nothing keeps, one after the other, then says how many went and what refused the rest; any other shared action
 runs on every picked row. A scan is redone at most every 30 s or once any process says a worktree changed
-(`~/.cache/cockpit/worktrees.stamp`), off the TUI's keys thread, every git call timed out.
+(`~/.cache/flightdeck/worktrees.stamp`), off the TUI's keys thread, every git call timed out.
 
 Without a Linear token (`tickets.token`), `set_state`, `assign`, `file_issue` and the ticket side of `start` hand the
 change to a Claude session in the actions space. Details on demand (`hub.fetchDetails(kind, args)`): `pr_merge`
@@ -1261,22 +1261,22 @@ never become news), the agent working on that PR or branch gets it added to its 
 own drain sends it once the agent rests, unless the queue is paused or a draft waits. It counts as told once the queue
 took it; an add refused is tried again the next batches. Red goes once per head commit (else run, else event),
 asked to say what it would do and change nothing yet (or to carry on, when fix ci handed it the fix), the failing job
-and tests quoted as data; green only after a red was told, which `~/.cache/cockpit/ci-told.json` keeps across hub
+and tests quoted as data; green only after a red was told, which `~/.cache/flightdeck/ci-told.json` keeps across hub
 restarts. Newer news replaces older news of the same PR still queued,
 runs on a default branch (a PR's head included) or on a PR's base are left out, and `ci.tellAgents: false` turns it off.
 
 Everything handed to an agent asks first, naming the PR as `#<n>` only, then quotes what came from outside (the PR's
 URL, its branch, the checkout, error text, logs, comments) in a fence labelled as data. A delivery never goes to a
-terminal with no agent in it (`frontend::alive`, herdr's pane or `hc ls`'s `agent`). Every agent cockpit starts reads
-its prompt from a file: `~/.cache/cockpit/prompts/<label>-<random>.prompt` (folder 0700, files 0600, written whole),
+terminal with no agent in it (`frontend::alive`, herdr's pane or `hc ls`'s `agent`). Every agent flightdeck starts reads
+its prompt from a file: `~/.cache/flightdeck/prompts/<label>-<random>.prompt` (folder 0700, files 0600, written whole),
 made safe and run by a script beside it; when it cannot be written, the action fails and nothing is typed.
 
 ## Start work (`start.js`, fetch `start_work`, view `start`, both halves)
 
 A prompt, a ticket or a PR becomes a worktree, a space and an agent. Home's New agent (`n`), the inbox's Start on a
 row, the palette's "Start work…" and its `start-work` entry when nothing matches open the dialog (`openStart(source)`, or `openStart({run})` on a start that runs
-or failed); Cockpit Chat's empty box is the same form (see the reading layout); the TUI opens it from the inbox's `n`
-and from `prefix+shift+s` (`cockpit start-work [source]`). The hub plans it again as the form changes, without side
+or failed); Flightdeck Chat's empty box is the same form (see the reading layout); the TUI opens it from the inbox's `n`
+and from `prefix+shift+s` (`flightdeck start-work [source]`). The hub plans it again as the form changes, without side
 effects, and only on this machine (refused off loopback):
 
 ```jsonc
@@ -1316,11 +1316,11 @@ effects, and only on this machine (refused off loopback):
   only main or master, else asked.
 - **Mode and model** go only to an agent whose table row takes them (the `mode` column, `models`), and so do the effort
   level and fast mode (`effort`, `fast`; a value it does not take is left out with a note). The forms offer them as its
-  `picks` say: pills in the dialog (Model ⌃M, Effort ⌃L, Speed ⌃S cycle them), chips in Cockpit Chat's empty box, ‹ ›
+  `picks` say: pills in the dialog (Model ⌃M, Effort ⌃L, Speed ⌃S cycle them), chips in Flightdeck Chat's empty box, ‹ ›
   fields in the TUI; each starts as the agent's own default, a model it lists none of is typed, and another agent or a
   model without them puts them back to the default.
 - **Pressing again.** A space of the start's label on the same repo plans `focus`; on another repo the new space gets
-  `<label> (<repo>)`. A branch already checked out with a space open on it, or a live session cockpit drives in it
+  `<label> (<repo>)`. A branch already checked out with a space open on it, or a live session flightdeck drives in it
   (`session: true`), plans `space`: the run brings it up ("is open already: brought it up"), its key in `made.pane`
   for the chat that asked, and makes nothing.
 
@@ -1328,7 +1328,7 @@ Actions (`hub.act("start", …)`): `work [request]`, `cancel [id]`, `retry [id]`
 `start_retry`, `start_cancel` (armed `cancel-start-<id>`) and `start_dismiss`, and open the form on the run itself
 (`start_open`). `work` runs fetch → `git worktree add` (`--no-track -b <branch> <path> <remote>/<base>`, or the existing
 branch) → the space (its id from the create answer) → the setup command and the agent: the terminal runs `sh
-<cache>/start/<id>-<random>.sh`, which runs the setup as `cockpit setup-run /bin/sh -c '<command>'` (cockpit's own work:
+<cache>/start/<id>-<random>.sh`, which runs the setup as `flightdeck setup-run /bin/sh -c '<command>'` (flightdeck's own work:
 the hub refuses what only a person does to it and to what it starts), writes its exit status, then `exec`s the agent
 with its prompt read from `<id>-<random>.prompt`, so nothing from a title or a prompt is typed into a shell. Both files
 are new ones of the start's own (0600, never written through a link). A mode is one of the form's (`default`,
@@ -1346,20 +1346,20 @@ ends that setup's process group before it removes the worktree, and a cancelled 
 exits idle nor hands over while it runs a start itself; a run it was running when it stopped anyway comes back failed
 ("the hub restarted during it") with Retry, which runs a driven setup again, while a terminal's setup is followed again.
 
-On a remote desk the dialog says Start work runs on that machine's own cockpit and offers nothing: `act start …` is
+On a remote desk the dialog says Start work runs on that machine's own flightdeck and offers nothing: `act start …` is
 not among the reads a remote desk sends, and the runner's hub, listening off loopback, refuses `fetch start_work`
 too. An optional `label` in the request names the new space (`"review · api"`) in place of the source's.
 
 View `start` (`{id}` for one run): `{run: {id, label, title, state: running|done|failed|cancelled, setup, steps: [{id,
 text, state: todo|running|done|failed|skipped, note}], error: {step, text} | null, retry, cancel, request, made, at}}`,
-without `id` `{runs: [...]}`, newest first; it is pushed as each step moves, and kept in `~/.cache/cockpit/start-runs.json`
+without `id` `{runs: [...]}`, newest first; it is pushed as each step moves, and kept in `~/.cache/flightdeck/start-runs.json`
 across a hub restart (a run cut short reads as failed). The last repo, agent and mode are in `start.json`, the approved
 setup commands in `start-trust.json`. Keys in the dialog: ↓ from a field reaches the options and fixes, in the order
 they are drawn, ↑/↓ move between them, ⏎ applies one and Esc goes back to the source; `1`–`9` pick one once ↓ gave the
 dialog the keyboard, never while a field types. None of these act while the plan is being checked, and a new plan keeps
 a lit choice on its label (the source takes the keyboard back when it is gone). ⌃R ⌃T ⌃G ⌃O turn the repo, worktree,
 agent and mode; ⏎ in a field starts, `r` retries, `c` cancels and Esc leaves. The TUI form numbers the same choices
-the same way, its digits working away from a text field. Cockpit Chat shows the keys in tooltips.
+the same way, its digits working away from a text field. Flightdeck Chat shows the keys in tooltips.
 
 ## How fresh each source is (`hub.fresh`, `sources`, both halves)
 
@@ -1368,37 +1368,37 @@ The hub's feed records each source it reads in the document that source fills, a
 The `inbox`, `meetings`, `mail` and `monitor` views serve them as `sources`, in that order:
 
 ```jsonc
-// Source: cockpit_core::fresh::Freshness's shape, with what a chip needs.
+// Source: flightdeck_core::fresh::Freshness's shape, with what a chip needs.
 {"source": "tickets", "label": "Linear", "at": 1793611507779 /* last good read */, "next": 1793611567779, "every": 60000,
  "state": "failing" /* never | fresh | stale (two intervals, five minutes at least, past the next read) | failing, as of the build */,
  "error": {"kind": "auth" /* auth | rate | network | not_found | server | other */, "message": "HTTP 401: token refused", "since": 1793610007779} /* or null */,
- "login": "cockpit connector login Linear" /* how it signs in again, as typed, or what to do instead */,
+ "login": "flightdeck connector login Linear" /* how it signs in again, as typed, or what to do instead */,
  "via": null /* the server that failed, for a source read through two */,
  "elsewhere": 1793611500000 /* when a Claude session's plugin last brought this source in (the inbox's
                               modFetched.<source>, else a plugin-written document's at), or null */,
  "now": 1793611507900 /* the build's time: a remote desk says ages by the hub's clock */}
 ```
 
-Words and state are made again at drawing time (`fresh.js` in the mod, `cockpit_core::header` in the TUI), so an age keeps
+Words and state are made again at drawing time (`fresh.js` in the mod, `flightdeck_core::header` in the TUI), so an age keeps
 moving while nothing new arrives: "GitHub · 2 min ago", "Linear · sign in again", "CI · offline since 12:04", "Calendar
 · stale, 2 h ago", "Mail · limited until 12:30". A failing source whose data a Claude session brought in since reads
 quiet, its age that data's. A source the hub records says its errors in its chip, so the views leave its error lines
 out; the record survives a hub restart and a whole write by another writer (`store put`, which keeps the hub's own
 record, never one the writer carried), and leaves when the config stops reading the source, with its document's error
 and its inbox error line. A remote desk shows the chips without their actions. Actions (`act("sources", action, [source])`): `sign_in` types the source's login (`gh auth
-login`, `cockpit connector login <server>`, else `cockpit setup`) into a new tab of the actions space; `refresh` reads
+login`, `flightdeck connector login <server>`, else `flightdeck setup`) into a new tab of the actions space; `refresh` reads
 every source again at once (a rate-limited one at its reset). Keys: `L` (shift+L) signs in again, `R` reads again,
 listed in the TUI's `?` under Sources.
 
-## Cockpit settings and getting started (`cockpit doctor --json`)
+## Flightdeck settings and getting started (`flightdeck doctor --json`)
 
-`cockpit doctor --json` runs the doctor's checks and prints them as data, and exits 0 whatever they found; it keeps the
-report in `~/.cache/cockpit/doctor.json`, which `--cached` gives back while it is under ten minutes old, newer than
+`flightdeck doctor --json` runs the doctor's checks and prints them as data, and exits 0 whatever they found; it keeps the
+report in `~/.cache/flightdeck/doctor.json`, which `--cached` gives back while it is under ten minutes old, newer than
 `config.json`, from the past and not marked `stale` by a fix. A `--json` run never builds the notifier: it says
 `notifier not built` with the build as its fix.
 
 ```jsonc
-{"version": 1, "at": 1793611507779, "cockpit": "0.40.3", "summary": {"pass": 21, "warn": 3, "fail": 1},
+{"version": 1, "at": 1793611507779, "flightdeck": "0.40.3", "summary": {"pass": 21, "warn": 3, "fail": 1},
  "checks": [{"id": "tools.gh" /* <category>.<what>, stable */, "category": "tools", "status": "fail" /* pass | warn | fail */,
              "message": "gh not signed in", "fix": {"label": "gh auth login", "command": "gh auth login" /* or */, "act": {"app", "action", "args"}} /* or null */}],
  "getting_started": [{"id": "github", "label": "Sign in to GitHub for your pull requests", "done": false, "status": "fail", "check": "tools.gh", "fix": {…}}],
@@ -1416,13 +1416,13 @@ whose check did not run is left out. Categories: `tools`, `install`,
 
 - **Fix** (`act("doctor", "fix", [check id, report at, fix as shown])`), asked first in both layouts: the hub reads the
   kept report and types the check's `command` into a tab of the actions space (named `fix · <check id>`), or runs its
-  `act`, then marks that report `stale` (under `doctor.lock`, never a newer one). It refuses a report another cockpit
+  `act`, then marks that report `stale` (under `doctor.lock`, never a newer one). It refuses a report another flightdeck
   version wrote, one other than the `at` the person saw, a fix other than the one shown (its command, or `app action
   [args]`: "The checks changed: look again"), an action other than `sources refresh` and `sources sign_in`, one that did
   nothing, and a fix said in words only. A confirm asked from a report closes when another lands; after a command the
   sheet waits for Check again, after an action it checks again at once. A fix runs only the report's command or action, never one the caller
   sends; the hub does run a caller's argv elsewhere: the inbox's `run` action (a row's own command, such as a focus).
-  In a sandbox (`COCKPIT_HC_BIN` set) a fix's command is shown, not run, since its terminals run on the real HOME.
+  In a sandbox (`FLIGHTDECK_HC_BIN` set) a fix's command is shown, not run, since its terminals run on the real HOME.
   The question is answered by a click on its button only, in both layouts, and not by one landing in its first 400 ms.
 - **Fix all** (`act("doctor", "fix_all", [report at, [[check id, fix as shown], …]])`): Health's top row shows "Fix all
   (N)" (`F`) when two or more checks that need a look have a fix the hub can run (`fixAll(report)`); one confirm, in
@@ -1433,13 +1433,13 @@ whose check did not run is left out. Categories: `tools`, `install`,
   a failure and goes on, and marks the report `stale` once. Its note is a line of counts ("Fixed 3 · 1 failed: <why>",
   "· N shown, not run" in a sandbox), then a line per fix, which the toast shows under it; nothing done at all is an
   error. After a batch with a command the sheet waits for Check again, else it checks again at once.
-- **The sheet** (`doctor.js`, view `settings`; `diagnostics` names the same view): `openSettings({tab})` opens Cockpit
-  settings as a window (860 px, narrower in a narrower window), from the palette ("Cockpit settings", and "Cockpit settings: Health", ": Agents" and ": Layout" for a tab),
-  `cockpit.settings`, `cockpit.settings:<options|health|agents|layout>`, and `SettingsLink` at the foot of the sidebar and of
-  Cockpit Chat's drawer, which opens it on Health while a check fails. `cockpit.diagnostics`, the name it had, still
+- **The sheet** (`doctor.js`, view `settings`; `diagnostics` names the same view): `openSettings({tab})` opens Flightdeck
+  settings as a window (860 px, narrower in a narrower window), from the palette ("Flightdeck settings", and "Flightdeck settings: Health", ": Agents" and ": Layout" for a tab),
+  `flightdeck.settings`, `flightdeck.settings:<options|health|agents|layout>`, and `SettingsLink` at the foot of the sidebar and of
+  Flightdeck Chat's drawer, which opens it on Health while a check fails. `flightdeck.diagnostics`, the name it had, still
   opens it, on Health (`ALIASES` in commands.js, so the keys sheet names a key bound to it as what it opens).
-  - **Header**: the installed version, the published one and when it was last checked, from `cockpit.json` and
-    `update.json` (`versions()` and `versionLine()` in update.js: "Cockpit 0.40.4 · up to date · checked 4 min ago",
+  - **Header**: the installed version, the published one and when it was last checked, from `flightdeck.json` and
+    `update.json` (`versions()` and `versionLine()` in update.js: "Flightdeck 0.40.4 · up to date · checked 4 min ago",
     "· 0.41.0 is out", "· updates not checked yet", "· the check failed: <why>"; "your own build" on an install that
     builds itself). **Check for updates** (`U`) asks the hub to look now (`act("update", "check")`, below) and shows
     "checking for updates…" meanwhile; when a newer version is out, **Update to <version>** opens the update dialog as
@@ -1455,19 +1455,19 @@ whose check did not run is left out. Categories: `tools`, `install`,
     `in_file`: each key with one line) and **Open config.json** (`O`) opens the file in the person's editor
     (`openInEditor`, the config's `editor`).
   - **Health**: what the checks found, Fix all (`F`, above) and Check again (`R`), the window's link to the hub when it is not live (what it
-    is doing, or "The cockpit hub isn't running: this window cannot reach it" with why and Start it), getting started,
+    is doing, or "The flightdeck hub isn't running: this window cannot reach it" with why and Start it), getting started,
     then the checks that need a look, or every one (`A`, or the two pills).
   - **Agents**: every agent of the table, installed first, with what each can do: start, resume, fork, headless, and
-    in chat (`can.driven`, its tooltip "Cockpit Chat runs it itself, without a terminal").
-  - **Layout**: a card per cockpit layout, Cockpit and Cockpit Chat, side by side (stacked under 640 px): its picture
-    in the window's theme (`app/mods/cockpit/layouts/<layout>-<dark|light>.png`, 800×512, the acme demo world; dark or
+    in chat (`can.driven`, its tooltip "Flightdeck Chat runs it itself, without a terminal").
+  - **Layout**: a card per flightdeck layout, Flightdeck and Flightdeck Chat, side by side (stacked under 640 px): its picture
+    in the window's theme (`app/mods/flightdeck/layouts/<layout>-<dark|light>.png`, 800×512, the acme demo world; dark or
     light by the theme's background, `isDark`), a few lines on what it is for (`LAYOUT_CHOICES`), "In use" on the one
     shown (a copy counts as the layout it copies) and **Use this layout** on the other. Its click closes the sheet and
     runs `layout.switch` as the update dialog's Try does, with a toast saying how to come back; no key or command does it.
   - **Keys**: `1`–`4` tabs, `j k` pick an option or a check, `space`/`⏎` flip the switch picked or take a choice's
     next value, `← →` (`h l`) turn a choice, `⏎` puts the keyboard in the picked field (`esc` gives it back, what was
     typed dropped), `⏎` on a check asks about its fix (a click answers), `F` asks about Fix all, `R` checks again, `U` checks for updates, `O` opens config.json, `esc`
-    closes. Any process can open the sheet (`cockpit.settings`), so the keys that set an option, turn a choice, reach
+    closes. Any process can open the sheet (`flightdeck.settings`), so the keys that set an option, turn a choice, reach
     a field, open the file or ask about a fix or Fix all act only from the person's own key, never held, once they moved in that
     tab (`j k`) or clicked one of its rows; showing a tab, or every check, asks for that again. Before that they say
     "Move to it first". A bare window command opens the sheet and changes nothing, and an injected key sets nothing
@@ -1478,29 +1478,29 @@ whose check did not run is left out. Categories: `tools`, `install`,
 - **Getting started in an empty state**: `new Started()` in `init`, `this.started.want(cx)` in `render` while the empty
   state shows (the doctor is asked only then), and `this.started.el({compact})` (null when every step is done), as
   Home's empty board does; a step's fix asks inline first and the list reads the checks again after it. `StartedList(report,
-  {onFix})` draws a report already read; the TUI inbox draws `cockpit_core::started::lines` while it has no row, and
+  {onFix})` draws a report already read; the TUI inbox draws `flightdeck_core::started::lines` while it has no row, and
   asks the doctor again every ten minutes.
-- **The sidebar's and the drawer's link** ("Cockpit settings") reads the failing count from
-  `shared("cockpit.doctor.failing")`, which every report read sets; a remote desk shows no link, and its chips and
+- **The sidebar's and the drawer's link** ("Flightdeck settings") reads the failing count from
+  `shared("flightdeck.doctor.failing")`, which every report read sets; a remote desk shows no link, and its chips and
   `⇧L`/`⇧R` do nothing.
 
 ## View `options` and the update's steps (`update.js`, both halves)
 
 The options a person sets are listed once, in `core/src/options.rs` (`ALL`), section by section (`SECTIONS`): key, section,
-the version that brought it (`since`: `NEXT`, the one number to change at release, or none for an option cockpit always
+the version that brought it (`since`: `NEXT`, the one number to change at release, or none for an option flightdeck always
 read), title, one plain line, default and kind. A kind is `toggle`, `choice` (its values with their names; the
 installed agents for `agents.default`), `text` (one line, one word, a time of day, a folder that exists or a branch
 template; `blank` says what an empty one means) or `number` (a whole number between two bounds, with its unit).
 `checked(setting, value)` gives the value as it is saved or why it is refused, in the option's own words ("Morning brief
 time takes a time of day, such as 08:30", "GitHub takes 15 to 86400 s"); `IN_FILE` lists what config.json holds that no
-switch or field sets. What was shown lives in `~/.cache/cockpit/options.json`: `{ran, seen: [keys], update: {from, to,
-at, notes, shown}}`. `note_run` runs at the hub's start, before its first look at what is published, and with `cockpit
+switch or field sets. What was shown lives in `~/.cache/flightdeck/options.json`: `{ran, seen: [keys], update: {from, to,
+at, notes, shown}}`. `note_run` runs at the hub's start, before its first look at what is published, and with `flightdeck
 options`: a version later than `ran` (update.json's `current` before anything was noted) is an update, kept with
 update.json's notes between the two.
 
 ```jsonc
 // view options
-{"next": "1.0.0", "layout": "cockpit-chat" /* the layout the update offers, or null */,
+{"next": "1.0.0", "layout": "flightdeck-chat" /* the layout the update offers, or null */,
  "update": {"from": "0.40.3", "to": "1.0.0", "notes": [{"version", "date", "changes"}], "shown": false} /* or null */,
  "sections": ["Agents", "Queue and CI", "Chat", "Usage", "Start work", "Sources", "Refresh", "Notifications", "Briefs and recaps", "Apps"],
  "options": [{"key": "queue.drain", "section": "Queue and CI", "since": "1.0.0" /* or null */, "title", "description",
@@ -1510,16 +1510,16 @@ update.json's notes between the two.
               "choices": [{"value", "label"}] /* choice */, "blank": "the conversation's own model" /* text: what empty means, or null */,
               "min": 15, "max": 86400, "unit": "s" /* number */,
               "seen": false /* always true without `since` */, "new": true /* brought by the update */}],
- "in_file": [{"key": "usage.commands", "description"}], "path": "/Users/me/.config/cockpit/config.json"}
+ "in_file": [{"key": "usage.commands", "description"}], "path": "/Users/me/.config/flightdeck/config.json"}
 ```
 
 - **Acts**, the view's own, a person's only (`peer::person`, so an agent's tools are refused): `set [{key: value…}]`
   checks each value as its option takes it (a boolean, one of a choice's values, a field's text, a whole number within
   its bounds) and refuses the whole save, nothing written, when one is not or names no option; then it writes
-  `~/.config/cockpit/config.json` in place (`core::jsonedit`, mode 0600, every other byte and every unknown key kept; a
+  `~/.config/flightdeck/config.json` in place (`core::jsonedit`, mode 0600, every other byte and every unknown key kept; a
   part of a key holding something other than an object is refused) and the resolved copy in the cache (a folder with
   its `~` spelled out), and marks them seen; `shown [{keys?, update?}]` marks options seen and the update shown. The
-  update dialog asks about the switches an update brought; an option of another kind is set in Cockpit settings.
+  update dialog asks about the switches an update brought; an option of another kind is set in Flightdeck settings.
 - **`act("update", "check")`**, anyone's (it reads what is published and installs nothing): the hub looks at the
   published version now and writes `update.json` (`{at, looked_at, current, latest, dev, notes, notified, error?:
   {message, at}}`: `at` stays the six-hourly look's, `looked_at` is this one's, and a failed look keeps the last version
@@ -1531,24 +1531,24 @@ update.json's notes between the two.
   are notes), the options the update brought (`options`: a switch each; Save sends only the changed ones, Skip keeps
   them) and the layout to try (`layout`, when the window shows another: `layout.switch`, then a toast saying ⌘⇧L comes
   back). The dialog marks the update shown, and the options step its options seen, once the person opened it (the
-  update tag's click, a keyed `cockpit.update`) or acted in it (a key of theirs, a click); one opened on its own or by
+  update tag's click, a keyed `flightdeck.update`) or acted in it (a key of theirs, a click); one opened on its own or by
   a bare command marks nothing. Save, Skip and Try take a click or the person's own key (`⏎`, `space` flips the picked
   option, `j k` pick), never held, and `⏎` and `space` only once they moved in the dialog or clicked in it; an injected
-  key only moves or closes, and `cockpit.update:<save|skip|try|next>` acts only with a key the window minted (`take`). An install this
-  window started is kept in `shared("cockpit.update.flow")`, so the dialog the mod's reload makes anew follows it on.
+  key only moves or closes, and `flightdeck.update:<save|skip|try|next>` acts only with a key the window minted (`take`). An install this
+  window started is kept in `shared("flightdeck.update.flow")`, so the dialog the mod's reload makes anew follows it on.
 - **At start** (`askAfterUpdate`, from `main.js`, once per load of the mod): when the update is not shown, says
   something (notes, an option it brought, or a layout to offer) and no update dialog beats, the dialog opens on it.
-- **Elsewhere**: `cockpit update` at an interactive terminal ends with `cockpit options ask`: the notes, each new option
-  asked in turn, and a default-No offer to try Cockpit Chat in Herdr desktop. Without terminal input it prints
-  `cockpit options new`, including the command to try the layout; the desktop frontend keeps its own update dialog.
+- **Elsewhere**: `flightdeck update` at an interactive terminal ends with `flightdeck options ask`: the notes, each new option
+  asked in turn, and a default-No offer to try Flightdeck Chat in Herdr desktop. Without terminal input it prints
+  `flightdeck options new`, including the command to try the layout; the desktop frontend keeps its own update dialog.
   Herdr's `whats-new` popup (`whats-new.sh`, after update.sh and at herdr's start, while
-  `cockpit options pending`) runs `cockpit options ask`; `cockpit setup` and /cockpit:setup ask about the options not
+  `flightdeck options pending`) runs `flightdeck options ask`; `flightdeck setup` and /flightdeck:setup ask about the options not
   seen yet.
 
 ## Views `mail` and `mail-thread` (the mail space, both halves)
 
-Built by `cockpit_mail::gui` from the hub's `mail` document (`{at, messages, notified, by?, error?}`, written by the hub
-through its own mail server or by a Claude Code session through the mail connector). The TUI app (`cockpit mail`, run in
+Built by `flightdeck_mail::gui` from the hub's `mail` document (`{at, messages, notified, by?, error?}`, written by the hub
+through its own mail server or by a Claude Code session through the mail connector). The TUI app (`flightdeck mail`, run in
 the `mail` space) draws the same model: the latest 15 unread messages, then the latest 15 read ones, each newest first.
 
 ```jsonc
@@ -1565,7 +1565,7 @@ the `mail` space) draws the same model: the latest 15 unread messages, then the 
 `mail-thread {id}` is one message's thread for the reading panel: `{state: "unread" | "loading" | "ready" | "failed",
 since?, error?, messages: [{from, fromName, date, when, html, text}]}`, its `html` sanitized (no scripts, styles, event
 handlers, frames or forms; links and images kept) and drawn with `TextView.html`, `text` the fallback. It follows
-`~/.cache/cockpit/mail/`, where threads are kept a week as `<id>.json`.
+`~/.cache/flightdeck/mail/`, where threads are kept a week as `<id>.json`.
 
 Actions (`act("mail", action, [message])`, the message as `raw` gives it): `mail_thread` reads the thread into the cache,
 through the hub's mail server at once (the mapping's `get` verb, `thread`/`html`/`body` fields), else files a `mail-get`
@@ -1589,9 +1589,9 @@ Agent capability coverage and source references are listed in [the agent invento
                                    // `models`: what a routine of it may run on, its default ("") first, then what only a
                                    // routine takes (Claude Code's `lightest`), then the models the agent offers everywhere
                                    // (`core::models::for_routine`: its own listing, asked at most once a day, half an hour
-                                   // after one that failed, and kept in ~/.cache/cockpit/models.json, else its table's; a
+                                   // after one that failed, and kept in ~/.cache/flightdeck/models.json, else its table's; a
                                    // failed listing keeps the last good one; none is asked in the demo world or with
-                                   // COCKPIT_HUB_MODELS=off); each Routine has its agent's
+                                   // FLIGHTDECK_HUB_MODELS=off); each Routine has its agent's
   "tiles": {"routines": 7, "active": 6, "paused": 1, "running": 0, "waiting": 0, "failing": 2, "look": 2, "unread": 4,
             "weekRuns": 10, "weekOk": 8, "weekFailed": 1, "weekMissed": 1, "weekSkipped": 1, "weekCost": 0.66,
             "spent": "~$0.66", "budget": 0.5, "overBudget": true, "worktrees": 1,
@@ -1622,7 +1622,7 @@ Agent capability coverage and source references are listed in [the agent invento
   `<id>.txt` path (what the precheck said, for a skip).
 - `Template` = `{id, name, about, when, shell, model, tools, mode, precheck, worktree, notify, body}`, as the default
   agent takes it (a model only its own, tools and a mode only for Claude Code): fills the form, nothing is saved until
-  `add`. The Herdr command `cockpit.routines:template:<id>` (`blank` for none) picks one in an open new-routine form.
+  `add`. The Herdr command `flightdeck.routines:template:<id>` (`blank` for none) picks one in an open new-routine form.
 - `acts` on routines and runs: `[{id, label, key, main, confirm, question, action, args}]`, run as `act("routines",
   action, args)` with `armed: confirm` once confirmed.
 
@@ -1640,7 +1640,7 @@ Actions (`act("routines", action, args)`), positional args:
 | `pause` | `[slug, paused]` | Pauses, or resumes from now on |
 | `model` | `[slug, model]` | Its model |
 | `read` / `read_all` | `[slug, id?]` / `[]` | Runs marked read |
-| `open_worktree` / `cleanup` | `[slug, id]` / `[slug?, id?]` (armed `remove-run-<slug>-<id>`, else `cleanup-runs`) | A run's worktree in a tab / removed (never forced) when nothing keeps it by `cockpit_core::cleanup`'s rules: a given run's (refused with what keeps it), else each, the note naming what keeps the others |
+| `open_worktree` / `cleanup` | `[slug, id]` / `[slug?, id?]` (armed `remove-run-<slug>-<id>`, else `cleanup-runs`) | A run's worktree in a tab / removed (never forced) when nothing keeps it by `flightdeck_core::cleanup`'s rules: a given run's (refused with what keeps it), else each, the note naming what keeps the others |
 
 Store events of the `routines` document: `routine_ok`, `routine_failed`, `routine_missed`, `routine_skipped` (once per
 stretch of skips: it keeps the first skip's id).
@@ -1648,33 +1648,33 @@ stretch of skips: it keeps the first skip's id).
 ## Views `show` and `review` (the right panel and the show tool's panes)
 
 - **`show`**, in two places. In the right panel (`{app: "show"}`) it follows the session in view (`followed`: the chat's
-  subject in Cockpit Chat, else the agent in view, else the focused pane's terminal, so a plain shell lists its own): its
+  subject in Flightdeck Chat, else the agent in view, else the focused pane's terminal, so a plain shell lists its own): its
   views as tabs, newest first, and none when it showed none or nothing is in view. As a pane beside an agent (`{app: "show", name}`) it shows that
-  view. Hub views: `show {name}` or `show {terminal, pick}` (an empty terminal lists nothing; an omitted terminal lists recent views), pushed on change from `~/.cache/cockpit/show` and the CI caches,
+  view. Hub views: `show {name}` or `show {terminal, pick}` (an empty terminal lists nothing; an omitted terminal lists recent views), pushed on change from `~/.cache/flightdeck/show` and the CI caches,
   and `show-block {name, n, since}` asked on the block's own clock for what runs something (a repo diff every 3 s, a log
   or a command's rows every `every` s; `{same: true}` when a diff's hash is `since`). Actions `show answer [name, n, type,
   value, label]` (type `choice`, `confirm`, `comment`, `blueprint` (a change request about a box), or `review` for
   several diff comments at once: `value.comments`, `label` = "1) a.rs:12: text 2) …"). Pictures are copied into
-  `<app home>/data/cockpit/show/` (the app draws images only from its folder). Commands: `cockpit.show:go:<name>[#block]`,
-  `cockpit.show:hide:<name>` (the pane closes itself), `show:copy:<n>`, `show:first:<n>`, `show:page:`.
+  `<app home>/data/flightdeck/show/` (the app draws images only from its folder). Commands: `flightdeck.show:go:<name>[#block]`,
+  `flightdeck.show:hide:<name>` (the pane closes itself), `show:copy:<n>`, `show:first:<n>`, `show:page:`.
 - **Drawing** (`plot.js`): a chart block's model is `{kind: line|area|bar|donut, labels, series, stacked, percent,
   horizontal, show_values}`; `Chart` picks the plot (axes, stacks, areas), `Rows` (horizontal bars with their values
   written) or `Donut` (six slices, then "Other"). A `stats` block draws its items as `StatTile`s with `Figures`.
 - **The show tool in app mode** (the plugin's side): split the agent's pane with `pane.split {direction, pane, mod:
-  "cockpit", props: {app: "show", name}}`, keep `{pane, terminal}` in `<name>.app` and write `terminal:
-  $HC_TERMINAL_ID` into the spec. A session cockpit drives has no terminal: it runs with `COCKPIT_SESSION_KEY` (its
-  key, `claude:…`), which the plugin and `cockpit mcp` write as the spec's `terminal` instead, so the chat's side panel
+  "flightdeck", props: {app: "show", name}}`, keep `{pane, terminal}` in `<name>.app` and write `terminal:
+  $HC_TERMINAL_ID` into the spec. A session flightdeck drives has no terminal: it runs with `FLIGHTDECK_SESSION_KEY` (its
+  key, `claude:…`), which the plugin and `flightdeck mcp` write as the spec's `terminal` instead, so the chat's side panel
   and its row's `documents` list its views as a terminal's. The view is open while the hub's `shown show` lists its name (see Claude sessions);
   the footer chip closes it with `pane.close {pane}`. Answers are the same `<name>.<n>.answer` files.
 - **Blueprint** (a `{type: "blueprint", text}` block): the session's living plan, a Mermaid flowchart whose boxes are
   the steps, `class A,B done` / `class C active` (or `A:::done`) marking progress and a `---\ntitle: …\n---` header
   its title. A view holding one is named `<pane>-<first 8 of the session id>` (one per session) and its text lives in
-  `~/.cache/cockpit/show/<name>.mmd`: the show call removes that file so the call's text shows, then the agent keeps
+  `~/.cache/flightdeck/show/<name>.mmd`: the show call removes that file so the call's text shows, then the agent keeps
   the plan current by writing the whole flowchart there (the plugin allows Write/Edit on those files without a
   prompt). The hub watches the folder, so each save rebuilds the view: its model carries `text` (the file's, else the
   call's), `file` and `updated` (the file's mtime, ms). The app draws a header (title, "updated 2m ago", done count,
   Fit / − / zoom% / +), a done / in progress / to do legend with a progress bar and the diagram on a dot grid; a click
-  on a box (or the palette's "Ask for a change", or `cockpit.show:ask:<block>:<box id>`) opens a composer, sent as
+  on a box (or the palette's "Ask for a change", or `flightdeck.show:ask:<block>:<box id>`) opens a composer, sent as
   `show answer [name, n, "blueprint", {node, label, text}, label]`, which reaches the session as "In the blueprint,
   about «label» (box id): text". The herdr TUI pane draws the file's flowchart like a mermaid block, without clicks.
 - **`review`** (`{app: "review"}`, or `{repo, terminal, scope}`): the followed agent's repo (the focused terminal's, or
@@ -1689,14 +1689,14 @@ stretch of skips: it keeps the first skip's id).
   [repo, scope, model]`, `review stop_walkthrough [repo, scope]`. The footer's To button (⇧T) picks who gets it among the
   agents view's rows working in the repo (driven ones included) or a new agent, which `start work` opens in the repo's
   checkout (`{source: "prompt", text: <prompt>, repo, worktree: "here", dirty: true}`); the choice is kept per repo in
-  shared `review.to`. Commands `cockpit.review:open:<path>` reviews that folder; `review:scope:<s>`,
+  shared `review.to`. Commands `flightdeck.review:open:<path>` reviews that folder; `review:scope:<s>`,
   `review:mode:diff|walk`, `review:submit`, `review:to` (the menu), `review:to:<handle|new>`, `review:follow:<handle>`
   (empty: the focus again).
-  The herdr TUI's review space (`cockpit review`, `prefix+shift+c`) reads the same scopes with `review::read` and
+  The herdr TUI's review space (`flightdeck review`, `prefix+shift+c`) reads the same scopes with `review::read` and
   sends through the same actions, to the agent it follows or the one `T` picks for the worktree (a driven session, or a
   new agent through `start work`).
 - **Walkthrough**: one detached `claude -p` (no tools, MCP servers, settings or skills, JSON schema) over a digest of the
-  hunks (`h1`…), in `~/.cache/cockpit/walkthrough/{jobs,entries,pointers}`, keyed by the digest and the model. Hunk ids are
+  hunks (`h1`…), in `~/.cache/flightdeck/walkthrough/{jobs,entries,pointers}`, keyed by the digest and the model. Hunk ids are
   the file and a hash of the hunk's lines, so a step whose code moved shows Outdated and new hunks land in Not covered.
   Only the hub's review view takes a finished job in; the TUI reads with `walkthrough::peek` and asks that view when one waits.
 - `diff.js` (`DiffView`) is the shared diff: folding files, unified or side by side, a cursor, comments as rows under
@@ -1713,17 +1713,17 @@ screen from these; add what is missing to the kit, not inline. `sh scripts/sandb
 | Area | API |
 | --- | --- |
 | Tokens | `tokens()` (background, foreground, card, popover, muted, mutedFg, dim, accent, selected, border, input, ring, primary, primaryFg, destructive, success, warning, info, working, blocked, done, idle), `alpha(color, a)`, `RADIUS`, `TEXT`, `CAPTION` (10px, for axes and corner counts) |
-| Primitives | `Icon(name)` (lucide, `icons/`), `AgentLogo(x, {size, color, tooltip, id})` (an agent's logo: Herdr's own icon from its home's `icons/`, LobeHub's, MIT, for a row's `icon`, Herdr's program or an icon name, a picture in its colours or a glyph tinted like the text from Herdr's program table, with `CHAT_LOGO_STYLE` in `ui.js` (`"brand"`, as shipped, keeps brand colours; `"tinted"` draws Chat's logos tinted); `iconOf(x)`, `providersOf(rows)`), `Spinner`, `Separator`, `Kbd` (writes "ctrl p" as ⌃P: `keyLabel(key)`; nothing in Cockpit Chat, where keys live in tooltips), `ChoiceKey(n)` (a choice's number: a Kbd in Cockpit, quiet text in Cockpit Chat), `CornerCount(n, {tone})` (a count on an icon's corner), `Badge(text, default/secondary/outline/destructive/success/warning/info, {dot, icon})`, `Button(id, {label, icon, variant, size, kbd, tooltip, onClick})` (`kbd` joins the tooltip in Cockpit Chat), `Checkbox`, `Skeleton`, `Avatar(name)`, `Progress(v)` |
-| Layout | `PageHeader({icon, title, description, aside, actions, sources, view, narrow})` (a view model's `sources` as chips beside the title, a click runs their fix, `view.toasts` says how it went; `narrow` keeps the loud ones), `SourceChips(sources, {view, narrow})`, `sourceKey(e, sources, cx, view, {refresh})` (shift+L, and shift+R for a view with no refresh of its own), `Card({title, description, action, children, footer})`, `Section(id, {title, count, open, onToggle})` (collapsible), `SidePanel(id, {title, onClose, children})` (details beside a list), `Tabs(id, {items, value, onChange})`, `KeyHints([[key, what]])` (nothing in Cockpit Chat), `Empty`, `ErrorState`, `SectionHeader` |
+| Primitives | `Icon(name)` (lucide, `icons/`), `AgentLogo(x, {size, color, tooltip, id})` (an agent's logo: Herdr's own icon from its home's `icons/`, LobeHub's, MIT, for a row's `icon`, Herdr's program or an icon name, a picture in its colours or a glyph tinted like the text from Herdr's program table, with `CHAT_LOGO_STYLE` in `ui.js` (`"brand"`, as shipped, keeps brand colours; `"tinted"` draws Chat's logos tinted); `iconOf(x)`, `providersOf(rows)`), `Spinner`, `Separator`, `Kbd` (writes "ctrl p" as ⌃P: `keyLabel(key)`; nothing in Flightdeck Chat, where keys live in tooltips), `ChoiceKey(n)` (a choice's number: a Kbd in Flightdeck, quiet text in Flightdeck Chat), `CornerCount(n, {tone})` (a count on an icon's corner), `Badge(text, default/secondary/outline/destructive/success/warning/info, {dot, icon})`, `Button(id, {label, icon, variant, size, kbd, tooltip, onClick})` (`kbd` joins the tooltip in Flightdeck Chat), `Checkbox`, `Skeleton`, `Avatar(name)`, `Progress(v)` |
+| Layout | `PageHeader({icon, title, description, aside, actions, sources, view, narrow})` (a view model's `sources` as chips beside the title, a click runs their fix, `view.toasts` says how it went; `narrow` keeps the loud ones), `SourceChips(sources, {view, narrow})`, `sourceKey(e, sources, cx, view, {refresh})` (shift+L, and shift+R for a view with no refresh of its own), `Card({title, description, action, children, footer})`, `Section(id, {title, count, open, onToggle})` (collapsible), `SidePanel(id, {title, onClose, children})` (details beside a list), `Tabs(id, {items, value, onChange})`, `KeyHints([[key, what]])` (nothing in Flightdeck Chat), `Empty`, `ErrorState`, `SectionHeader` |
 | Lists | `ListRow(id, {selected, marked, flash, leading, title, meta, actions, hover, grip, dropAbove, dimmed, onClick, onDoubleClick, onRightClick})`, `Scroller` (keyboard-followed list), `Table(id, {columns, rows, sort, onSort})` (sortable) |
 | Inputs | `SearchField(state, {active, kbd})`, `TextField(state)` (an `InputState` made in `init`), `Command(id, {state, groups, selected})` |
 | Feedback | `Toaster` (`push(cx, title, {kind, description, action: {label, onClick}})`, Sonner-style, with Undo), `Flashes` (rows that changed), `AlertDialog` |
-| Pointer | `Hover` (actions on hover), `HoverCard(id, trigger, content)`, `openMenu(items, {width, at, byKey})` (a menu at the pointer, or at `at` = {x, y} under its control, kept inside the window; with the pointer outside the window it opens at the top middle; `byKey`, a key opened it, picks its first item; items run `cockpit.<command>`, an `info` item only says something), `Reorder` (drag a grip to reorder: `grip(key, i)`, `track(listEl, rowHeight, count)`, `onDrop(key, to, cx)`) |
+| Pointer | `Hover` (actions on hover), `HoverCard(id, trigger, content)`, `openMenu(items, {width, at, byKey})` (a menu at the pointer, or at `at` = {x, y} under its control, kept inside the window; with the pointer outside the window it opens at the top middle; `byKey`, a key opened it, picks its first item; items run `flightdeck.<command>`, an `info` item only says something), `Reorder` (drag a grip to reorder: `grip(key, i)`, `track(listEl, rowHeight, count)`, `onDrop(key, to, cx)`) |
 | Charts | `Sparkline(values, {w, h, area})`, `LineChart(id, {series, xLabels})`, `BarChart(id, {bars})`, `Ring(v, {label})`, `StatTile(id, {label, value, delta, deltaGood, spark})` — native paths (`window.paint_path` with `%` coordinates; strokes × zoom) |
 | Dashboards | `Meter(parts, {total, segW})` (segmented LED meter), `Strip(values, {levels, h})` (history strip, a column per sample colored by level), `SegBar(id, parts)` (a bar split in proportion), `Pills(id, options, value, onPick)` (one choice among a few), `Toggle(id, on, onToggle)` (switch), `Tiles(tiles, {narrow})` (a row of tiles, rows of two when narrow) |
 | Boards | `Mono(text)`, `dur(ms)` (`<1m`/`12m`/`3h`/`2d`), `Chip(text, {color, mono, icon, logo, onClick})` (a fact tinted with its state; `logo` an agent's), `CountPill(n)`, `StageHeading(id, label, {color, count, pulse, spin, action})`, `Overline(text)` (the heading inside a card or side panel), `MiniBars(values)`, `Metric(id, {label, value, tone, tint, hint, bars, spin})`, `Callout(id, {tone, label, icon, title, meta, body, actions, stack})`, `ToneButton(id, {label, tone, kbd})` |
 
-Agent logos use Herdr's program-table `tint` metadata, cached once per window, and keep their brand colours in both layouts. The single `CHAT_LOGO_STYLE` switch in `ui.js` (`"brand"`, or `"tinted"` for the LobeHub MIT monochrome marks in `app/mods/cockpit/icons/agents/`) sets Cockpit Chat's.
+Agent logos use Herdr's program-table `tint` metadata, cached once per window, and keep their brand colours in both layouts. The single `CHAT_LOGO_STYLE` switch in `ui.js` (`"brand"`, or `"tinted"` for the LobeHub MIT monochrome marks in `app/mods/flightdeck/icons/agents/`) sets Flightdeck Chat's.
 
 The GUI is the floor-plus: visible buttons with key hints instead of hidden keys, hover actions, right-click menus,
 drag to reorder, double-click to edit, Undo on toasts instead of confirms for reversible actions, details beside lists
@@ -1733,7 +1733,7 @@ abbreviations).
 ## Testing
 
 ```sh
-COCKPIT_SANDBOX=$TMPDIR/cockpit-gui-inbox sh scripts/sandbox.sh start   # one sandbox per person or agent working at once
+FLIGHTDECK_SANDBOX=$TMPDIR/flightdeck-gui-inbox sh scripts/sandbox.sh start   # one sandbox per person or agent working at once
 sh scripts/sandbox.sh show todo; sh scripts/sandbox.sh key j; sh scripts/sandbox.sh shot /tmp/x.png; sh scripts/sandbox.sh check
 sh scripts/sandbox.sh notify "🔴 CI failed: api main" "lint" "space:inbox"; sh scripts/sandbox.sh light; sh scripts/sandbox.sh stop
 ```
@@ -1744,9 +1744,9 @@ terminals there are theirs, so never create, close or type into them. Herdr load
 would not show), hence the copying. `herdr-app check` must pass and a screenshot must look right in both themes before a
 view is done; `cargo test` for the crates touched.
 
-- Keep `COCKPIT_SANDBOX` short: macOS caps a socket's path at 104 bytes, and a longer one gives no `herdr-app.sock`.
+- Keep `FLIGHTDECK_SANDBOX` short: macOS caps a socket's path at 104 bytes, and a longer one gives no `herdr-app.sock`.
 - A window behind others does not repaint, so `herdr-app shot` returns its last frame: bring it to the front first.
-- `hc` runs on the real HOME (`$box/hc.sh`, through `COCKPIT_HC_BIN`): under the fake one it would start a herdr-core
+- `hc` runs on the real HOME (`$box/hc.sh`, through `FLIGHTDECK_HC_BIN`): under the fake one it would start a herdr-core
   of its own.
 - After many reloads the mod can stop reloading ("out of memory" in `sandbox.sh status`): quit the window and start
   again.
@@ -1778,9 +1778,9 @@ wide, into `docs/app/` (`OUT`, `WIDTHS`, `THEMES` change that). It brings the wi
   [herdr-linear](https://github.com/mrolafsson/herdr-linear) (MIT); PR alerts by diff, the agent-time ledger read on
   ticket rows and the merged-worktree cleanup follow herdr-relevo (Apache-2.0, ideas); hover cards fetched on hover
   follow [herdr-gh-board](https://github.com/meviusisback/herdr-gh-board) (MIT).
-- The code view (`app/mods/cockpit/code.js`) is ported from [yama-lei/herdr-editor-layout](https://github.com/yama-lei/herdr-editor-layout)'s
+- The code view (`app/mods/flightdeck/code.js`) is ported from [yama-lei/herdr-editor-layout](https://github.com/yama-lei/herdr-editor-layout)'s
   editor pane (Apache-2.0).
-- The show view's Mermaid flowchart parser and layered layout (`app/mods/cockpit/diagram.js`) are ported from
+- The show view's Mermaid flowchart parser and layered layout (`app/mods/flightdeck/diagram.js`) are ported from
   [herdr-blueprint-app](https://github.com/chappse6/herdr-blueprint-app)'s `mermaid.js` and `layout.js` (MIT, Copyright
   (c) 2026 chappse6), its node drawing and done/active marks after its `main.js`; the living blueprint (a plan the
   agent keeps current in a `.mmd` file, a click on a box asking it for a change, Fit / − / % / +, the dot grid) is its

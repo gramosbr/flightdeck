@@ -6,9 +6,9 @@ use crate::data::{Clock, Doc, State};
 
 pub const ICON: &str = "\u{f017}";
 
-/// Run by `cockpit space routines` in the routines space: the sidebar row is this app's then.
+/// Run by `flightdeck space routines` in the routines space: the sidebar row is this app's then.
 pub fn is_pinned() -> bool {
-    std::env::var("COCKPIT_SPACE").is_ok_and(|s| !s.is_empty())
+    std::env::var("FLIGHTDECK_SPACE").is_ok_and(|s| !s.is_empty())
 }
 
 /// The sidebar's line, and whether it says something is wrong: what runs, else the routines whose last run failed,
@@ -41,7 +41,17 @@ pub fn report(text: String, bad: bool) {
     let (token, other) = if bad { ("routines_bad", "routines") } else { ("routines", "routines_bad") };
     std::thread::spawn(move || {
         let _ = Command::new(bin)
-            .args(["workspace", "report-metadata", &workspace, "--source", "cockpit-routines", "--token", &format!("{token}={text}"), "--clear-token", other])
+            .args([
+                "workspace",
+                "report-metadata",
+                &workspace,
+                "--source",
+                "flightdeck-routines",
+                "--token",
+                &format!("{token}={text}"),
+                "--clear-token",
+                other,
+            ])
             .output();
     });
 }

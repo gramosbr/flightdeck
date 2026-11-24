@@ -15,7 +15,7 @@ export const BEAT_MS = 3000;
  */
 export const STALL_MS = 12_000;
 
-const feeds = () => (globalThis.cockpitFeeds ??= new Map());
+const feeds = () => (globalThis.flightdeckFeeds ??= new Map());
 
 /** The arguments a view is followed with, in one shape per meaning: null and {} both mean none. */
 export function normalize(_name, args) {

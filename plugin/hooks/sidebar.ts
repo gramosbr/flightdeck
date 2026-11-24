@@ -14,12 +14,12 @@ import { branchOf, reviewFocus } from './work'
 
 type $ = EngineInterface
 
-const inbox = atom({ plugin: 'cockpit', key: 'inbox' } as const, null)
-const muted = atom({ plugin: 'cockpit', key: 'muted' } as const, [])
-const sidePage = atom({ plugin: 'cockpit', key: 'sidePage' } as const, null)
-const usage = atom({ plugin: 'cockpit', key: 'usage' } as const, null)
-const views = atom({ plugin: 'cockpit', key: 'views' } as const, [])
-const work = atom({ plugin: 'cockpit', key: 'work' } as const, null)
+const inbox = atom({ plugin: 'flightdeck', key: 'inbox' } as const, null)
+const muted = atom({ plugin: 'flightdeck', key: 'muted' } as const, [])
+const sidePage = atom({ plugin: 'flightdeck', key: 'sidePage' } as const, null)
+const usage = atom({ plugin: 'flightdeck', key: 'usage' } as const, null)
+const views = atom({ plugin: 'flightdeck', key: 'views' } as const, [])
+const work = atom({ plugin: 'flightdeck', key: 'work' } as const, null)
 type Limit = { name: string; percent: number; resetsAt?: string }
 
 // What the herdr sidebar shows: counts on the inbox space's row, and on this agent's rows its context, repo, branch and
@@ -51,7 +51,7 @@ export async function reportDashboard($: $) {
   ]
   const key = `${space}|${JSON.stringify(tokens)}`
   if (key === lastDashboard) return
-  if ((await herdr($, tokenArgs(['workspace', 'report-metadata', space, '--source', 'cockpit'], tokens))).exitCode === 0) lastDashboard = key
+  if ((await herdr($, tokenArgs(['workspace', 'report-metadata', space, '--source', 'flightdeck'], tokens))).exitCode === 0) lastDashboard = key
 }
 
 // Rows are fitted to the sidebar's width from herdr's config, so herdr never cuts their end off with an ellipsis.
@@ -151,13 +151,13 @@ export async function reportUsage($: $, e: SessionMeasureInput) {
     clash: other ? { label: otherLabel ?? other.space, space: other.space, tab: other.tab ?? null } : null,
   }).catch(() => undefined)
   if (here.frontend === 'app') return
-  await herdr($, tokenArgs(['pane', 'report-metadata', here.pane, '--source', 'cockpit'], tokens))
+  await herdr($, tokenArgs(['pane', 'report-metadata', here.pane, '--source', 'flightdeck'], tokens))
 }
 
 export function clearRows($: $, pane: string) {
   if (pane.startsWith('app:')) return Promise.resolve(undefined)
   const names = ['ctx_ok', 'ctx_warn', 'ctx_hot', 'work', 'work_run', 'work_ok', 'work_fail', 'clash', 'agent', 'side_sep', 'side']
-  return herdr($, tokenArgs(['pane', 'report-metadata', pane, '--source', 'cockpit'], names.map(name => [name, undefined])))
+  return herdr($, tokenArgs(['pane', 'report-metadata', pane, '--source', 'flightdeck'], names.map(name => [name, undefined])))
 }
 
 const clip = (text: string, width: number) => (text.length <= width ? text : `${text.slice(0, width - 1).trimEnd()}…`)
@@ -200,7 +200,7 @@ export async function reportSide($: $) {
   await reportFacts($, here, { page: shown?.url ?? null, pageTitle: shown?.title || null, views: (await read($, views)).map(v => ({ name: v.name, open: v.isOpen })) }).catch(() => undefined)
   const key = JSON.stringify(tokens)
   if (key === lastRow) return
-  if ((await herdr($, tokenArgs(['pane', 'report-metadata', here.pane, '--source', 'cockpit'], tokens))).exitCode === 0) lastRow = key
+  if ((await herdr($, tokenArgs(['pane', 'report-metadata', here.pane, '--source', 'flightdeck'], tokens))).exitCode === 0) lastRow = key
 }
 
 // The app draws the agent's row from the hub's facts: the page beside it and its views.

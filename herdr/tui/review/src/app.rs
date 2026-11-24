@@ -7,13 +7,13 @@ use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender, channel};
 use std::time::{Duration, Instant};
 
-use cockpit_core::bridge::Bridge;
-use cockpit_core::dialog::Dialog;
-use cockpit_core::palette::Palette;
-use cockpit_core::toast::{Kind as Toast, Toasts};
-use cockpit_show::diff::{Diff, Note};
-use cockpit_show::review::{self, Read};
-use cockpit_show::row::Row;
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::dialog::Dialog;
+use flightdeck_core::palette::Palette;
+use flightdeck_core::toast::{Kind as Toast, Toasts};
+use flightdeck_show::diff::{Diff, Note};
+use flightdeck_show::review::{self, Read};
+use flightdeck_show::row::Row;
 use ratatui::layout::Rect;
 use serde_json::{Value, json};
 
@@ -178,7 +178,7 @@ impl Changes {
 }
 
 /// The spans of a row a click acts on: from, to and what it does.
-pub type Clicks = Vec<(usize, usize, cockpit_show::row::Act)>;
+pub type Clicks = Vec<(usize, usize, flightdeck_show::row::Act)>;
 
 /// Where the last frame drew what a click can land on.
 #[derive(Default)]
@@ -438,7 +438,7 @@ impl App {
         let Some(scope) = Scope::ALL.into_iter().find(|s| s.id() == read.scope) else { return };
         let Some(scopes) = self.repos.get_mut(&read.repo) else { return };
         let changes = &mut scopes[scope.index()];
-        changes.read_at = Some(cockpit_core::seen::now_ms());
+        changes.read_at = Some(flightdeck_core::seen::now_ms());
         changes.about = read.about;
         match read.error {
             Some(error) => changes.error = Some(error),
@@ -487,7 +487,7 @@ impl App {
         self.reading = Some((repo.clone(), scope));
         std::thread::spawn(move || {
             let _ = tx.send(review::read(&repo, scope.id(), since));
-            cockpit_core::term::wake();
+            flightdeck_core::term::wake();
         });
     }
 
@@ -641,7 +641,7 @@ impl App {
             Recipient::Gone(agent) => self.toasts.push(format!("{} is no longer running here: T picks who gets the review", agent.name), Toast::Bad),
             Recipient::Starting => self.toasts.push("The review agent is not running yet: T picks who gets the review", Toast::Note),
             // The last poll's word, at once; `deliver` checks again as it sends.
-            Recipient::Agent(agent) if agent.waiting => self.toasts.push(cockpit_core::deliver::waiting_note(&agent.name), Toast::Bad),
+            Recipient::Agent(agent) if agent.waiting => self.toasts.push(flightdeck_core::deliver::waiting_note(&agent.name), Toast::Bad),
             Recipient::Agent(agent) => {
                 review["to"] = json!(agent.name);
                 self.sending.insert(tag.clone(), notes);
@@ -651,7 +651,7 @@ impl App {
             Recipient::New => {
                 let Ok(prompt) = review::message(&review) else { return };
                 // A space of its own, and Start work's own choices of repo, agent and mode left as they were.
-                let label = format!("review-{}", cockpit_core::seen::now_ms());
+                let label = format!("review-{}", flightdeck_core::seen::now_ms());
                 let request = json!({
                     "id": label, "source": "prompt", "text": prompt, "repo": repo, "worktree": "here", "dirty": true,
                     "label": label, "remember": false,
@@ -738,13 +738,13 @@ impl App {
                 (self.scroll, self.reveal) = (0, false);
             }
             Cmd::Copy => match walk::markdown(&self.here().walkthrough) {
-                Some(text) if cockpit_core::files::copy(&text) => self.toasts.push("Copied the walkthrough as Markdown", Toast::Good),
+                Some(text) if flightdeck_core::files::copy(&text) => self.toasts.push("Copied the walkthrough as Markdown", Toast::Good),
                 Some(_) => self.toasts.push("No clipboard tool answered (pbcopy, wl-copy or xclip)", Toast::Bad),
                 None => {}
             },
             Cmd::OpenPr => {
                 if let Some(url) = self.here().about["pr"]["url"].as_str().map(str::to_string) {
-                    cockpit_core::files::open_url(&url);
+                    flightdeck_core::files::open_url(&url);
                     self.toasts.push(format!("opened {url}"), Toast::Note);
                 }
             }
@@ -799,7 +799,7 @@ impl App {
         }
         let current = self.subject().map(|a| a.terminal.clone());
         let selected = agents.iter().position(|a| Some(&a.terminal) == current.as_ref()).unwrap_or(0);
-        let options = agents.iter().map(|a| cockpit_core::text::fit(&a.label(), PICKED).trim_end().to_string()).collect();
+        let options = agents.iter().map(|a| flightdeck_core::text::fit(&a.label(), PICKED).trim_end().to_string()).collect();
         let question = "Whose worktree to review? Comments go to that agent.".to_string();
         self.dialog = Some((Dialog::Pick { question, options, selected }, Ask::Pick(agents.into_iter().map(|a| a.terminal).collect())));
     }
@@ -807,7 +807,7 @@ impl App {
     /// Opens the recipient picker: the worktree's agents, driven sessions among them, then a new agent.
     pub fn open_recipients(&mut self) {
         let agents: Vec<Agent> = self.on_worktree().into_iter().cloned().collect();
-        let mut options: Vec<String> = agents.iter().map(|a| cockpit_core::text::fit(&a.recipient(), PICKED).trim_end().to_string()).collect();
+        let mut options: Vec<String> = agents.iter().map(|a| flightdeck_core::text::fit(&a.recipient(), PICKED).trim_end().to_string()).collect();
         options.push("A new agent, started on the review".into());
         let mut targets: Vec<To> = agents.into_iter().map(To::Agent).collect();
         targets.push(To::New);
@@ -848,9 +848,9 @@ fn poll_agents() -> (Sender<Poll>, Receiver<Result<Vec<Agent>, String>>) {
         let toplevel = |cwd: &str| toplevels.borrow_mut().entry(cwd.to_string()).or_insert_with(|| review::toplevel(cwd)).clone();
         let mut every = AGENTS_EVERY;
         loop {
-            // Every agent, both halves' terminals and the sessions cockpit drives: any of them can take the review.
+            // Every agent, both halves' terminals and the sessions flightdeck drives: any of them can take the review.
             let request = json!({"op": "view", "name": "agents", "args": {}});
-            let found = cockpit_core::hub::request(&request, Duration::from_secs(5)).map(|answer| {
+            let found = flightdeck_core::hub::request(&request, Duration::from_secs(5)).map(|answer| {
                 let listed: HashSet<&str> = answer["value"]["agents"].as_array().into_iter().flatten().filter_map(|a| a["cwd"].as_str()).collect();
                 toplevels.borrow_mut().retain(|cwd, _| listed.contains(cwd.as_str()));
                 subject::agents(&answer["value"], &toplevel)
@@ -858,7 +858,7 @@ fn poll_agents() -> (Sender<Poll>, Receiver<Result<Vec<Agent>, String>>) {
             if tx.send(found).is_err() {
                 return;
             }
-            cockpit_core::term::wake();
+            flightdeck_core::term::wake();
             match told.recv_timeout(every) {
                 Ok(Poll::Focus(on)) => every = if on { AGENTS_EVERY } else { AWAY_EVERY },
                 Ok(Poll::Again) => toplevels.borrow_mut().clear(),

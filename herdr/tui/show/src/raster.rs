@@ -7,7 +7,7 @@ use std::sync::{Arc, OnceLock};
 use image::{DynamicImage, RgbaImage};
 use resvg::{tiny_skia, usvg};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 
 static FONTS: OnceLock<Arc<usvg::fontdb::Database>> = OnceLock::new();
 
@@ -96,7 +96,7 @@ pub fn fetch(source: &str) -> Result<PathBuf, String> {
     if !path.exists() {
         let part = path.with_extension("part");
         let done = std::process::Command::new("curl")
-            .args(["-fsSL", "--max-time", "20", "-A", "cockpit", "-o"])
+            .args(["-fsSL", "--max-time", "20", "-A", "flightdeck", "-o"])
             .arg(&part)
             .arg(source)
             .output()

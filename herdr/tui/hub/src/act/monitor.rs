@@ -4,7 +4,7 @@
 
 use std::path::{Path, PathBuf};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
 use super::{Ctx, arg, inbox};
@@ -178,7 +178,7 @@ pub fn investigate(ctx: &mut Ctx, args: &[Value]) -> Res {
     facts.extend(context(app, target)?);
     let focus = if subject.phrase.is_empty() { String::new() } else { format!(", looking at {}", subject.phrase) };
     let prompt = format!(
-        "Investigate how {} does in production{focus}. Use your observability tools (Datadog): its APM, logs and error tracking. This is read-only: change nothing in Datadog, the code, Linear or Slack. What cockpit's monitor saw: {}. Links: {}. End with a short verdict: whether something is wrong, the likely cause, and the next step (nothing, a fix, a bug or a roll back).",
+        "Investigate how {} does in production{focus}. Use your observability tools (Datadog): its APM, logs and error tracking. This is read-only: change nothing in Datadog, the code, Linear or Slack. What flightdeck's monitor saw: {}. Links: {}. End with a short verdict: whether something is wrong, the likely cause, and the next step (nothing, a fix, a bug or a roll back).",
         who(app)?,
         facts.join("; "),
         links(app, &subject)
@@ -217,7 +217,7 @@ pub fn bug(ctx: &mut Ctx, args: &[Value]) -> Res {
     let mut facts = subject.facts.clone();
     facts.extend(context(app, target)?);
     let prompt = format!(
-        "Draft a Linear bug for {} in {}. The evidence cockpit's monitor has: {}. Links: {}. Add what the bug needs from Datadog (through your observability tools: the stack trace, sample events, when it started, how many requests or users it hits), then write it following my conventions for Linear issues (CLAUDE.md or AGENTS.md). Show me the draft and ask before filing it: file nothing until I say so.",
+        "Draft a Linear bug for {} in {}. The evidence flightdeck's monitor has: {}. Links: {}. Add what the bug needs from Datadog (through your observability tools: the stack trace, sample events, when it started, how many requests or users it hits), then write it following my conventions for Linear issues (CLAUDE.md or AGENTS.md). Show me the draft and ask before filing it: file nothing until I say so.",
         subject.phrase,
         who(app)?,
         facts.join("; "),

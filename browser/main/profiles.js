@@ -12,7 +12,7 @@ export const DEFAULT = "default";
 export const emptyRegistry = () => ({ profiles: [{ id: DEFAULT, name: "Default", owner: null, created: 0 }] });
 
 /** The Electron session partition that holds a profile's data. */
-export const partitionOf = (id) => `persist:cockpit-${id}`;
+export const partitionOf = (id) => `persist:flightdeck-${id}`;
 
 /** Who a managed profile belongs to under a scope: a repo, a worktree, or nobody when every worktree shares one. */
 export function ownerFor(scope, { root, repo }) {

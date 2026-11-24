@@ -27,7 +27,7 @@ fn assumed() -> Option<bool> {
 /// What a space is waiting for.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Waiting {
-    /// Nothing is wired: `cockpit setup` is the answer, not patience.
+    /// Nothing is wired: `flightdeck setup` is the answer, not patience.
     NotConnected,
     /// Wired, and the first fetch has not landed.
     FirstFetch,
@@ -120,7 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn a_cockpit_with_no_config_is_connected_to_nothing() {
+    fn a_flightdeck_with_no_config_is_connected_to_nothing() {
         let empty = json!({});
         for source in [Source::Github, Source::Tickets, Source::Ci, Source::Calendar, Source::Mail, Source::Platform] {
             assert!(!source.connected_in(&empty), "{source:?} without a config");

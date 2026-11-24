@@ -4,12 +4,12 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use cockpit_core::files;
+use flightdeck_core::files;
 use serde_json::{Value, json};
 
-/// `COCKPIT_RUNBOOKS_DIR`, else ~/.config/cockpit/runbooks.
+/// `FLIGHTDECK_RUNBOOKS_DIR`, else ~/.config/flightdeck/runbooks.
 pub fn runbooks_dir() -> PathBuf {
-    std::env::var("COCKPIT_RUNBOOKS_DIR").map(PathBuf::from).unwrap_or_else(|_| files::config_dir().join("runbooks"))
+    std::env::var("FLIGHTDECK_RUNBOOKS_DIR").map(PathBuf::from).unwrap_or_else(|_| files::config_dir().join("runbooks"))
 }
 
 pub fn handoffs_dir() -> PathBuf {

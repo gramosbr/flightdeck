@@ -10,7 +10,7 @@ pub fn open_link(ctx: &mut Ctx, args: &[Value]) -> Res {
     let token = text(arg(args, 0)?);
     let url = if token.to_lowercase().starts_with("http") { Some(token.clone()) } else { config::ticket_url(&token, &ctx.cfg, None) };
     let Some(url) = url else {
-        ctx.note(format!("no URL known for {}: set tickets.urlTemplate in the cockpit config", token.to_uppercase()));
+        ctx.note(format!("no URL known for {}: set tickets.urlTemplate in the flightdeck config", token.to_uppercase()));
         return Ok(());
     };
     config::open_url(&url);

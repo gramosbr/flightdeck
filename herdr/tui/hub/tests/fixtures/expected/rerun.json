@@ -2,7 +2,7 @@
   "calls": [],
   "error": null,
   "files": {
-    "home/.cache/cockpit/requests/<MS>-rerun.req": {
+    "home/.cache/flightdeck/requests/<MS>-rerun.req": {
       "label": "rerun api#4",
       "type": "rerun",
       "workflowId": "wf1"

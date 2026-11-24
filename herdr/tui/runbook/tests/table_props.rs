@@ -3,8 +3,8 @@
 
 use std::path::Path;
 
-use cockpit_runbook::book::{Step, parse_text};
-use cockpit_runbook::table::{self, Column, clean, insert_step, set_cell};
+use flightdeck_runbook::book::{Step, parse_text};
+use flightdeck_runbook::table::{self, Column, clean, insert_step, set_cell};
 use proptest::prelude::*;
 
 const COLUMNS: [Column; 4] = [Column::Step, Column::Where, Column::Status, Column::Command];

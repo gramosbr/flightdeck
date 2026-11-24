@@ -1,6 +1,6 @@
 // The hub's notifications in the Herdr app: Herdr's own toast while the window is in front, its click bringing the row
 // the notification is about into view (where its other buttons are); the system's notification while it is behind,
-// whose click and buttons lead to the same row through `cockpit focus herdr-app:<target>`.
+// whose click and buttons lead to the same row through `flightdeck focus herdr-app:<target>`.
 
 import { notify, window as win } from "herdr";
 import * as hub from "./hub.js";
@@ -8,16 +8,16 @@ import { openUpdate } from "./update.js";
 
 const LEVEL = { "🔴": "error", "❌": "error", "⚠️": "warning", "✅": "success", "🟢": "success", "🚀": "success" };
 
-const WHERE = { inbox: "the inbox", runbook: "the runbook", meeting: "Meetings", monitor: "the monitor", routine: "Routines", space: "cockpit" };
+const WHERE = { inbox: "the inbox", runbook: "the runbook", meeting: "Meetings", monitor: "the monitor", routine: "Routines", space: "flightdeck" };
 
 /**
  * A notification from the hub, {title, body, action, row, buttons, from}: shown as fits the window. One a client sent
- * (`from` names who) is drawn plain, never with cockpit's icon or a success or failure colour its words may claim.
+ * (`from` names who) is drawn plain, never with flightdeck's icon or a success or failure colour its words may claim.
  */
 export function deliver(n, install, cx) {
-  const always = Boolean(install?.machine) || install?.env?.COCKPIT_TOASTS === "always";
+  const always = Boolean(install?.machine) || install?.env?.FLIGHTDECK_TOASTS === "always";
   if (!win().active && !always) {
-    cx.spawn(async () => hub.cockpit(["notify", "--system", n.title ?? "", n.body ?? "", n.action ?? "", ...(n.buttons ?? [])]));
+    cx.spawn(async () => hub.flightdeck(["notify", "--system", n.title ?? "", n.body ?? "", n.action ?? "", ...(n.buttons ?? [])]));
     return;
   }
   const level = n.from ? "info" : (Object.entries(LEVEL).find(([mark]) => `${n.title ?? ""} ${n.body ?? ""}`.includes(mark))?.[1] ?? "info");
@@ -30,9 +30,9 @@ export function deliver(n, install, cx) {
     title: n.title ?? "",
     body: `${n.body ?? ""}${more}`,
     level,
-    ...(n.from ? {} : { icon: "mods/cockpit/cockpit.svg" }),
+    ...(n.from ? {} : { icon: "mods/flightdeck/flightdeck.svg" }),
     timeout: level === "error" ? 12000 : 6000,
-    ...(target ? { action: { name: `cockpit.target:${target}` } } : {}),
+    ...(target ? { action: { name: `flightdeck.target:${target}` } } : {}),
   });
 }
 
@@ -54,11 +54,11 @@ export function rowOf(target) {
 
 /**
  * What a toast's click asks, which only ever navigates: a URL opens, the update its dialog, the rest goes through
- * `cockpit focus` (rows, spaces, tabs), a button's action as the row it is about.
+ * `flightdeck focus` (rows, spaces, tabs), a button's action as the row it is about.
  */
 export function follow(target, cx) {
   if (/^https?:\/\//.test(target)) cx.spawn(async () => hub.openUrl(target));
   else if (target === "update") openUpdate();
   // A remote desk refuses what needs its own terminals: the click says so instead of going nowhere.
-  else cx.spawn(async () => hub.cockpit(["focus", rowOf(target)]).catch((e) => notify({ title: "Could not follow it", body: String(e?.message ?? e), level: "warning", timeout: 5000 })));
+  else cx.spawn(async () => hub.flightdeck(["focus", rowOf(target)]).catch((e) => notify({ title: "Could not follow it", body: String(e?.message ?? e), level: "warning", timeout: 5000 })));
 }

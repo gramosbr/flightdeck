@@ -1,5 +1,5 @@
 //! Plan limits and token use of the coding agents, read from what they leave on disk: Claude Code's status line (the
-//! plugin's limits.json), the rate limits a session cockpit drives reports, and Codex's rollouts. Every window names its
+//! plugin's limits.json), the rate limits a session flightdeck drives reports, and Codex's rollouts. Every window names its
 //! source and how fresh it is, a number is only ever one a source gave, and tokens and spend per day are estimates.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -29,7 +29,7 @@ pub const STATUSLINE: &str = "claude-statusline";
 pub const STREAM: &str = "claude-stream";
 pub const ROLLOUT: &str = "codex-rollout";
 pub const COPILOT: &str = "copilot-gh";
-/// A reading from the command the config names for an agent (`usage.commands`), for a provider cockpit has no source of.
+/// A reading from the command the config names for an agent (`usage.commands`), for a provider flightdeck has no source of.
 pub const COMMAND: &str = "usage-command";
 
 /// How often a source reports while its agent works, in ms: three of these without news make a reading stale.
@@ -453,7 +453,7 @@ fn lock<T: Default>(m: &'static OnceLock<Mutex<T>>) -> MutexGuard<'static, T> {
 }
 
 /// The driven sessions' limits, each as of when its session last reported it; a session that keeps no such time gives
-/// the time cockpit first saw that reading.
+/// the time flightdeck first saw that reading.
 fn stream_readings(now: u64) -> Vec<Window> {
     static SEEN: OnceLock<Mutex<HashMap<String, (String, u64)>>> = OnceLock::new();
     let Some(sessions) = STREAM_FN.get() else { return Vec::new() };
@@ -522,7 +522,7 @@ fn claude_json() -> PathBuf {
     }
 }
 
-/// Claude Code's settings file as far as cockpit keeps it: the account's address and organization, everything else
+/// Claude Code's settings file as far as flightdeck keeps it: the account's address and organization, everything else
 /// passed over by the parser and dropped.
 #[derive(Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
@@ -771,9 +771,9 @@ fn installed(now: u64) -> Vec<String> {
     ids
 }
 
-/// The demo world's `usage` block (COCKPIT_AGENTS_DEMO), ages and resets given in minutes from now.
+/// The demo world's `usage` block (FLIGHTDECK_AGENTS_DEMO), ages and resets given in minutes from now.
 fn demo(now: u64) -> Option<Inputs> {
-    let path = std::env::var_os("COCKPIT_AGENTS_DEMO").filter(|p| !p.is_empty())?;
+    let path = std::env::var_os("FLIGHTDECK_AGENTS_DEMO").filter(|p| !p.is_empty())?;
     let world = files::load(Path::new(&path))?;
     let u = world.get("usage").filter(|u| u.is_object())?;
     let ago = |v: &Value| now.saturating_sub((v.as_f64().unwrap_or(0.0) * 60_000.0) as u64);
@@ -1519,7 +1519,7 @@ pub fn rescan(now: u64) -> Days {
     let priced: Vec<String> = roots.iter().filter(|(_, kind, _)| *kind == Transcripts::Claude).map(|(id, _, _)| id.clone()).collect();
     let books = files::cache().join("costs");
     let mut s = scanner();
-    // Another process (a second hub, `cockpit usage` without one) counts under the same lock.
+    // Another process (a second hub, `flightdeck usage` without one) counts under the same lock.
     let held = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(files::cache().join("estimates.lock"));
     let held = held.ok().filter(|f| f.lock().is_ok());
     let was = files::load(&estimates_path()).unwrap_or(Value::Null);
@@ -2132,7 +2132,7 @@ pub fn count(n: u64) -> String {
     }
 }
 
-/// "~$1.84", "~$0.004": a cost cockpit estimated, never billed as such.
+/// "~$1.84", "~$0.004": a cost flightdeck estimated, never billed as such.
 pub fn estimate(usd: f64) -> String {
     if usd > 0.0 && usd < 0.01 { format!("~${usd:.3}") } else { format!("~${usd:.2}") }
 }
@@ -2567,7 +2567,7 @@ mod tests {
         assert_eq!(stream_of(&session(NOW - 1_000), NOW, &mut seen)[0].as_of, NOW - 1_000, "the same verdict confirmed again is fresh again");
         let bare = json!({"key": "s2", "rate_limit": info});
         assert_eq!(stream_of(&bare, NOW, &mut seen)[0].as_of, NOW);
-        assert_eq!(stream_of(&bare, NOW + 60_000, &mut seen)[0].as_of, NOW, "without its time, as of when cockpit first saw it");
+        assert_eq!(stream_of(&bare, NOW + 60_000, &mut seen)[0].as_of, NOW, "without its time, as of when flightdeck first saw it");
         assert!(stream_of(&json!({"key": "s3"}), NOW, &mut seen).is_empty());
     }
 

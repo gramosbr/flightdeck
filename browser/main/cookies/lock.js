@@ -1,5 +1,5 @@
 // Ported from Orca (https://github.com/stablyai/orca, commit 49498c3), src/main/browser/cookies/mutation/cookie-mutation-lock.ts.
-// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to cockpit's browser shell.
+// MIT licence, Copyright (c) 2026 Lovecast Inc. Translated from TypeScript and adapted to flightdeck's browser shell.
 
 /** @type {WeakMap<object, Promise<void>>} */
 const mutationLocks = new WeakMap();

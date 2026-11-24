@@ -4,7 +4,7 @@
 use std::sync::{LazyLock, OnceLock};
 
 use chrono::{DateTime, Local, TimeZone, Utc};
-use cockpit_core::theme::{DIM, GREEN, ORANGE, RED, fg};
+use flightdeck_core::theme::{DIM, GREEN, ORANGE, RED, fg};
 use ratatui::style::Style;
 use regex::Regex;
 use serde_json::Value;
@@ -219,8 +219,8 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Self {
-        let claude = cockpit_core::agent::get("claude").is_some_and(|a| a.installed());
-        Self { claude, ..Self::from(cockpit_core::files::config()) }
+        let claude = flightdeck_core::agent::get("claude").is_some_and(|a| a.installed());
+        Self { claude, ..Self::from(flightdeck_core::files::config()) }
     }
 
     pub fn from(raw: Value) -> Self {
@@ -233,7 +233,7 @@ impl Config {
         Self { claude: false, ..self }
     }
 
-    /// Whether Claude Code is installed: the cockpit plugin carries out CircleCI reruns, previews and releases in its
+    /// Whether Claude Code is installed: the flightdeck plugin carries out CircleCI reruns, previews and releases in its
     /// sessions, so without it those are not offered.
     pub fn claude(&self) -> bool {
         self.claude

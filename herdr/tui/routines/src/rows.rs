@@ -1,7 +1,7 @@
 //! The list's rows: the routines, running and failed ones first, each unfolded onto its past runs; each row's actions,
 //! and the keys its marker stands for.
 
-use cockpit_core::acts::Act;
+use flightdeck_core::acts::Act;
 
 use crate::app::{App, Cmd};
 use crate::data::{Doc, Routine, State};

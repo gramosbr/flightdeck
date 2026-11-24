@@ -1,4 +1,4 @@
-//! Tabs and spaces named after their work: a tab takes the name the agents view gives its agent (`cockpit_core::names`:
+//! Tabs and spaces named after their work: a tab takes the name the agents view gives its agent (`flightdeck_core::names`:
 //! the session's own title, else its first prompt in a few words), a space its agents' shared ticket, else its repo.
 //! Only a label that is a placeholder or the one given here last ever changes, so a name the person typed, or another
 //! tool gave, stays; `names: false` in the config turns it off.
@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
 
-use cockpit_core::{frontend, names};
+use flightdeck_core::{frontend, names};
 use serde_json::{Value, json};
 
 use crate::config;
@@ -16,7 +16,7 @@ const EVERY: Duration = Duration::from_secs(20);
 
 pub fn start() {
     static STARTED: std::sync::Once = std::sync::Once::new();
-    if std::env::var("COCKPIT_HUB_FEED").is_ok_and(|v| v == "off") {
+    if std::env::var("FLIGHTDECK_HUB_FEED").is_ok_and(|v| v == "off") {
         return;
     }
     STARTED.call_once(|| {

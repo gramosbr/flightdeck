@@ -20,12 +20,12 @@ use ratatui_image::sliced::{SignedPosition, SlicedImage};
 use serde_json::{Value, json};
 use tachyonfx::{Effect, Interpolation, fx};
 
-use cockpit_core::bridge::Bridge;
-use cockpit_core::files::Density;
-use cockpit_core::palette::{Entry, Outcome, Palette};
-use cockpit_core::theme::{BG, DIM, FG, LINE, ORANGE, PANEL, base, bold, dim, fg};
-use cockpit_core::toast::{Kind, Toasts};
-use cockpit_core::{files, focus, hub, term};
+use flightdeck_core::bridge::Bridge;
+use flightdeck_core::files::Density;
+use flightdeck_core::palette::{Entry, Outcome, Palette};
+use flightdeck_core::theme::{BG, DIM, FG, LINE, ORANGE, PANEL, base, bold, dim, fg};
+use flightdeck_core::toast::{Kind, Toasts};
+use flightdeck_core::{files, focus, hub, term};
 
 use crate::answers::Outbox;
 use crate::blocks::{Ctx, Msg, View};
@@ -439,7 +439,7 @@ impl ShowApp {
         }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         let page = self.height().saturating_sub(1).max(1) as isize;
-        if cockpit_core::keys::is_quit(&key) {
+        if flightdeck_core::keys::is_quit(&key) {
             return true;
         }
         match key.code {
@@ -616,7 +616,7 @@ impl ShowApp {
             let visible = y + i64::from(image.size().height) > 0 && y < height as i64;
             if visible && self.fades[n].is_none() {
                 frame.render_widget(SlicedImage::new(image, SignedPosition { x: 0, y: y as i16 }), inner);
-                if let Ok(dir) = std::env::var("COCKPIT_SHOT_DIR") {
+                if let Ok(dir) = std::env::var("FLIGHTDECK_SHOT_DIR") {
                     let size = image.size();
                     let place = serde_json::json!([inner.x, i64::from(inner.y) + y, size.width, size.height]);
                     let _ = std::fs::write(std::path::Path::new(&dir).join(format!("{}.at", crate::picture::shot_key(&view.spec))), place.to_string());
@@ -630,7 +630,7 @@ impl ShowApp {
     pub fn settle(&mut self, width: u16, height: u16) {
         let started = Instant::now();
         loop {
-            let _ = cockpit_core::testing::render(self, width, height);
+            let _ = flightdeck_core::testing::render(self, width, height);
             term::App::tick(self);
             let busy = self.ctx.running.get() > 0 || self.views.iter().any(View::pending);
             if !busy || started.elapsed() > Duration::from_secs(20) {

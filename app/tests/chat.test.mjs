@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createContext, SourceTextModule, SyntheticModule } from "node:vm";
 import { test } from "node:test";
 
-async function fixture(layout = "cockpit-chat") {
+async function fixture(layout = "flightdeck-chat") {
   const calls = [], notices = [];
   const context = createContext({ console });
   const imports = {
@@ -18,7 +18,7 @@ async function fixture(layout = "cockpit-chat") {
     "./hub.js": { act: () => { throw new Error("no hub action expected"); }, openUrl: () => {} },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -147,7 +147,7 @@ test("the box offers the agent's commands after a / and the folder's files after
 async function subjectFixture({ focusedOn = "t41", answers = {}, views = {} } = {}) {
   const calls = [], acts = [];
   const subscriptions = [];
-  const shared = { layout: "cockpit-chat" };
+  const shared = { layout: "flightdeck-chat" };
   // Herdr's focus as it is with an agent in front: its pane's terminal, its tab, and the agent its blocks would show.
   const focus = focusedOn ? { agent: focusedOn, terminal: focusedOn, tab: `tab-${focusedOn}` } : {};
   const context = createContext({ console });
@@ -174,11 +174,11 @@ async function subjectFixture({ focusedOn = "t41", answers = {}, views = {} } = 
       openUrl: () => {},
       sleep: async () => {},
       install: async () => ({}),
-      cockpit: async () => ({ code: 0, stdout: "", stderr: "" }),
+      flightdeck: async () => ({ code: 0, stdout: "", stderr: "" }),
     },
   };
   const sources = new Map(), modules = new Map();
-  const folder = new URL("../mods/cockpit/", import.meta.url);
+  const folder = new URL("../mods/flightdeck/", import.meta.url);
   for (const name of await readdir(folder)) {
     if (!name.endsWith(".js")) continue;
     const text = await readFile(new URL(name, folder), "utf8");
@@ -245,12 +245,12 @@ test("the chat follows the agent chat:open named until another one comes in fron
   assert.equal(f.chat.wanted(), "t41", "the agent in front, by default");
   f.chat.open("claude:1793611000000-0", f.cx);
   assert.equal(f.chat.wanted(), "claude:1793611000000-0");
-  assert.equal(f.shared["cockpit.chat.subject"], "claude:1793611000000-0", "the runner and the review panel read it here");
+  assert.equal(f.shared["flightdeck.chat.subject"], "claude:1793611000000-0", "the runner and the review panel read it here");
   const views = f.calls.filter((c) => c[0] === "subscribe").at(-1)[1].views;
   assert.deepEqual(JSON.parse(JSON.stringify(views)).map((v) => v.name ?? v), ["chat", "queue", "session"], "a driven subject has its session followed, by its key");
   assert.equal(views[2].args.key, "claude:1793611000000-0");
   // Once the focus had time to settle with the pin, another agent coming in front takes over.
-  f.shared["cockpit.chat.pinned"].at -= 3_000;
+  f.shared["flightdeck.chat.pinned"].at -= 3_000;
   Object.assign(f.focus, { agent: "t42", terminal: "t42", tab: "tab-t42" });
   assert.equal(f.chat.wanted(), "t42", "another agent in front takes over");
 });
@@ -269,8 +269,8 @@ test("on a tab no agent runs in, the chat follows none, never the first agent He
   f.chat.model.row = (k) => (k === key ? { terminal: k, driven: true } : null);
   Object.assign(f.focus, { agent: "t41", terminal: "t11", tab: "tab-3" });
   f.chat.open(key, f.cx);
-  assert.equal(f.shared["cockpit.chat.pinned"].focus, null);
-  f.shared["cockpit.chat.pinned"].at -= 3_000;
+  assert.equal(f.shared["flightdeck.chat.pinned"].focus, null);
+  f.shared["flightdeck.chat.pinned"].at -= 3_000;
   Object.assign(f.focus, { agent: "t41", terminal: "t13", tab: "tab-3" });
   assert.equal(f.chat.wanted(), key, "another shell pane in the same tab: kept");
   Object.assign(f.focus, { tab: "tab-web" });
@@ -287,7 +287,7 @@ test("native navigation to a shell tab or another space ends even a freshly pinn
     Object.assign(f.focus, { agent: "t41", terminal: "t11", tab: "tab-t41", ...change });
     if (change.space) Object.assign(f.focus, { tab: "tab-3" });
     assert.equal(f.chat.wanted(), null);
-    assert.equal(f.shared["cockpit.chat.pinned"], null);
+    assert.equal(f.shared["flightdeck.chat.pinned"], null);
   }
 });
 
@@ -303,8 +303,8 @@ test("the chat keeps the session the start box followed through a hub restart, w
   assert.equal(f.chat.wanted(), key, "not listed yet, just started: followed");
   listed = true;
   assert.equal(f.chat.wanted(), key);
-  f.shared["cockpit.chat.pinned"].at -= 3_000;
-  // cockpit hub stop: Herdr's own rows, no session; the focus moves to another shell.
+  f.shared["flightdeck.chat.pinned"].at -= 3_000;
+  // flightdeck hub stop: Herdr's own rows, no session; the focus moves to another shell.
   listed = false;
   f.chat.model.down = true;
   f.focus.terminal = "t9";
@@ -459,7 +459,7 @@ test("the chat's own keys: ⇧⇥ cycles a driven session's mode, ⎋ stops a tu
   Object.assign(f.chat, { confirm: null, handle: { is_focused: () => true }, cardFocus: { is_focused: () => false, focus() {} }, boxFocused: true });
   f.chat.model.shown = () => null;
   f.chat.sessions = { session: { key, working: true, messages: [] } };
-  f.shared["cockpit.app"] = "chat";
+  f.shared["flightdeck.app"] = "chat";
   assert.equal(f.chat.pressed({ keystroke: "shift-tab", injected: true }, f.cx), false, "a key from outside");
   assert.equal(f.chat.pressed({ keystroke: "shift-tab" }, f.cx), true);
   assert.equal(f.chat.pressed({ keystroke: "escape" }, f.cx), true);
@@ -469,14 +469,14 @@ test("the chat's own keys: ⇧⇥ cycles a driven session's mode, ⎋ stops a tu
   assert.equal(f.chat.pressed({ keystroke: "escape" }, f.cx), true);
   assert.equal(f.chat.confirm, null, "⎋ closes the confirm and stops nothing");
   assert.equal(f.acts.length, 2);
-  f.shared["cockpit.app"] = "tab";
+  f.shared["flightdeck.app"] = "tab";
   assert.equal(f.chat.pressed({ keystroke: "shift-tab" }, f.cx), false, "behind another screen, the chat takes no keys");
 });
 
 test("the chat's keys are bindings of its own context, so the box's Tab, ⏎ and ⎋ and the window's focus moves come after them", async () => {
   const f = await subjectFixture();
   const bindings = f.mod.chatBindings();
-  for (const b of bindings) assert.match(b.context, /^CockpitChat && chat_[a-z]+( > Input)?$/, `${b.keystroke} stays in the chat: ${b.context}`);
+  for (const b of bindings) assert.match(b.context, /^FlightdeckChat && chat_[a-z]+( > Input)?$/, `${b.keystroke} stays in the chat: ${b.context}`);
   const where = (keystroke) => JSON.parse(JSON.stringify(bindings.filter((b) => b.keystroke === keystroke).map((b) => b.context.endsWith("> Input"))));
   assert.deepEqual(where("tab"), [false, true], "Tab: anywhere in the chat, and in its box before the box's own");
   assert.deepEqual(where("shift-tab"), [false, true]);
@@ -503,7 +503,7 @@ test("a chat key pressed for real takes the chat's path: Tab to the card, ⇧⇥
   const answered = [];
   f.chat.model = { row: () => ({ terminal: key, driven: true, status: "blocked" }), value: {}, shown: () => q, answer: (_cx, _row, n) => answered.push(n) };
   f.chat.sessions = { session: { key, working: false, messages: [], commands: [{ name: "review" }] } };
-  f.shared["cockpit.app"] = "chat";
+  f.shared["flightdeck.app"] = "chat";
   f.chat.action("tab", f.cx);
   assert.equal(focusedCard, true, "Tab puts the keyboard on the question card");
   assert.equal(f.chat.pressed({ keystroke: "2", key: "2" }, f.cx), true, "and its digit answers");
@@ -619,7 +619,7 @@ test("going to an agent on purpose, even the one in front, unpins the chat; so d
   f.chat.open(key, f.cx);
   assert.equal(f.chat.wanted(), key);
   f.mod.goToAgent({ address: "t41" });
-  assert.equal(f.shared["cockpit.chat.pinned"], null, "the drawer, Needs, the palette and a tab pill all go through here");
+  assert.equal(f.shared["flightdeck.chat.pinned"], null, "the drawer, Needs, the palette and a tab pill all go through here");
   assert.equal(f.chat.wanted(), "t41");
   f.chat.open(key, f.cx);
   f.chat.driven(key);
@@ -627,7 +627,7 @@ test("going to an agent on purpose, even the one in front, unpins the chat; so d
   assert.equal(f.chat.wanted(), key, "unlisted a moment, as while a hub comes back: kept");
   f.chat.pinMissing.since -= 6_000;
   assert.equal(f.chat.wanted(), "t41", "the session it was pinned to is gone: the agent in front again");
-  assert.equal(f.shared["cockpit.chat.pinned"], null);
+  assert.equal(f.shared["flightdeck.chat.pinned"], null);
 });
 
 test("reading further back keeps the row at the top of the view, wherever the reader is", async () => {

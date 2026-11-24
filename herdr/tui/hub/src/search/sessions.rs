@@ -1,6 +1,6 @@
 //! Past agent sessions, searchable by their words and by what they meant: a tantivy index of the transcripts of every
-//! agent cockpit reads (`cockpit_core::transcripts`), one document per passage with its vector (see embed), kept in
-//! ~/.cache/cockpit/sessions-index. A process of its own (the hub's command run again with HUB_TASK set) indexes the
+//! agent flightdeck reads (`flightdeck_core::transcripts`), one document per passage with its vector (see embed), kept in
+//! ~/.cache/flightdeck/sessions-index. A process of its own (the hub's command run again with HUB_TASK set) indexes the
 //! transcripts whose size or time changed, when the hub starts, on a watch of the agents' folders and every few minutes,
 //! so the memory indexing takes goes back to the system each time; the hub only reads.
 
@@ -13,8 +13,8 @@ use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local, NaiveDate};
-use cockpit_core::files;
-use cockpit_core::transcripts::{self as reader, Transcripts};
+use flightdeck_core::files;
+use flightdeck_core::transcripts::{self as reader, Transcripts};
 use notify::{RecursiveMode, Watcher};
 use serde_json::{Value, json};
 use tantivy::collector::TopDocs;
@@ -28,8 +28,8 @@ use super::embed;
 use super::transcript::{self, Session};
 
 /// Set on the hub's command run again to index the sessions once, then exit.
-pub const HUB_TASK: &str = "COCKPIT_HUB_INDEX_SESSIONS";
-/// Sessions shown after cockpit's own entries.
+pub const HUB_TASK: &str = "FLIGHTDECK_HUB_INDEX_SESSIONS";
+/// Sessions shown after flightdeck's own entries.
 const BEST: usize = 6;
 /// The writer's memory, tantivy's least for one thread: a batch is committed and the writer dropped well before.
 const WRITER_HEAP: usize = 15_000_000;
